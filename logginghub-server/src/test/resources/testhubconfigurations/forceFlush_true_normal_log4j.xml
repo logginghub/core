@@ -1,0 +1,9 @@
+<hubConfiguration port="64547" telemetryPort="64548">
+   
+   <aggregatedFileLogConfiguration filename="target/test/forceflushlogs/log.txt" 
+                                   writeAsynchronously="false"                  
+                                   forceFlush="true"
+								   formatter="com.logginghub.logging.logeventformatters.log4j.Log4jPatternLogEventFormatter"
+								   pattern="%d %-4r [%t] %a %h %i %-5p %c %M %x - %m%n"/>
+   
+</hubConfiguration>

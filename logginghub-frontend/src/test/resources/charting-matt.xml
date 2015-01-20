@@ -1,0 +1,220 @@
+<chartingModel>
+<patternModels>
+<patternmodel patternID="-1" pattern="Request: {ID} was made through [Portal] portal by: [Customer] to: [Salesperson] Of Unit: [Unit] at: [Time] and ended with status: [Status].
+This was a [Product] Request for Currency Pair: [CCYPair] for amount: {Amount} Euros.
+The Current Global Hit Ratio is: {HR}%" name="Data" debug="false" cleanUp="false"/>
+<patternmodel patternID="-1" pattern="Request: {ID} was made through [Portal] portal by: [Customer] to: [Salesperson] Of [Unit] at: [Time] and ended with status: Completed.
+This was a [Product] Request for Currency Pair: [CCYPair] for amount: {Amount} Euros.
+The Current Global Hit Ratio is: {HR}%" name="TurnoverNew" debug="false" cleanUp="false"/>
+<patternmodel patternID="-1" pattern="[ID] of unit: [UNIT] has a current Hit Ratio of:{Ratio}%" name="HR" debug="false" cleanUp="false"/>
+<patternmodel patternID="-1" pattern="{group0} made by: [customer] has no HR Person or Unit associated with it. Please Investigate" name="Erroneous" debug="false" cleanUp="false"/>
+<patternmodel patternID="-1" pattern="Request: {ID} was made through [Portal] portal by: [Customer] to: [Salesperson] Of Unit: [Unit] at: [Time] and ended with status: [Status].
+This was a [Product] Request for Currency Pair: [CCYPair] for amount: {Amount} Euros.
+The Current Global Hit Ratio is: {HR}%" name="Data2" debug="false" cleanUp="false"/>
+<patternmodel patternID="-1" pattern="Customer: [ID] with Unit: [unit] has a current Hit Ratio of:{Ratio}%" name="CustomerInfo" debug="false" cleanUp="false"/>
+</patternModels>
+<streamModels>
+ 
+</streamModels>
+<aggregationModels>
+ 
+</aggregationModels>
+<pages>
+<pagemodel name="Long Term Charting">
+<chartingModels>
+<linechartmodel title="Turnover" layout="cell 3 1" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false">
+<matchers>
+<chartseriesmodel pattern="Data" label="Amount" groupBy="Status" type="TotalSum" interval="1000" eventParts="" generateEmptyTicks="true">
+<filters>
+<chartseriesfiltermodel pattern="Unit" enabled="false" blacklist="" whitelist="FX/MM Sales FI"/>
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+<linechartmodel title="Requests" layout="cell 3 2" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false">
+<matchers>
+<chartseriesmodel pattern="Data" label="ID" groupBy="Status" type="TotalCount" interval="1000" eventParts="" generateEmptyTicks="true">
+<filters>
+<chartseriesfiltermodel pattern="Unit" enabled="false" blacklist="" whitelist="FX/MM Sales FI"/>
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+<linechartmodel title="Hit Ratios by Person" layout="cell 4 1" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false">
+<matchers>
+<chartseriesmodel pattern="HR" label="Ratio" groupBy="ID" type="LastValue" interval="1000" eventParts="" generateEmptyTicks="true">
+<filters>
+<chartseriesfiltermodel pattern="UNIT" enabled="true" blacklist="" whitelist="FX/MM Sales FI"/>
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+<linechartmodel title="Turnover by Person" layout="cell 4 2" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false">
+<matchers>
+<chartseriesmodel pattern="Data" label="Amount" groupBy="Salesperson" type="TotalSum" interval="1000" eventParts="" generateEmptyTicks="true">
+<filters>
+<chartseriesfiltermodel pattern="Unit" enabled="true" blacklist="" whitelist="FX/MM Sales FI"/>
+<chartseriesfiltermodel pattern="Status" enabled="true" blacklist="" whitelist="Completed"/>
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+<linechartmodel title="Turnover by Customer" layout="cell 5 1" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="9.999999999E9" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="false" sideLegend="false">
+<matchers>
+<chartseriesmodel pattern="Data" label="Amount" groupBy="Customer" type="TotalSum" interval="1000" eventParts="" generateEmptyTicks="true">
+<filters>
+<chartseriesfiltermodel pattern="Unit" enabled="true" blacklist="" whitelist="FX/MM Sales FI"/>
+<chartseriesfiltermodel pattern="Status" enabled="true" blacklist="" whitelist="Completed"/>
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+<linechartmodel title="Hit Ratios by Customer" layout="cell 5 2" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="false" sideLegend="false">
+<matchers>
+<chartseriesmodel pattern="CustomerInfo" label="Ratio" groupBy="ID" type="LastValue" interval="1000" eventParts="" generateEmptyTicks="true">
+<filters>
+<chartseriesfiltermodel pattern="unit" enabled="true" blacklist="" whitelist="FX/MM Sales FI"/>
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+</chartingModels>
+<pieChartModels>
+<piechartmodel title="Product Split" layout="cell 1 1" resetAt="13:26:00" resets="22" type="" xAxisLabel="Time" yAxisLabel="y axis label" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" top="2147483647" showOtherSeries="false">
+<matchers>
+<chartseriesmodel pattern="Data" label="ID" groupBy="Product" type="TotalCount" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+<chartseriesfiltermodel pattern="Unit" enabled="false" blacklist="" whitelist="FX/MM Sales FI"/>
+</filters>
+</chartseriesmodel>
+</matchers>
+</piechartmodel>
+<piechartmodel title="CCY Pair Split" layout="cell 2 1" resetAt="null" resets="0" type="" xAxisLabel="Time" yAxisLabel="y axis label" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="10" forceYZero="true" showLegend="true" sideLegend="false" top="10" showOtherSeries="true">
+<matchers>
+<chartseriesmodel pattern="Data" label="ID" groupBy="CCYPair" type="TotalCount" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+<chartseriesfiltermodel pattern="Unit" enabled="false" blacklist="" whitelist="FX/MM Sales FI"/>
+</filters>
+</chartseriesmodel>
+</matchers>
+</piechartmodel>
+<piechartmodel title="Status Split" layout="cell 1 2" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="y axis label" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" top="2147483647" showOtherSeries="false">
+<matchers>
+<chartseriesmodel pattern="Data" label="Status" groupBy="Status" type="TotalCount" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+<chartseriesfiltermodel pattern="Unit" enabled="false" blacklist="" whitelist="FX/MM Sales FI"/>
+</filters>
+</chartseriesmodel>
+</matchers>
+</piechartmodel>
+<piechartmodel title="Portal Split" layout="cell 2 2" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="y axis label" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" top="2147483647" showOtherSeries="false">
+<matchers>
+<chartseriesmodel pattern="Data" label="Portal" groupBy="Portal" type="TotalCount" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+<chartseriesfiltermodel pattern="Unit" enabled="false" blacklist="" whitelist="FX/MM Sales FI"/>
+</filters>
+</chartseriesmodel>
+</matchers>
+</piechartmodel>
+</pieChartModels>
+</pagemodel>
+<pagemodel name="Daily Charting">
+<chartingModels>
+<linechartmodel title="Turnover" layout="cell 3 1" resetAt="00:00:00" resets="4" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false">
+<matchers>
+<chartseriesmodel pattern="Data" label="Amount" groupBy="Status" type="TotalSum" interval="1000" eventParts="" generateEmptyTicks="true">
+<filters>
+<chartseriesfiltermodel pattern="Unit" enabled="false" blacklist="" whitelist="FX/MM Sales FI"/>
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+<linechartmodel title="Requests" layout="cell 3 2" resetAt="00:00:00" resets="2" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false">
+<matchers>
+<chartseriesmodel pattern="Data" label="ID" groupBy="Status" type="TotalCount" interval="1000" eventParts="" generateEmptyTicks="true">
+<filters>
+<chartseriesfiltermodel pattern="Unit" enabled="false" blacklist="" whitelist="FX/MM Sales FI"/>
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+<linechartmodel title="Hit Ratios by Person" layout="cell 4 1" resetAt="00:00:00" resets="2" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false">
+<matchers>
+<chartseriesmodel pattern="HR" label="Ratio" groupBy="ID" type="LastValue" interval="1000" eventParts="" generateEmptyTicks="true">
+<filters>
+<chartseriesfiltermodel pattern="UNIT" enabled="true" blacklist="" whitelist="FX/MM Sales FI"/>
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+<linechartmodel title="Turnover by Person" layout="cell 4 2" resetAt="00:00:00" resets="2" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false">
+<matchers>
+<chartseriesmodel pattern="Data" label="Amount" groupBy="Salesperson" type="TotalSum" interval="1000" eventParts="" generateEmptyTicks="true">
+<filters>
+<chartseriesfiltermodel pattern="Unit" enabled="true" blacklist="" whitelist="FX/MM Sales FI"/>
+<chartseriesfiltermodel pattern="Status" enabled="true" blacklist="" whitelist="Completed"/>
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+<linechartmodel title="Turnover by Customer" layout="cell 5 1" resetAt="00:00:00" resets="2" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="9.999999999E9" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="false" sideLegend="false">
+<matchers>
+<chartseriesmodel pattern="Data" label="Amount" groupBy="Customer" type="TotalSum" interval="1000" eventParts="" generateEmptyTicks="true">
+<filters>
+<chartseriesfiltermodel pattern="Unit" enabled="true" blacklist="" whitelist="FX/MM Sales FI"/>
+<chartseriesfiltermodel pattern="Status" enabled="true" blacklist="" whitelist="Completed"/>
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+<linechartmodel title="Hit Ratios by Customer" layout="cell 5 2" resetAt="00:00:00" resets="2" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="false" sideLegend="false">
+<matchers>
+<chartseriesmodel pattern="CustomerInfo" label="Ratio" groupBy="ID" type="LastValue" interval="1000" eventParts="" generateEmptyTicks="true">
+<filters>
+<chartseriesfiltermodel pattern="unit" enabled="true" blacklist="" whitelist="FX/MM Sales FI"/>
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+</chartingModels>
+<pieChartModels>
+<piechartmodel title="Product Split" layout="cell 1 1" resetAt="00:00:00" resets="5" type="" xAxisLabel="Time" yAxisLabel="y axis label" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" top="2147483647" showOtherSeries="false">
+<matchers>
+<chartseriesmodel pattern="Data" label="ID" groupBy="Product" type="TotalCount" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+<chartseriesfiltermodel pattern="Unit" enabled="false" blacklist="" whitelist="FX/MM Sales FI"/>
+</filters>
+</chartseriesmodel>
+</matchers>
+</piechartmodel>
+<piechartmodel title="CCY Pair Split" layout="cell 2 1" resetAt="00:00:00" resets="2" type="" xAxisLabel="Time" yAxisLabel="y axis label" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="10" forceYZero="true" showLegend="true" sideLegend="false" top="10" showOtherSeries="true">
+<matchers>
+<chartseriesmodel pattern="Data" label="ID" groupBy="CCYPair" type="TotalCount" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+<chartseriesfiltermodel pattern="Unit" enabled="false" blacklist="" whitelist="FX/MM Sales FI"/>
+</filters>
+</chartseriesmodel>
+</matchers>
+</piechartmodel>
+<piechartmodel title="Status Split" layout="cell 1 2" resetAt="00:00:00" resets="2" type="" xAxisLabel="Time" yAxisLabel="y axis label" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" top="2147483647" showOtherSeries="false">
+<matchers>
+<chartseriesmodel pattern="Data" label="Status" groupBy="Status" type="TotalCount" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+<chartseriesfiltermodel pattern="Unit" enabled="false" blacklist="" whitelist="FX/MM Sales FI"/>
+</filters>
+</chartseriesmodel>
+</matchers>
+</piechartmodel>
+<piechartmodel title="Portal Split" layout="cell 2 2" resetAt="00:00:00" resets="2" type="" xAxisLabel="Time" yAxisLabel="y axis label" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" top="2147483647" showOtherSeries="false">
+<matchers>
+<chartseriesmodel pattern="Data" label="Portal" groupBy="Portal" type="TotalCount" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+<chartseriesfiltermodel pattern="Unit" enabled="false" blacklist="" whitelist="FX/MM Sales FI"/>
+</filters>
+</chartseriesmodel>
+</matchers>
+</piechartmodel>
+</pieChartModels>
+</pagemodel>
+</pages>
+</chartingModel>

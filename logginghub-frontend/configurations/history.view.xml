@@ -1,0 +1,16 @@
+<container>
+
+    <environmentController />
+
+    <environment name="local" >
+        <hub name="local" host="localhost" port="58770" />
+    </environment>
+
+    <mainFrame name="History View">
+        <menuBar />
+        <tabbedPane>
+            <historyView name='History view' environmentRef='local' />
+        </tabbedPane>
+    </mainFrame>
+
+</container>

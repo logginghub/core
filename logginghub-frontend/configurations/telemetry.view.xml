@@ -1,0 +1,15 @@
+<container>
+
+    <environment id="local" subscribe="true">
+        <hub name="hub1" host="localhost" port="58770" />
+    </environment>
+    
+    <mainFrame name="Telemetry View" quitOnClose="true">
+        <menuBar quitOnExit="true"/>
+        <tabbedPane>
+           <realtimeView />
+           <telemetryView />
+        </tabbedPane>
+    </mainFrame>
+
+</container>

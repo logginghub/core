@@ -1,0 +1,7 @@
+<hubConfiguration port="64547" telemetryPort="64548">
+   
+  <timeStampAggregatedFileLogConfiguration filename="${DSL_CLUSTERNAME}_dslhub"   
+                                           extension=".log" 
+                                           folder="${TEMP}/runHubTest"
+                                           forceFlush="true"/>
+</hubConfiguration>

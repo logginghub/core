@@ -1,0 +1,73 @@
+<chartingModel>
+
+    <pages>
+        <pagemodel name="New page">
+            <chartingModels>
+              
+                <linechartmodel title="Trade received time" layout="cell 0 0" type="" xAxisLabel="Time" yAxisLabel="Events per second" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="35.0" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false">
+                    <matchers>
+                        <chartseriesmodel pattern="received" legend="" label="time" type="Mean" interval="1000" eventParts="" />
+                    </matchers>
+                </linechartmodel>
+                
+                <linechartmodel title="Trade storage time" layout="cell 1 0" type="" xAxisLabel="Time" yAxisLabel="Events per second" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="35.0" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false">
+                    <matchers>
+                        <chartseriesmodel pattern="stored" legend="" label="time" type="Mean" interval="1000" eventParts="" />
+                    </matchers>
+                </linechartmodel>
+                
+                <linechartmodel title="Trade validated time" layout="cell 2 0" type="" xAxisLabel="Time" yAxisLabel="Events per second" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="35.0" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false">
+                    <matchers>
+                        <chartseriesmodel pattern="validated" legend="" label="time" type="Mean" interval="1000" eventParts="" />
+                    </matchers>
+                </linechartmodel>
+                
+                <linechartmodel title="Trade enriched time" layout="cell 3 0" type="" xAxisLabel="Time" yAxisLabel="Events per second" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="35.0" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false">
+                    <matchers>
+                        <chartseriesmodel pattern="enriched" legend="" label="time" type="Mean" interval="1000" eventParts="" />
+                    </matchers>
+                </linechartmodel>
+                
+                <linechartmodel title="Trade reported time" layout="cell 4 0" type="" xAxisLabel="Time" yAxisLabel="Events per second" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="35.0" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false">
+                    <matchers>
+                        <chartseriesmodel pattern="reported" legend="" label="time" type="Mean" interval="1000" eventParts="" />
+                    </matchers>
+                </linechartmodel>
+                
+                <!-- ______________________________________________________________________________________ -->
+                
+                  <linechartmodel title="Trade received rate" layout="cell 0 1" type="" xAxisLabel="Time" yAxisLabel="Events per second" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="35.0" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false">
+                    <matchers>
+                        <chartseriesmodel pattern="received" legend="" label="time" type="Count" interval="1000" eventParts="" />
+                    </matchers>
+                </linechartmodel>
+                
+                <linechartmodel title="Trade storage rate" layout="cell 1 1" type="" xAxisLabel="Time" yAxisLabel="Events per second" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="35.0" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false">
+                    <matchers>
+                        <chartseriesmodel pattern="stored" legend="" label="time" type="Count" interval="1000" eventParts="" />
+                    </matchers>
+                </linechartmodel>
+                
+                <linechartmodel title="Trade validated rate" layout="cell 2 1" type="" xAxisLabel="Time" yAxisLabel="Events per second" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="35.0" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false">
+                    <matchers>
+                        <chartseriesmodel pattern="validated" legend="" label="time" type="Count" interval="1000" eventParts="" />
+                    </matchers>
+                </linechartmodel>
+                
+                <linechartmodel title="Trade enriched rate" layout="cell 3 1" type="" xAxisLabel="Time" yAxisLabel="Events per second" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="35.0" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false">
+                    <matchers>
+                        <chartseriesmodel pattern="enriched" legend="" label="tid" type="Count" interval="1000" eventParts="" />
+                    </matchers>
+                </linechartmodel>
+                
+                <linechartmodel title="Trade reported rate" layout="cell 4 1" type="" xAxisLabel="Time" yAxisLabel="Events per second" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="35.0" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false">
+                    <matchers>
+                        <chartseriesmodel pattern="reported" legend="" label="time" type="Count" interval="1000" eventParts="" />
+                    </matchers>
+                </linechartmodel>
+              
+            </chartingModels>
+        </pagemodel>
+     
+    </pages>
+</chartingModel>

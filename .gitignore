@@ -17,3 +17,12 @@ logginghub-utils/build/
 logginghub-utils/vl-utils.iml
 logginghub.iml
 logginghub-utils/logginghub-utils.iml
+*/build*/
+logginghub-server/logs*
+logginghub-server/logdata*
+*/target/*
+logginghub-frontend/exportData/
+logginghub-frontend/data*
+logginghub-frontend/images*
+logginghub-frontend/lib*
+logginghub-frontend/logs*

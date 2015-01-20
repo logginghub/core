@@ -1,0 +1,31 @@
+<loggingFrontendConfiguration title="Example configuration">
+
+	<environment name="local">
+	
+		<hub name="localHub" host="localhost"/>
+
+		<charting>
+			<pages>
+				<page title="Simulator" rows="1" columns="3">
+					<chart title="Average order times" yLabel="Processing Time/ms" xLabel="" datapoints="300" forceYZero="true">
+						<matcher value="*/orderTime/Mean" legend="Average order time" />
+					</chart>
+				</page>
+			</pages>
+
+			<parsers>
+				<chunker interval="1000">
+					<parser>
+						<format value="{host}/{source}/{label}" />
+						<patterns>
+							<pattern value="Order placed in {orderTime} ms" debug="false" />
+
+						</patterns>
+					</parser>
+				</chunker>
+			</parsers>
+		</charting>
+
+	</environment>
+
+</loggingFrontendConfiguration>

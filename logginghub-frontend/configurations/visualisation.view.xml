@@ -1,0 +1,29 @@
+<container>
+
+    <environment id="local" subscribe="true">
+        <hub name="hub1" host="localhost" />
+    </environment>
+    
+    <patterniser>
+        <pattern name="received" pattern="Trade received successfully in {time} ms - Trade ID '[tradeid]' and transaction ID '[tid]'" />
+        <pattern name="stored" pattern="Trade stored successfully in {time} ms - Trade ID '{tradeID}' and transaction ID '[tid]'" />
+        <pattern name="validated" pattern="Trade validated successfully in {time} ms - Trade ID '{tradeID}' and transaction ID '[tid]'" />
+        <pattern name="enriched" pattern="Trade enriched successfully - Trade ID '{tradeID}' and transaction ID '[tid]'" />
+        <pattern name="reported" pattern="Trade reported to regulator successfully in {time} ms - Trade ID '{tradeID}' and transaction ID '[tid]'" /> 
+    </patterniser>
+    
+    <mainFrame name="Visualisation View" quitOnClose="true">
+        <menuBar quitOnExit="true"/>
+        <visualisationView />
+    </mainFrame>
+    
+    <mainFrame name="Visualisation Tester" quitOnClose="true">
+     <environment id="local" subscribe="true">
+        <hub name="hub1" host="localhost" />
+    </environment>
+        <menuBar quitOnExit="false"/>
+        <visualisationTester/>
+    </mainFrame>
+    
+
+</container>

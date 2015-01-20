@@ -1,0 +1,153 @@
+package com.logginghub.logging.frontend.configuration;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+
+import com.logginghub.utils.JAXBConfiguration;
+
+@XmlAccessorType(XmlAccessType.FIELD) @XmlRootElement public class LoggingFrontendConfiguration {
+
+    @XmlElement(name = "environment") private List<EnvironmentConfiguration> environments = new ArrayList<EnvironmentConfiguration>();
+    @XmlAttribute private String title = "no title";
+    @XmlAttribute private String chartingConfigurationFile = "charting.xml";
+    @XmlAttribute private String kryoHubHost;
+    @XmlAttribute private int kryoHubPort;
+    @XmlAttribute private boolean showDashboard = false;
+    @XmlAttribute private boolean popoutCharting = false;
+    @XmlElement(name = "selectedRowFormat") private RowFormatConfiguration selectedRowFormat = new RowFormatConfiguration();
+    @XmlAttribute private boolean showOldCharting = false;
+    @XmlAttribute private boolean showExperimental = true;
+    @XmlAttribute private boolean showChartingEditor = true;
+    @XmlAttribute private boolean showHeapSlider = false;
+    
+    @XmlElement List<RemoteChartConfiguration> remoteCharting = new ArrayList<RemoteChartConfiguration>();
+
+    public LoggingFrontendConfiguration() {
+
+    }
+
+    public List<RemoteChartConfiguration> getRemoteCharting() {
+        return remoteCharting;
+    }
+    
+    public RowFormatConfiguration getSelectedRowFormat() {
+        return selectedRowFormat;
+    }
+
+    public void setSelectedRowFormat(RowFormatConfiguration selectedRowFormat) {
+        this.selectedRowFormat = selectedRowFormat;
+    }
+
+    public void setPopoutCharting(boolean popoutCharting) {
+        this.popoutCharting = popoutCharting;
+    }
+
+    public boolean isPopoutCharting() {
+        return popoutCharting;
+    }
+
+    public void setShowOldCharting(boolean showOldCharting) {
+        this.showOldCharting = showOldCharting;
+    }
+
+    public boolean isShowOldCharting() {
+        return showOldCharting;
+    }
+
+    public void setShowDashboard(boolean showDashboard) {
+        this.showDashboard = showDashboard;
+    }
+
+    public boolean isShowDashboard() {
+        return showDashboard;
+    }
+
+    public List<EnvironmentConfiguration> getEnvironments() {
+        return environments;
+    }
+
+    public void setEnvironments(List<EnvironmentConfiguration> environments) {
+        this.environments = environments;
+    }
+
+    public String getKryoHubHost() {
+        return kryoHubHost;
+    }
+
+    public void setKryoHubHost(String kryoHubHost) {
+        this.kryoHubHost = kryoHubHost;
+    }
+
+    public int getKryoHubPort() {
+        return kryoHubPort;
+
+    }
+
+    public void setKryoHubPort(int kryoHubPort) {
+        this.kryoHubPort = kryoHubPort;
+    }
+
+    public static LoggingFrontendConfiguration loadConfiguration(String configurationPath) {
+        LoggingFrontendConfiguration configuration = JAXBConfiguration.loadConfiguration(LoggingFrontendConfiguration.class, configurationPath);
+        return configuration;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    @Override public String toString() {
+        return "LoggingFrontendConfiguration [title=" +
+               title +
+               ", environments=" +
+               environments +
+               ", kryoHubHost=" +
+               kryoHubHost +
+               ", kryoHubPort=" +
+               kryoHubPort +
+               "]";
+    }
+
+    public void setChartingConfigurationFile(String chartingConfigurationFile) {
+        this.chartingConfigurationFile = chartingConfigurationFile;
+    }
+
+    public String getChartingConfigurationFile() {
+        return chartingConfigurationFile;
+    }
+
+    public boolean isShowExperimental() {
+        return showExperimental;
+    }
+    
+    public boolean isShowChartingEditor() {
+        return showChartingEditor;
+    }
+    
+    public void setShowChartingEditor(boolean showChartingEditor) {
+        this.showChartingEditor = showChartingEditor;
+    }
+
+    public boolean isShowHeapSlider() {
+        return showHeapSlider;
+    }
+
+    public void setShowExperimental(boolean showExperimental) {
+        this.showExperimental = showExperimental;
+    }
+    
+    public void setShowHeapSlider(boolean showHeapSlider) {
+        this.showHeapSlider = showHeapSlider;
+    }
+
+}

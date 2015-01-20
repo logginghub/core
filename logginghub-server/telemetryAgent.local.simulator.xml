@@ -1,0 +1,62 @@
+<telemetryAgentConfiguration host="localhost" port="58778">
+
+    <hub host="localhost"/>
+
+    <externalProcess name="top" 
+                     command="top -n1 -b" 
+                     valueEnum="Top" 
+                     interval="30 seconds" 
+                     simulationResource="samples/top.txt" 
+                     simulating="true" 
+                     logRawEvents="true"
+                     prefex="top : "
+                     channel="telemetry/top"/>
+                     
+    <externalProcess name="netstat" 
+                     command="netstat -tnap" 
+                     valueEnum="Netstat" 
+                     interval="30 seconds" 
+                     simulationResource="samples/netstat.txt" 
+                     simulating="true" 
+                     logRawEvents="true"
+                     prefix="netstat : "
+                     channel="telemetry/netstat/"/>
+                     
+    <externalProcess name="netstat-statistics" 
+                     command="netstat --statistics" 
+                     valueEnum="NetstatStatistics" 
+                     interval="30 seconds" 
+                     simulationResource="samples/netstat-statistics.txt" 
+                     simulating="true" 
+                     logRawEvents="true"
+                     prefix="netstat-statistics : "
+                     channel="telemetry/netstat/statistics"/>
+    
+    <externalFile name="syslog" 
+                  path="/var/log/syslog" 
+                  prefix="syslog : "/>
+                  
+    <externalFile name="test" 
+                  path="build.xml" 
+                  prefix="build.xml : "
+                  level="info"
+                  channel="events/build"/>
+    
+    <processTelemetryConfiguration interval="1 second"/>
+    <machineTelemetryConfiguration interval="1 second"/>
+    
+    <vmstatConfiguration command="vmstat -n 1" 
+                         simulationResource="samples/vmstat.txt" 
+                         simulating="true"
+                         logRawEvents="true"
+                         prefix="vmstat : "
+                         channel="telemetry/vmstat"/>
+    
+    <iostatConfiguration command="iostat -d -k -x 1" 
+                         simulationResource="samples/iostat.txt" 
+                         simulating="true" 
+                         logRawEvents="true"
+                         prefix="iostat : "
+                         channel="telemetry/iostat"/>
+
+</telemetryAgentConfiguration>

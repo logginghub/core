@@ -1,0 +1,28 @@
+<container>
+
+    <socketHub />
+
+    <generator>
+        <message pattern="This is a telemetry message ${sequence}">
+            <template channel="telemetry" />
+        </message>  
+    </generator>
+
+    <generator>    
+        <message pattern="This is an events message ${sequence}">
+            <template channel="events" />
+        </message>
+    </generator>
+
+
+    <rollingFileLogger folder="target/temp/rolling" channels="telemetry" filename="telemetry" />
+    <rollingFileLogger folder="target/temp/rolling" channels="events" filename="events" />
+
+    <timestampVariableRollingFileLogger folder="target/temp/variable" channels="telemetry" filename="telemetry" />
+    <timestampVariableRollingFileLogger folder="target/temp/variable" channels="events" filename="events" />
+
+    <timestampVariableRollingFileLogger folder="target/temp/fixed" channels="telemetry" filename="telemetry" />
+    <timestampVariableRollingFileLogger folder="target/temp/fixed" channels="events" filename="events" />
+
+</container>
+

@@ -1,0 +1,20 @@
+
+body {
+    overflow: hidden;
+    
+    -moz-user-select: none; 
+    -khtml-user-select: none; 
+    -webkit-user-select: none; 
+    -o-user-select: none; 
+}
+
+#view {
+     height: 98vh;   
+    
+}
+
+
+.inline {
+    float: left;           
+  
+}

@@ -1,0 +1,15 @@
+<loggingFrontendConfiguration title="Multiple Environments" showDashboard="true">
+
+    <environment name="Pricing">
+        
+    </environment>  
+  
+    <environment name="Trading">
+        
+    </environment>
+    
+    <environment name="Backoffice">
+        
+    </environment>
+  
+</loggingFrontendConfiguration>

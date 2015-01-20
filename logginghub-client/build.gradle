@@ -1,0 +1,38 @@
+sourceCompatibility = 1.5
+targetCompatibility = 1.5
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// jshaw - workaround to fix the intellij resource copying bug
+//
+task copyTestResources(type: Copy) {
+    from "${projectDir}/src/test/resources"
+    into "${buildDir}/classes/test"
+}
+processTestResources.dependsOn copyTestResources
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+dependencies {
+    compile project(':logginghub-utils')
+    compile project(':logginghub-messaging2')
+    compile project(':logginghub-messaging3')
+
+    testCompile project(':logginghub-testutils')
+
+    compile("com.logginghub.thirdparty:kryonet:2.12")
+
+    compile("org.fusesource:sigar:1.6.4") {
+        exclude group: "log4j", module: 'log4j'
+    }
+
+    compile("com.logginghub.thirdparty.org.fusesource:sigar-native:1.6.4")
+
+    provided("log4j:log4j:1.2.14") {
+        exclude group: "javax.jms", module: 'jms'
+    }
+
+    provided("ch.qos.logback:logback-core:1.0.7")
+    provided("ch.qos.logback:logback-classic:1.0.7")
+}

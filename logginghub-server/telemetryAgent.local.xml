@@ -1,0 +1,15 @@
+<telemetryAgentConfiguration host="localhost" port="58778">
+
+    <externalProcess name="top" command="top -n1 -b" valueEnum="Top" interval="30 seconds"/>
+    <externalProcess name="netstat" command="netstat -tnap" valueEnum="Netstat" interval="30 seconds"/>
+    <externalProcess name="netstat-statistics" command="netstat --statistics" valueEnum="NetstatStatistics" interval="30 seconds"/>
+    
+    <externalFile name="syslog" path="/var/log/syslog" prefix="syslog : "/>
+    
+    <processTelemetryConfiguration interval="1 second"/>
+    <machineTelemetryConfiguration interval="1 second"/>
+    
+    <vmstatConfiguration command="vmstat -n 1" /> <!--  simulationResource=samples/vmstat.txt --> 
+    <iostatConfiguration command="iostat -d -k -x 1"/>  <!--  simulationResource=samples/iostat.txt -->
+
+</telemetryAgentConfiguration>

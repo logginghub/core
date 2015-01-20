@@ -1,0 +1,11 @@
+<configuration>
+
+  <appender name="socket" class="com.logginghub.logging.logback.SocketAppender">
+        <sourceApplication>sourceApplication</sourceApplication>
+  </appender>
+
+  <root level="all">
+    <appender-ref ref="socket" />
+  </root>
+  
+</configuration>

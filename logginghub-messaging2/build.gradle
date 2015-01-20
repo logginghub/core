@@ -1,0 +1,6 @@
+
+dependencies {
+	compile project(':logginghub-utils')
+	compile("com.logginghub.thirdparty:kryonet:2.12")
+}
+

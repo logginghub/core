@@ -1,0 +1,71 @@
+apply plugin: 'distribution'
+
+dependencies {
+    compile project(':logginghub-utils')
+    compile project(':logginghub-server')
+    compile project(':logginghub-swingutils')
+
+    compile("net.sourceforge.jdatepicker:jdatepicker:1.3.2")
+    compile("org.swinglabs.swingx:swingx-all:1.6.4")
+    compile("jfree:jfreechart:1.0.13")
+    compile("jfree:jcommon:1.0.15")
+    compile("com.miglayout:miglayout:3.7.3.1:swing")
+    compile("com.badlogic:gdx:0.9.9")
+    compile("com.badlogic:gdx-natives:0.9.9")
+    compile("com.badlogic:gdx-backend-lwjgl:0.9.9")
+    compile("com.badlogic:gdx-backend-lwjgl-natives:0.9.9")
+    testCompile("org.easytesting:fest-swing:1.2.1")
+}
+
+test {
+    exclude 'com/logginghub/**'
+}
+
+task buildLaunchScripts << {
+
+    delete 'build/tmp/dist_temp/'
+
+    copy {
+        from 'dist'
+        into 'build/tmp/dist_temp/'
+    }
+
+    def artifact = "logginghub-frontend-${version}.jar"
+
+    ant.replace(file: "build/tmp/dist_temp/frontend.sh", token: 'CLASSPATH', value: artifact)
+    ant.replace(file: "build/tmp/dist_temp/frontend.command", token: 'CLASSPATH', value: artifact)
+    ant.replace(file: "build/tmp/dist_temp/frontend.bat", token: 'CLASSPATH', value: artifact)
+    ant.replace(file: "build/tmp/dist_temp/frontend-console.bat", token: 'CLASSPATH', value: artifact)
+
+    ant.chmod(file: "build/tmp/dist_temp/frontend.sh", perm: "755");
+    ant.chmod(file: "build/tmp/dist_temp/frontend.comman", perm: "755");
+
+}
+
+distZip.dependsOn("buildLaunchScripts")
+
+distributions {
+    main {
+        contents {
+            from { "build/tmp/dist_temp/" }
+            from(jar)
+        }
+    }
+}
+
+jar {
+    from(configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }) {
+        exclude "META-INF/*.SF"
+        exclude "META-INF/*.DSA"
+        exclude "META-INF/*.RSA"
+    }
+
+//    manifest {
+//        attributes 'Implementation-Title': 'Foobar',
+//                'Implementation-Version': version,
+//                'Built-By': System.getProperty('user.name'),
+//                'Built-Date': new Date(),
+//                'Built-JDK': System.getProperty('java.version'),
+//                'Main-Class': mainClassName
+//    }
+}

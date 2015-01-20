@@ -1,0 +1,51 @@
+
+<container>
+
+
+    <socketHub port="15000"/>
+
+    <bridge host="localhost" port="15001"/>
+
+    <channelSubscriptions />
+    <inMemoryHistory />
+
+    <transactionMonitor>
+        <stateEngine name="slow">
+
+            <stateCapture name="stored" pattern="[{[group0]}] Incrementing entry processing completed successfully in {time} ms : key was [tid] value is now {group3}" />
+
+            <transition state="stored"/>
+
+            <eventReporter singleLine="true" reportSuccess="false" reportFailure="true" successLevel="info" failureLevel="severe" warningAt="25 ms" />
+
+        </stateEngine>
+
+    </transactionMonitor>
+
+    <timestampFixedRollingFileLogger filename="hub"
+                                     extension=".log"
+                                     folder="../logs/"
+                                     maximumFileSize="10000000"
+                                     numberOfFiles="5"
+                                     numberOfCompressed="10"
+                                     openWithAppend="false"
+                                     writeAsynchronously="true"
+                                     asynchronousQueueWarningSize="10000"/>
+
+
+    <!--
+    <socketHub />
+    <channelSubscriptions />
+
+    <diskHistory />    
+    <diskHistoryIndex />
+ 
+    <patternManager />
+    <patterniser/>
+    <aggregator/>
+
+    <patternisedDiskHistory />
+    <aggregatedDiskHistory />
+    -->
+ 
+</container>

@@ -1,0 +1,11 @@
+<root>
+
+	<FrequencyCountGenerator>
+		<regex>This is mock record 1</regex>
+		<message>%d events processed in the last period</message>
+		<interval>1000</interval>
+	</FrequencyCountGenerator>
+	
+	<FrequencyCountGenerator regex='This is mock record 1' message='Events = %d' interval='500'/>
+	
+</root>		 

@@ -1,0 +1,24 @@
+<container>
+        
+    <hubConnector>
+        <hub host="localhost" port="58770" />
+    </hubConnector>
+
+    <telemetry>
+
+        <externalFile name="syslog" path="/var/log/syslog" prefix="syslog : " />
+
+        <externalProcess name="top" command="top -n1 -b" valueEnum="Top" interval="1 second" logRawEvents="true" channel="telemetry/top" />
+        <externalProcess name="netstat" command="netstat -tnap" valueEnum="Netstat" interval="1 second" logRawEvents="true" channel="telemetry/netstat" prefix="netstat - " />
+        <externalProcess name="netstat-statistics" command="netstat --statistics" valueEnum="NetstatStatistics" interval="1 second" logRawEvents="true" channel="telemetry/netstat/statistics" />
+
+        <processTelemetryConfiguration interval="1 second" />
+        <machineTelemetryConfiguration interval="1 second" />
+
+        <vmstatConfiguration command="vmstat -n 1" logRawEvents="true" channel="telemetry/vmstat" />
+        <iostatConfiguration command="iostat -d -k -x 1" logRawEvents="true" channel="telemetry/iostat" />
+
+
+    </telemetry>
+
+</container>

@@ -1,0 +1,36 @@
+Time,Level,Source host,Source address,Source application,Logger name,Thread name,Source classname,Source method name,Message
+100,FINEST,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,Creating connection to user repository
+200,FINER,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,Checking credentials against user repository for user 'user1'
+300,FINE,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,Validated credentials for user 'user1'
+400,CONFIG,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,Validation for 'user1' complete in 28 ms, token was 345 bytes long
+500,INFO,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,User 'user1' successfully authenticated in 34 ms
+600,WARNING,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,Connection to database lost, retrying…
+700,SEVERE,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,Connection to database failed due to authentication issue, please check your configuration
+800,FINEST,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,Creating connection to user repository
+900,FINER,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,Checking credentials against user repository for user 'user2'
+1000,FINE,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,Validated credentials for user 'user2'
+1100,CONFIG,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,Validation for 'user2' complete in 15 ms, token was 1,234 bytes long
+1200,INFO,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,User 'user2' successfully authenticated in 19 ms
+1300,WARNING,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,Connection to database lost, retrying…
+1400,SEVERE,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,Connection to database failed due to authentication issue, please check your configuration
+1500,FINEST,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,Creating connection to user repository
+1600,FINER,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,Checking credentials against user repository for user 'user2'
+1700,FINE,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,Validated credentials for user 'user2'
+1800,CONFIG,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,Validation for 'user2' complete in 234 ms, token was 24 bytes long
+1900,INFO,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,User 'user2' successfully authenticated in 241 ms
+2000,WARNING,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,Connection to database lost, retrying…
+2100,SEVERE,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,Connection to database failed due to authentication issue, please check your configuration
+2200,FINEST,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,Creating connection to user repository
+2300,FINER,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,Checking credentials against user repository for user 'user3'
+2400,FINE,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,Validated credentials for user 'user3'
+2500,CONFIG,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,Validation for 'user3' complete in 2,241 ms, token was 100 bytes long
+2600,INFO,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,User 'user3' successfully authenticated in 2,512 ms
+2700,WARNING,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,Connection to database lost, retrying…
+2800,SEVERE,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,Connection to database failed due to authentication issue, please check your configuration
+2900,FINEST,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,Creating connection to user repository
+3000,FINER,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,Checking credentials against user repository for user 'user4'
+3100,FINE,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,Validated credentials for user 'user4'
+3200,CONFIG,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,Validation for 'user4' complete in 0.143 ms, token was 1 bytes long
+3300,INFO,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,User 'user4' successfully authenticated in 2.123 ms
+3400,WARNING,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,Connection to database lost, retrying…
+3500,SEVERE,Host1,192.168.1.1,Application1,Logger1,Thread1,Class1,Method1,Connection to database failed due to authentication issue, please check your configuration

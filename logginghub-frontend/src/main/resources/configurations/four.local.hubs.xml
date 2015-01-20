@@ -1,0 +1,10 @@
+<loggingFrontendConfiguration title="Local">
+
+    <environment name="local">
+           <hub name="Hub1" host="localhost" port="58770"/>
+           <hub name="Hub2" host="localhost" port="58771"/>
+           <hub name="Hub3" host="localhost" port="58772"/>
+           <hub name="Hub4" host="localhost" port="58773"/>
+    </environment>  
+  
+</loggingFrontendConfiguration>

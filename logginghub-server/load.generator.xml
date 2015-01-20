@@ -1,0 +1,18 @@
+
+
+<container>
+
+   <hubConnector host="localhost" port="58770"/>
+   
+   <generator rateMin="3000" rateMax="3000" message="The document name being saved to :document/path/is/here"/>
+   <generator rateMin="3000" rateMax="3000" message="imported 123 values into map mapname"/>
+   <generator rateMin="3000" rateMax="3000" message="start-asdfasdf time-asdfasdf tag|[PERF:ClearingService.handleClearingTradeMessage|] message|[Processed trade id=tradeid to regulator Count=1 Duration=123.23(ms) Rate=123.123/sec DurationOne=12321.12 sec|]"/>
+   <generator rateMin="3000" rateMax="3000" message="total of 123 sweeps high=123 [123] medium=123 [123] no priority=123 [123] nowork=123 time=123 [123]"/>
+   <generator rateMin="3000" rateMax="3000" message="saveDocument completed successfully in 123 ms : something"/>
+   <generator rateMin="3000" rateMax="3000" message="============= Reloaded 10 total 100 for something ============="/>
+   <generator rateMin="3000" rateMax="3000" message="============= Reloaded 10 total 100 for cache:control-event from something"/>
+
+
+
+</container>
+

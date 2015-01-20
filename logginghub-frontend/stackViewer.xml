@@ -1,0 +1,14 @@
+<container>
+
+    <environmentController />
+
+    <environment name="local" showHistoryTab="true">
+        <hub name="local" host="localhost" port="58770" />
+    </environment>
+
+    <mainFrame name="LoggingHub Stack Viewer">
+        <menuBar />
+        <stackTraceView name='Stack view' environmentRef='local' />
+    </mainFrame>
+
+</container>

@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<configuration>
+<pages> 
+    
+    <page title="Simulator" rows="1" columns="3">
+      <chart title="Chart 1" datapoints="300" forceYZero="true">
+        <matcher value="*/orderTime/Count" legend="Average order time"/>
+      </chart>
+    </page>
+    
+	<page title="PerformanceTest" rows="3" columns="3">
+	<chart title="Chart 1">
+		<matcher value="*/thread1/Sum" legend="Count"/>
+	</chart>
+	<chart title="Chart 2">
+		<matcher value="*/thread2/Sum" legend="Count"/>
+	</chart>
+	<chart title="Chart 3">
+		<matcher value="*/thread3/Sum" legend="Count"/>
+	</chart>
+	<chart title="Chart 4">
+		<matcher value="*/thread4/Sum" legend="Count"/>
+	</chart>
+	<chart title="Chart 5">
+		<matcher value="*/thread5/Sum" legend="Count"/>
+	</chart>
+	<chart title="Chart 6">
+		<matcher value="*/thread6/Sum" legend="Count"/>
+	</chart>
+	<chart title="Chart 7">
+		<matcher value="*/thread7/Sum" legend="Count"/>
+	</chart>
+	<chart title="Chart 8">
+		<matcher value="*/thread8/Sum" legend="Count"/>
+	</chart>
+	<chart title="Chart 9">
+		<matcher value="*/thread9/Sum" legend="Count"/>
+	</chart>
+		
+	</page>
+
+	<page title="Page1" rows="2" columns="3">
+		
+		<chart title="Auth time" type="histogram" 
+		                         maximumBucket='50' 
+								 minimumBucket='0' 
+								 granularity='10' 
+								 realtimeUpdate='false'
+								 timeLimit='300000'>
+			<matcher value="*/authTimeRaw" legend="Average auth time"/>
+		</chart>
+		
+		<chart title="Chart title 1" datapoints="1000" forceYZero="true">
+			<matcher value="*/checkoutElapsed/Mean" legend="Average checkout time"/>
+			<matcher value="*/checkoutElapsed/Percentile90" legend="90th percentile time"/>
+		</chart>
+		
+		<chart title="Chart title 2" datapoints="1000"  forceYZero="false">
+			<matcher value="*/checkoutElapsed/TotalSum" legend="Average checkout time"/>
+			<matcher value="*/checkoutElapsed/TotalCount" legend="90th percentile time"/>
+		</chart>
+		
+		<chart title="Chart title 3" matcher="*" datapoints="10"/>
+		<chart title="Chart title 4" matcher="*" datapoints="10"/>
+		<chart title="Chart title 5" matcher="*" datapoints="10"/>
+		<chart title="Chart title 6" matcher="*" datapoints="10"/>
+	</page>
+	
+	<page title="Page2 - Log4j performance">	
+		<chart title="Cpu from threads" matcher="*/cpuFromThreads/Mean" datapoints="1000"/>
+		<chart title="Cpu from jvm" matcher="*/cpuFromJVM/Mean" datapoints="1000"/>
+		<chart title="User time from threads" matcher="*/userFromThreads/Mean" datapoints="1000"/>
+		<chart title="System time from threads" matcher="*/systemFromThreads/Mean" datapoints="1000"/>
+		<chart title="Threads" matcher="*ThreadCpuStats*" datapoints="1000" onlyShowValuesAbove="1"/>	
+	</page>
+
+
+	<page title="vmstat" rows="4" columns="4">	
+		<chart title="CPU - user time" showLegend="false">
+			<matcher value="*/userTime/Mean"/>
+		</chart>
+		
+		<chart title="CPU - kernel time" showLegend="false">
+			<matcher value="*/kernelTime/Mean"/>
+		</chart>
+		
+		<chart title="CPU - idle time" showLegend="false">
+			<matcher value="*/idleTime/Mean"/>
+		</chart>
+
+		<chart title="CPU - waiting time" showLegend="false">
+			<matcher value="*/waitingTime/Mean"/>
+		</chart>
+	
+		<chart title="Procs - Run queue size" showLegend="false">
+			<matcher value="*/runQueue/Mean"/>
+		</chart>
+		
+		<chart title="Procs - Blocking processes count" showLegend="false">
+			<matcher value="*/blocking/Mean"/>
+		</chart>
+				
+		<chart title="System - interrupts" showLegend="false">
+			<matcher value="*/interrupts/Mean"/>
+		</chart>
+		
+		<chart title="System - context switches" showLegend="false">
+			<matcher value="*/contextSwitches/Mean"/>
+		</chart>
+				
+		<chart title="Memory - virtual memory used" showLegend="false">
+			<matcher value="*/virtualMemory/Mean"/>
+		</chart>
+		
+		<chart title="Memory - free memory" showLegend="false">
+			<matcher value="*/freeMemory/Mean"/>
+		</chart>
+		
+		<chart title="Memory - buffer memory" showLegend="false">
+			<matcher value="*/bufferMemory/Mean"/>
+		</chart>
+		
+		<chart title="Memory - cache memory" showLegend="false">
+			<matcher value="*/cacheMemory/Mean"/>
+		</chart>
+
+		<chart title="Swap - memory swapped in from disk" showLegend="false">
+			<matcher value="*/swappedIn/Mean"/>
+		</chart>
+		
+		<chart title="Swap - memory swapped out to disk" showLegend="false">
+			<matcher value="*/swappedOut/Mean"/>
+		</chart>
+
+		<chart title="IO - blocks received" showLegend="false">
+			<matcher value="*/blocksIn/Mean"/>
+		</chart>
+		
+		<chart title="IO - blocks sent" showLegend="false">
+			<matcher value="*/blocksOut/Mean"/>
+		</chart>
+	</page>
+	
+</pages>
+
+
+
+	<parsers>
+		
+		<raw>
+			<parser>
+				<format value="{host}/{source}/{label}"/>
+				<patterns>
+					<pattern value="Authentication successful for user '{}' in {authTimeRaw} ms"/>
+				</patterns>
+			</parser>
+		</raw>
+	
+    	<chunker interval="1000">
+			<parser>
+				<format value="{host}/{source}/{label}" />
+				<patterns>
+				    <pattern value="Order placed in {orderTime} ms" debug="true"/>                  
+				
+					<pattern value="This is mock record 1 - WriterTestElement-0" name="thread1"/>
+			 		<pattern value="This is mock record 1 - WriterTestElement-1" name="thread2"/>
+				 	<pattern value="This is mock record 1 - WriterTestElement-2" name="thread3"/>
+				 	<pattern value="This is mock record 1 - WriterTestElement-3" name="thread4"/>
+			 		<pattern value="This is mock record 1 - WriterTestElement-4" name="thread5"/>
+			 		<pattern value="This is mock record 1 - WriterTestElement-5" name="thread6"/>
+			 		<pattern value="This is mock record 1 - WriterTestElement-6" name="thread7"/>
+			 		<pattern value="This is mock record 1 - WriterTestElement-7" name="thread8"/>
+				 	<pattern value="This is mock record 1 - WriterTestElement-8" name="thread9"/>
+			 		
+					<pattern value="Authentication successful for user '{}' in {authTime} ms"/>
+			 		<pattern value="Checking out for basket {} complete in {checkoutElapsed} ms" />
+					<pattern value="Authentication successful for user {} in {authElapsed} ms" /> 			
+ 					<pattern value="Summary Cpu stats : {cpuFromThreads} % ({userFromThreads} % user {systemFromThreads} % system) JVM process {cpuFromJVM} %"/>
+	 				
+ 					<!-- vmstat -->
+ 					<pattern value="vmstat:\s+{runQueue}\s+{blocking}\s+{virtualMemory}\s+{freeMemory}\s+{bufferMemory}\s+{cacheMemory}\s+{swappedIn}\s+{swappedOut}\s+{blocksIn}\s+{blocksOut}\s+{interupts}\s+{contextSwitches}\s+{userTime}\s+{kernelTime}\s+{idleTime}\s+{waitingTime}" cleanup="false"/> 
+ 				
+				</patterns>
+			</parser>		
+		</chunker>		
+	</parsers>
+</configuration>

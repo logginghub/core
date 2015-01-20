@@ -1,0 +1,5 @@
+1. mvn install utils
+2. mvn install analytics
+3. mvn deploy logging
+4. ant test.deployables
+5. ant deploy.deployables

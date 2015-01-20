@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+
+    <appender name="async" class="org.apache.log4j.AsyncAppender"> 
+        <appender-ref ref="socket"/>
+    </appender>
+    
+    <appender name="socket" class="com.logginghub.logging.log4j.SocketAppender">
+        <param name="host" value="localhost"/>
+        <param name="sourceApplication" value="${sourceApplication}"/>
+        <param name="cpuLogging" value="true"/>     
+        <param name="telemetry" value="localhost:58771"/>
+        <param name="publishMachineTelemetry" value="false"/>
+        <param name="publishProcessTelemetry" value="true"/>
+    </appender>
+
+    <!-- Root Logger -->
+    <root>
+        <priority value="all" />
+        <appender-ref ref="async" />        
+    </root>
+    
+</log4j:configuration>

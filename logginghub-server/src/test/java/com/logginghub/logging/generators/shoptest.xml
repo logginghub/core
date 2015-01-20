@@ -1,0 +1,24 @@
+<root>
+
+	<FrequencyCountGenerator regex="Starting authentication for user '\w+'" 
+	                         message='Logons per second = %d' 
+	                         interval='1000'/>
+	
+	<FrequencyCountGenerator regex="Product \[MockProduct description='\w+'\] added to basket for session \[Session user='\w+'\]" 
+	                         message='Products added per second = %d' 
+	                         interval='1000'/>
+	
+	<FrequencyCountGenerator regex="Starting checkout for basket \[Basket user='\w+' size='\d+' .*" 
+	                         message='Check outs per second = %d' 
+	                         interval='1000'/>
+	
+	<AveragingRegexGenerator regex="Starting checkout for basket \[Basket user='\w+' size='(\d+)' .*" 
+	                         message='Average products per basket in the last second = %.1f' 
+	                         interval='1000'/>
+	
+	<TotallingRegexGenerator regex="Starting checkout for basket \[Basket user='\w+' size='(\d+)' .*" 
+	                         message='Total products checked out in the last second = %.1f' 
+	                         interval='1000'/>
+	 
+	
+</root>		 

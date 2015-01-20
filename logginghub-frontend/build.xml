@@ -1,0 +1,96 @@
+<project name="vl-loggingBuild" xmlns:artifact="antlib:org.apache.maven.artifact.ant">
+
+	<taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
+	<path id="maven-ant-tasks.classpath" path="../vl-parent/lib/maven-ant-tasks-2.1.1.jar" />
+	<typedef resource="org/apache/maven/artifact/ant/antlib.xml" uri="antlib:org.apache.maven.artifact.ant" classpathref="maven-ant-tasks.classpath" />
+
+	<artifact:pom id="mypom" file="pom.xml" />
+
+	<property name="deployment-artifact-frontend-name" value="vl-logging-frontend-${mypom.version}.zip" />
+	<property name="deployment-artifact-frontend-name-diy" value="diy-frontend-${mypom.version}.zip" />
+	
+	<property name="deployment-artifact-frontend" location="target/${deployment-artifact-frontend-name}" />
+	<property name="deployment-artifact-frontend-diy" location="target/${deployment-artifact-frontend-name-diy}" />
+	
+
+	<!-- Make sure you've got everything happy in Maven before you run this stuff! -->
+	<target name="build.deployables">
+
+		<property name="version" value="${mypom.version}"/>		
+		<echo>The version is ${version}</echo>
+		
+		<!-- Generate the launch scripts based on the version in the jar -->
+		<property name="mainClass" value="com.logginghub.logging.frontend.SwingFrontEnd"/>
+		<property name="artifact" value="vl-logging-frontend-${version}.jar"/>
+		
+		<echo file="dist/frontend.bat" message="pushd %~dp0 &amp; javaw -cp ${artifact} ${mainClass}"/>
+		<echo file="dist/frontend-console.bat" message="pushd %~dp0 &amp; java -cp ${artifact} ${mainClass} &amp; pause"/>
+		<echo file="dist/frontend.sh" message="#! /bin/sh&#10;java -cp ${artifact} ${mainClass}"/>
+		<echo file="dist/frontend.command" message="#! /bin/sh&#10;cd &quot;`dirname &quot;$0&quot;`&quot;&#10;java -cp ${artifact} ${mainClass}"/>
+		
+		<!-- Generate the primary artifact -->
+		<zip destfile="${deployment-artifact-frontend}">
+			<zipfileset dir="dist/" fullpath="" includes="frontend.sh" filemode="775"/>
+			<zipfileset dir="dist/" fullpath="" includes="frontend.command" filemode="775"/>
+			<zipfileset dir="dist/" fullpath="" includes="frontend-console.bat"/>
+			<zipfileset dir="dist/" fullpath="" includes="frontend.bat"/>			
+			<zipfileset dir="dist/" fullpath="" includes="logging.frontend.xml"/>
+			<zipfileset dir="target" includes="vl-logging-frontend-${version}-jar-with-dependencies.jar" fullpath="vl-logging-frontend-${version}.jar" />
+		</zip>
+		
+		<!-- Generate the diy artifact -->
+		<property name="mainClass2" value="com.logginghub.logging.frontend.modules.FrontendContainer"/>
+		<property name="config" value="side-by-side.view.xml"/>
+		
+		<echo file="dist/diy.bat" message="pushd %~dp0 &amp; javaw -cp ${artifact} ${mainClass2} ${config}"/>
+		<echo file="dist/diy-console.bat" message="pushd %~dp0 &amp; java -cp ${artifact} ${mainClass2} ${config} &amp; pause"/>
+		<echo file="dist/diy.sh" message="#! /bin/sh&#10;java -cp ${artifact} ${mainClass2} ${config}"/>
+	    <echo file="dist/diy.command" message="#! /bin/sh&#10;cd &quot;`dirname &quot;$0&quot;`&quot;&#10;java -cp ${artifact} ${mainClass2} ${config}"/>
+		
+        <zip destfile="${deployment-artifact-frontend-diy}">
+            <zipfileset dir="dist/" fullpath="" includes="diy.sh" filemode="775"/>
+            <zipfileset dir="dist/" fullpath="" includes="diy.command" filemode="775"/>
+            <zipfileset dir="dist/" fullpath="" includes="diy-console.bat"/>
+            <zipfileset dir="dist/" fullpath="" includes="diy.bat"/>           
+            <zipfileset dir="configurations/" fullpath=""/>
+            <zipfileset dir="target" includes="vl-logging-frontend-${version}-jar-with-dependencies.jar" fullpath="vl-logging-frontend-${version}.jar" />
+        </zip>
+
+	</target>
+
+	<target name="test.deployables" depends="build.deployables">
+
+		<delete dir="target/test-deployment"/>
+		<mkdir dir="target/test-deployment/" />
+
+		<unzip dest="target/test-deployment/" src="${deployment-artifact-frontend}" />
+
+		<exec executable="cmd.exe" dir="target\test-deployment\">
+			<arg value="/C" />
+			<arg value="start" />
+			<arg value="frontend-console.bat" />
+		</exec>
+
+	</target>
+	
+	<target name="stage" depends="build.deployables">
+			
+			<copy todir="/shared/build/repository/com/logginghub/vl-logging-frontend/${mypom.version}">
+				<fileset file="${deployment-artifact-frontend}" />
+				<fileset file="${deployment-artifact-frontend-diy}" />
+			</copy>
+			
+		</target>
+	
+	<target name="deploy.deployables" depends="build.deployables">
+		
+		<sshexec failonerror="false" host="hosting" username="mavenrepo" password="JjM3eVRhG3fmoKWqAQR6" trust="yes" command="mkdir /var/www/repository/com/logginghub/vl-logging-frontend/${mypom.version}"/>
+		
+		<scp remoteTodir="mavenrepo@hosting:/var/www/repository/com/logginghub/vl-logging-frontend/${mypom.version}" password="JjM3eVRhG3fmoKWqAQR6" trust="yes">
+			<fileset file="${deployment-artifact-frontend}" />
+			<fileset file="${deployment-artifact-frontend-diy}" />
+		</scp>
+		
+	</target>
+
+</project>

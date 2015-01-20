@@ -1,0 +1,16 @@
+<container>
+
+    <socketHub port="39000" />
+
+    <timestampFixedRollingFileLogger folder="/opt/mds/storage/Phill/Temp/"
+                                     filename="hub"
+                                     extension=".log"
+                                     maximumFileSize="104857600"
+                                     numberOfFiles="10"
+                                     numberOfCompressedFiles="50"
+                                     openWithAppend="false"
+                                     writeAsynchronously="true"
+                                     asynchronousQueueWarningSize="10000"/>
+
+</container>
+

@@ -1,0 +1,26 @@
+<container>
+
+    <environment id="environmentA" subscribe="true">
+        <hub name="hub1" host="localhost" port="58770" />
+    </environment>
+    
+    <environment id="environmentB" subscribe="true" >
+        <hub name="hub2" host="localhost" port="58771" />
+    </environment>
+
+    <mainFrame name="Side-by-side view" quitOnClose="true">
+        <menuBar quitOnExit="true"/>
+        <splitPane horizontal="false" dividerSize="5">
+            
+            <border title="Environment A">
+                <realtimeView messagingServiceRef='environmentA' />
+            </border>
+            
+            <border title="Environment B">
+                <realtimeView messagingServiceRef='environmentB' />
+            </border>
+            
+        </splitPane>
+    </mainFrame>
+
+</container>

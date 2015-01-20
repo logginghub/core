@@ -1,0 +1,1 @@
+pushd %~dp0 & java -cp CLASSPATH com.logginghub.logging.frontend.SwingFrontEnd & pause

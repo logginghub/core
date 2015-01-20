@@ -1,0 +1,12 @@
+
+dependencies {
+
+    compile project(':logginghub-utils')
+
+    compile("org.slf4j:slf4j-api:1.6.1")
+    compile("jfree:jfreechart:1.0.13")
+    compile("jfree:jcommon:1.0.15")
+    compile("net.sf.opencsv:opencsv:2.0")
+
+}
+

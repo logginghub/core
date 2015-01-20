@@ -1,0 +1,22 @@
+<container>
+
+    <socketHub port="58770" />
+
+    <sqlExtract>
+    
+        <database name="db1" 
+                  user="sa" 
+                  password="" 
+                  url="jdbc:hsqldb:mem:aname" 
+                  properties="ifexists=false,shutdown=true"/>
+  
+        <query sql="select * from test_table" 
+               pattern="This is column 1 {column1} this is column 2 {column2}" 
+               database="db1" 
+               initialDelay="1 second" 
+               repeatDelay="30 seconds" />
+    
+    </sqlExtract>
+
+</container>
+    

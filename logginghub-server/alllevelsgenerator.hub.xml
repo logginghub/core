@@ -1,0 +1,9 @@
+  <generator>
+        <message pattern="Severe message" level="SEVERE" rateMin="1" rateMax="1" />
+        <message pattern="Warning message" level="WARNING" rateMin="1" rateMax="1"/>
+        <message pattern="Info message" level="INFO" rateMin="1" rateMax="1"/>
+        <message pattern="Config message" level="CONFIG" rateMin="1" rateMax="1"/>
+        <message pattern="Fine message" level="FINE" rateMin="1" rateMax="1"/>
+        <message pattern="Finer message" level="FINER" rateMin="1" rateMax="1"/>
+        <message pattern="Finest message" level="FINEST" rateMin="1" rateMax="1"/>
+    </generator>

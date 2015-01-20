@@ -1,0 +1,6 @@
+<container>
+
+    <socketHub port="58771"/>
+    <generator />
+
+</container>

@@ -1,0 +1,103 @@
+<container>
+    
+    <socketHub port="58770" />
+    <restfulListener port="58779"/>
+    
+    <memoryMonitor threshold="95"/>
+    
+    <binaryWriter />
+    <binaryProcessor />
+    
+    <channelSubscriptions />    
+    
+    <inMemoryHistory />
+    
+    <bridge host="server" />
+
+    <socketTextReader port="58772">
+        <template level="warning"
+                  sourceClassName=""
+                  sourceMethodName= ""
+                  message="Socket Text : ${message}"
+                  threadName= ""
+                  loggerName= ""
+                  sourceApplication=""
+                  channel="events"        />        
+                  <!-- sourceHost="" -->
+                  <!-- sourceAddress=""  -->
+
+    </socketTextReader>
+    
+    <stackCapture snapshotInterval="1s" environment="local" instanceType="LoggingHub" instanceNumber="1"/>
+    
+    <telemetry>
+        <vmstatConfiguration logRawEvents="true"/>
+        <iostatConfiguration logRawEvents="true"/>
+        <processTelemetryConfiguration interval="1 second" />
+        <machineTelemetryConfiguration interval="1 second" />    
+    </telemetry>
+
+    <simulator />
+    <!--     
+     -->
+    
+    <patterniser>
+        <pattern name="received" pattern="Trade received successfully in {time} ms - Trade ID '[tradeid]' and transaction ID '[tid]'" />
+        <pattern name="stored" pattern="Trade stored successfully in {time} ms - Trade ID '{tradeID}' and transaction ID '[tid]'" />
+        <pattern name="validated" pattern="Trade validated successfully in {time} ms - Trade ID '{tradeID}' and transaction ID '[tid]'" />
+        <pattern name="enriched" pattern="Trade enriched successfully - Trade ID '{tradeID}' and transaction ID '[tid]'" />
+        <pattern name="reported" pattern="Trade reported to regulator successfully in {time} ms - Trade ID '{tradeID}' and transaction ID '[tid]'" />
+    </patterniser>
+
+    <aggregator>
+        <aggregation patternName="received" label="time" type="Mean" interval="1 second" eventsParts="" />
+        <aggregation patternName="stored" label="time" type="Mean" interval="1 second" eventsParts="" />
+        <aggregation patternName="validated" label="time" type="Mean" interval="1 second" eventsParts="" />
+        <!-- <aggregation patternName="enriched" label="time" type="Mean" interval="1 second" eventsParts=""/> -->
+        <aggregation patternName="reported" label="time" type="Mean" interval="1 second" eventsParts="" />
+
+        <aggregation patternName="received" label="time" type="Count" interval="1 second" eventsParts="" />
+        <aggregation patternName="stored" label="time" type="Count" interval="1 second" eventsParts="" />
+        <aggregation patternName="validated" label="time" type="Count" interval="1 second" eventsParts="" />
+        <aggregation patternName="enriched" label="tid" type="Count" interval="1 second" eventsParts="" />
+        <aggregation patternName="reported" label="time" type="Count" interval="1 second" eventsParts="" />
+    </aggregator>
+    
+    <!-- 
+     <transactionMonitor>
+        <stateEngine name="trade">
+
+            <stateCapture name="received" pattern="Trade received successfully in {time} ms - Trade ID '{tradeID}' and transaction ID '[tid]'" />
+            <stateCapture name="stored" pattern="Trade stored successfully in {time} ms - Trade ID '{tradeID}' and transaction ID '[tid]'" />
+            <stateCapture name="validated" pattern="Trade validated successfully in {time} ms - Trade ID '{tradeID}' and transaction ID '[tid]'" />
+            <stateCapture name="enriched" pattern="Trade enriched successfully - Trade ID '{tradeID}' and transaction ID '[tid]'" />
+            <stateCapture name="reported" pattern="Trade reported to regulator successfully in {time} ms - Trade ID '{tradeID}' and transaction ID '[tid]'" />
+
+            <transition state="received">
+                <transition state="stored" timeout="10 seconds">
+                    <transition state="validated" timeout="10 seconds">
+                        <transition state="enriched" timeout="10 seconds">
+                            <transition state="reported" timeout="10 seconds" />
+                        </transition>
+                    </transition>
+                </transition>
+            </transition>
+
+            <eventReporter reportSuccess="true" reportFailure="true" successLevel="info" failureLevel="severe" warningAt="2 seconds" />
+
+        </stateEngine>
+
+    </transactionMonitor> -->
+    
+    <!--
+    <timestampFixedRollingFileLogger filename="hub" 
+                                     extension=".log" 
+                                     folder="target/logs/"
+                                     maximumFileSize="10000000" 
+                                     numberOfFiles="5" 
+                                     numberOfCompressed="10" 
+                                     openWithAppend="false" 
+                                     writeAsynchronously="true" 
+                                     asynchronousQueueWarningSize="10000"/>
+     -->
+</container>

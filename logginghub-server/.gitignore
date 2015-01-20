@@ -1,0 +1,16 @@
+/target
+/.settings
+/.classpath
+/.project
+/test.log.1
+/test.log.1.lck
+/test.log.binary
+/test.log.lck
+/temp
+/tmp
+/log
+/log.1
+/log.2
+/log.3.zip
+/coverage.ec
+/matt.xml

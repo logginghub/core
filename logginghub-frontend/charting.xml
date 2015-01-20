@@ -1,0 +1,156 @@
+<chartingModel>
+<patternModels>
+<patternmodel patternID="3" pattern="Request: {group0} was made by: [group1] to: Rob : [group2] was [group3]" name="asdfasdfsdf" debug="false" cleanUp="false"/>
+<patternmodel patternID="4" pattern="Request: {group0} was made by: HSBC to: Helen : product was Future" name="aaaaa" debug="false" cleanUp="false"/>
+<patternmodel patternID="5" pattern="Request: {group0} was made by: HSBC to: David : product was Spot" name="aaaa" debug="false" cleanUp="false"/>
+<patternmodel patternID="6" pattern="Request: 2713 was made by: [group0] to: Rob : product was Spot" name="eeeee" debug="false" cleanUp="false"/>
+<patternmodel patternID="7" pattern="Request: {group0} was made by: [group1] to: [group2] : product was [group3]" name="aaaaaaaaaaaaa" debug="false" cleanUp="false"/>
+<patternmodel patternID="8" pattern="vmstat - r={runqueue} b={blocked} swpd={virtualMemory} free={freeMemory} buff={bufferMemory} cache={cacheMemory} si={swapIn} so={swapOut} bi={blocksIn} bo={blocksOut} in={interupts} cs={contextSwitches} us={userCPU} sy={systemCPU} id={idleCPU} wa={ioWaitCPU} st={stolenCPU}" name="vmstat" debug="false" cleanUp="false"/>
+<patternmodel patternID="9" pattern="Sigar OS - mfp={memoryfree} mup={memoryused} mt={memorytotal} mu={memoryused} neti={networkin} neto={networkout} cpu={cpu-used} us={cpu-user} sy={cpu-sys} id={cpu-idle} wa={cpu-waiting}" name="sigar_os" debug="false" cleanUp="false"/>
+</patternModels>
+<streamModels>
+
+</streamModels>
+<aggregationModels>
+
+</aggregationModels>
+<pages>
+<pagemodel name="New page">
+<chartingModels>
+<linechartmodel title="CPU Usage" layout="" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" smoothed="false">
+<matchers>
+<chartseriesmodel patternID="3" labelIndex="0" groupBy="null" type="Mean" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+<chartseriesfiltermodel variableIndex="2" enabled="true" blacklist="" whitelist=""/>
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+<linechartmodel title="Chart title2" layout="" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" smoothed="true">
+<matchers>
+<chartseriesmodel patternID="3" labelIndex="1" groupBy="null" type="Count" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+<linechartmodel title="Grouped" layout="cell 0 1" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" smoothed="true">
+<matchers>
+<chartseriesmodel patternID="3" labelIndex="0" groupBy="{group1}" type="Count" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+<linechartmodel title="Chart title" layout="" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" smoothed="false">
+<matchers>
+<chartseriesmodel patternID="3" labelIndex="0" groupBy="{group1} &amp; {group3} &amp; {event.sourceHost}" type="Mean" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+<linechartmodel title="Chart title" layout="" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" smoothed="false">
+<matchers>
+<chartseriesmodel patternID="7" labelIndex="1" groupBy="" type="Count" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+</chartingModels>
+<pieChartModels>
+<piechartmodel title="Chart title" layout="" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="y axis label" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" top="2147483647" showOtherSeries="false">
+<matchers>
+<chartseriesmodel patternID="3" labelIndex="0" groupBy="null" type="Count" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+
+</filters>
+</chartseriesmodel>
+</matchers>
+</piechartmodel>
+</pieChartModels>
+</pagemodel>
+<pagemodel name="OS Monitoring">
+<chartingModels>
+<linechartmodel title="Idle CPU" layout="" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" smoothed="false">
+<matchers>
+<chartseriesmodel patternID="8" labelIndex="14" groupBy="{event.sourceHost}" type="Mean" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+<linechartmodel title="Blocks out" layout="" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" smoothed="false">
+<matchers>
+<chartseriesmodel patternID="8" labelIndex="9" groupBy="{event.sourceHost}" type="Mean" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+<linechartmodel title="Memory" layout="cell 0 1" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" smoothed="false">
+<matchers>
+<chartseriesmodel patternID="8" labelIndex="0" groupBy="{event.sourceHost}" type="LastValue" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+</chartingModels>
+<pieChartModels>
+
+</pieChartModels>
+</pagemodel>
+<pagemodel name="Sigar OS">
+<chartingModels>
+<linechartmodel title="Free Memory" layout="" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" smoothed="false">
+<matchers>
+<chartseriesmodel patternID="9" labelIndex="0" groupBy="{event.sourceHost}" type="LastValue" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+<linechartmodel title="CPU Usage" layout="" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" smoothed="false">
+<matchers>
+<chartseriesmodel patternID="9" labelIndex="6" groupBy="{event.sourceHost}" type="LastValue" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+<linechartmodel title="Net In" layout="cell 0 1" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" smoothed="false">
+<matchers>
+<chartseriesmodel patternID="9" labelIndex="4" groupBy="{event.sourceHost}" type="Mean" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+<linechartmodel title="Net Out" layout="" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" smoothed="false">
+<matchers>
+<chartseriesmodel patternID="9" labelIndex="5" groupBy="{event.sourceHost}" type="Mean" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+</chartingModels>
+<pieChartModels>
+
+</pieChartModels>
+</pagemodel>
+</pages>
+</chartingModel>

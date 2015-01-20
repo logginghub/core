@@ -1,0 +1,34 @@
+<container>
+
+    <socketHub />
+
+    <channelSubscriptions/>
+
+    <simulator />
+
+    <patternManager />
+
+    <patterniser>
+        <pattern name="received" pattern="Trade received successfully in {time} ms - Trade ID '[tradeid]' and transaction ID '[tid]'" />
+        <pattern name="stored" pattern="Trade stored successfully in {time} ms - Trade ID '{tradeID}' and transaction ID '[tid]'" />
+        <pattern name="validated" pattern="Trade validated successfully in {time} ms - Trade ID '{tradeID}' and transaction ID '[tid]'" />
+        <pattern name="enriched" pattern="Trade enriched successfully - Trade ID '{tradeID}' and transaction ID '[tid]'" />
+        <pattern name="reported" pattern="Trade reported to regulator successfully in {time} ms - Trade ID '{tradeID}' and transaction ID '[tid]'" />
+    </patterniser>
+
+    <aggregator>
+        <aggregation patternName="received" label="time" type="Mean" interval="1 second" eventsParts="" />
+        <aggregation patternName="stored" label="time" type="Mean" interval="1 second" eventsParts="" />
+        <aggregation patternName="validated" label="time" type="Mean" interval="1 second" eventsParts="" />
+        <!-- <aggregation patternName="enriched" label="time" type="Mean" interval="1 second" eventsParts=""/> -->
+        <aggregation patternName="reported" label="time" type="Mean" interval="1 second" eventsParts="" />
+
+        <aggregation patternName="received" label="time" type="Count" interval="1 second" eventsParts="" />
+        <aggregation patternName="stored" label="time" type="Count" interval="1 second" eventsParts="" />
+        <aggregation patternName="validated" label="time" type="Count" interval="1 second" eventsParts="" />
+        <aggregation patternName="enriched" label="tid" type="Count" interval="1 second" eventsParts="" />
+        <aggregation patternName="reported" label="time" type="Count" interval="1 second" eventsParts="" />
+    </aggregator>
+
+</container>
+

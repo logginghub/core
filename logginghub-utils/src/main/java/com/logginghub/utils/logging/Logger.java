@@ -83,7 +83,7 @@ public class Logger {
 
     private static void loadProperties() {
 
-        String propertyResourceLocation = EnvironmentProperties.getString("lhlogging.properties", "lhlogging.properties");
+        String propertyResourceLocation = EnvironmentProperties.getString("logginghub.levels.properties", "logginghub.levels.properties");
         if (debugFlag) {
             Out.out("[LHLogging] Loading properties from '{}'", propertyResourceLocation);
         }

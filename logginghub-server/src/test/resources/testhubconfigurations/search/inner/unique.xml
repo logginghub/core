@@ -1,0 +1,5 @@
+<hubConfiguration port="-1" telemetryPort="-1">
+   
+   <aggregatedFileLogConfiguration filename="unique.txt"/>                                    
+   
+</hubConfiguration>

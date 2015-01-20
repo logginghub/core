@@ -1,2 +1,15 @@
 rootProject.name = 'logginghub'
 
+include "logginghub-utils"
+include "logginghub-utilsjava6"
+include "logginghub-messaging"
+include "logginghub-messaging2"
+include "logginghub-messaging3"
+include "logginghub-testutils"
+include "logginghub-swingutils"
+include "logginghub-analytics"
+include "logginghub-web"
+include "logginghub-client"
+include "logginghub-server"
+include "logginghub-frontend"
+

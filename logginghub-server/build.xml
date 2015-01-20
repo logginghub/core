@@ -1,0 +1,119 @@
+<project name="vl-loggingBuild" xmlns:artifact="antlib:org.apache.maven.artifact.ant">
+
+	<path id="maven-ant-tasks.classpath" path="../vl-parent/lib/maven-ant-tasks-2.1.1.jar" />
+	<typedef resource="org/apache/maven/artifact/ant/antlib.xml" uri="antlib:org.apache.maven.artifact.ant" classpathref="maven-ant-tasks.classpath" />  
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
+
+	<artifact:pom id="mypom" file="pom.xml" />
+	<property name="version" value="${mypom.version}" />
+
+	<!-- Make sure you've got everything happy in Maven before you run this stuff! -->
+	<target name="package">
+		
+		<ant antfile="build.hub.xml" target="package"/>
+		<packageWrapper name="telemetry" />
+	</target>
+
+	<target name="test" depends="package">
+		<delete dir="target/test-deployment" />
+		<mkdir dir="target/test-deployment/" />
+
+	    <ant antfile="build.hub.xml" target="test"/>
+		
+		<testWrapper name="telemetry" />
+
+	</target>	
+	
+	<target name="unzip" depends="package">
+        <delete dir="target/test-deployment" />
+        <mkdir dir="target/test-deployment/" />
+
+        <ant antfile="build.hub.xml" target="test"/>
+        
+        <unzipWrapper name="telemetry" />
+
+    </target>   
+	
+	<target name="stage" depends="package">
+
+		<ant antfile="build.hub.xml" target="stage"/>
+		
+		<copy todir="/shared/build/repository/com/logginghub/logging/${mypom.version}">
+		
+			<fileset file="target/vl-logging-telemetry-${version}.zip" />
+		</copy>
+
+	</target>
+
+
+	<macrodef name="packageWrapper">
+		<attribute name="name" />
+		<attribute name="common" default="dist" />
+		<attribute name="local" default="dist" />
+		<attribute name="archive" default="vl-logging" />
+		<sequential>
+
+			<local name="artifact-name" />
+			<local name="artifact-location" />
+
+			<property name="artifact-name" value="vl-logging-@{name}-${version}.zip" />
+			<property name="artifact-location" location="target/${artifact-name}" />
+			<delete file="${artifact-location}" />
+
+			<zip destfile="${artifact-location}">
+				<!-- Add the common files for the wrapper in -->
+				<zipfileset dir="@{common}/common" excludes="bin/wrapper" prefix="@{name}-${version}" />
+				<zipfileset dir="@{common}/common/bin" includes="wrapper" prefix="@{name}-${version}/bin" filemode="755" />
+
+				<!-- Add the batch files for this application -->
+				<zipfileset dir="@{local}/@{name}" excludes="bin/@{name}.sh bin/wrapper" prefix="@{name}-${version}" />
+
+				<!-- Add the shell script for this application, making sure we keep it +x -->
+				<zipfileset dir="@{local}/@{name}/bin" includes="@{name}.sh" prefix="@{name}-${version}/bin" filemode="755" />
+
+				<!-- Last but not least, add the actual uber-jar for this application -->
+				<zipfileset dir="target" includes="@{archive}-${version}-jar-with-dependencies.jar" fullpath="@{name}-${version}/lib/vl-logging-${version}.jar" />
+			</zip>
+
+		</sequential>
+	</macrodef>
+
+	<macrodef name="testWrapper">
+		<attribute name="name" />
+		<sequential>
+
+			<local name="artifact-name" />
+			<local name="artifact-location" />
+
+			<property name="artifact-name" value="vl-logging-@{name}-${version}.zip" />
+			<property name="artifact-location" location="target/${artifact-name}" />
+
+			<unzip dest="target/test-deployment/" src="${artifact-location}" />
+
+			<exec executable="cmd.exe" dir="target\test-deployment\@{name}-${version}\">
+				<arg value="/C" />
+				<arg value="start" />
+				<arg value="bin\run@{name}.bat" />
+			</exec>
+
+		</sequential>
+	</macrodef>
+
+    <macrodef name="unzipWrapper">
+        <attribute name="name" />
+        <sequential>
+
+            <local name="artifact-name" />
+            <local name="artifact-location" />
+
+            <property name="artifact-name" value="vl-logging-@{name}-${version}.zip" />
+            <property name="artifact-location" location="target/${artifact-name}" />
+
+            <unzip dest="target/test-deployment/" src="${artifact-location}" />
+
+        </sequential>
+    </macrodef>
+
+
+
+</project>

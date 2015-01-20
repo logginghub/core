@@ -1,0 +1,6 @@
+<dataFileProcessorConfiguration fileCheckIntervalMilliseconds="5000" inputPath="logdata"  outputPath="logdata-processed" resultsPath="results">
+
+	<regexProcessor expression="Validation for '[username]' complete in {elapsed} ms, token was {tokenSize} bytes long" aggregationPeriod="1000"/>
+	<eventCounter aggregationPeriod="1000"/>
+	
+</dataFileProcessorConfiguration>

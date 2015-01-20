@@ -1,0 +1,12 @@
+<container>
+
+    <socketHub port="58770">
+        <filter type="startsWith" field="message" pattern="Trade reported" />
+        <filter type="contains" field="message" pattern="stored successfully" />
+        <filter type="regex" field="message" pattern=".*enriched.*" />
+    </socketHub>
+
+
+    <simulator />
+
+</container>

@@ -1,0 +1,6 @@
+
+dependencies {
+	compile project(':logginghub-utils')
+	compile("com.miglayout:miglayout:3.7.2")
+}
+

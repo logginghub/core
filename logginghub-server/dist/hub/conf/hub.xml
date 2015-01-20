@@ -1,0 +1,16 @@
+<container>
+    <socketHub />
+    <channelSubscriptions />
+    <inMemoryHistory />
+    
+    <timestampFixedRollingFileLogger filename="hub" 
+                                     extension=".log" 
+                                     folder="../logs/"
+                                     maximumFileSize="10000000" 
+                                     numberOfFiles="5" 
+                                     numberOfCompressed="10" 
+                                     openWithAppend="false" 
+                                     writeAsynchronously="true" 
+                                     asynchronousQueueWarningSize="10000"/>
+                                     
+</container>

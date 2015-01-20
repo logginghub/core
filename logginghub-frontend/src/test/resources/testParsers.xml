@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<parsers>
+
+	<parser>
+		<format value="{host}-{source}-{label}" />
+		<patterns>
+			<pattern value="Value one {valueOne} value two {valueTwo} and finally value three {valueThree}" />
+		</patterns>
+	</parser>
+	
+	<parser>
+		<format value="{address}-{source}-{label}" />
+		<patterns>
+			<pattern value="Second parser value one {valueOne}" />
+			<pattern value="Second parser pattern 2 value one {valueOne}" />
+		</patterns>
+	</parser>
+
+</parsers>

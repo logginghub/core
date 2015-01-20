@@ -1,0 +1,64 @@
+Ip:
+    7260 total packets received
+    2 with invalid addresses
+    0 forwarded
+    0 incoming packets discarded
+    7247 incoming packets delivered
+    5586 requests sent out
+    2 dropped because of missing route
+Icmp:
+    73 ICMP messages received
+    43 input ICMP message failed.
+    ICMP input histogram:
+        destination unreachable: 73
+    8 ICMP messages sent
+    0 ICMP messages failed
+    ICMP output histogram:
+        destination unreachable: 8
+IcmpMsg:
+        InType3: 73
+        OutType3: 8
+Tcp:
+    478 active connections openings
+    423 passive connection openings
+    22 failed connection attempts
+    3 connection resets received
+    17 connections established
+    6765 segments received
+    5263 segments send out
+    51 segments retransmited
+    0 bad segments received.
+    4 resets sent
+Udp:
+    247 packets received
+    8 packets to unknown port received.
+    0 packet receive errors
+    262 packets sent
+UdpLite:
+TcpExt:
+    373 TCP sockets finished time wait in fast timer
+    23 delayed acks sent
+    Quick ack mode was activated 3 times
+    437 packets directly queued to recvmsg prequeue.
+    1418 bytes directly in process context from backlog
+    29222 bytes directly received in process context from prequeue
+    2581 packet headers predicted
+    16 packets header predicted and directly queued to user
+    1438 acknowledgments not containing data payload received
+    268 predicted acknowledgments
+    23 other TCP timeouts
+    3 DSACKs sent for old packets
+    3 connections reset due to early user close
+    1 connections aborted due to timeout
+    TCPSackShiftFallback: 1
+IpExt:
+    InMcastPkts: 19
+    OutMcastPkts: 21
+    InBcastPkts: 154
+    OutBcastPkts: 7
+    InOctets: 4328067
+    OutOctets: 603370
+    InMcastOctets: 3790
+    OutMcastOctets: 3870
+    InBcastOctets: 25542
+    OutBcastOctets: 328

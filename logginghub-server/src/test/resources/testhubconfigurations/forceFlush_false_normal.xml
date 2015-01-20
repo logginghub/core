@@ -1,0 +1,7 @@
+<hubConfiguration port="64547" telemetryPort="64548">
+   
+   <aggregatedFileLogConfiguration filename="target/test/forceflushlogs/log.txt" 
+                                   writeAsynchronously="false"                  
+                                   forceFlush="false"/>
+   
+</hubConfiguration>

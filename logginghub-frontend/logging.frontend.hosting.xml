@@ -1,0 +1,7 @@
+<loggingFrontendConfiguration title="Local Configuration" showHistoryViewer="true" showChartingEditor="true" showHeapSlider="false">
+
+    <environment name="hosting" showHistoryTab="true">    
+        <hub name="hosting" host="hosting" port="58770"/>
+    </environment>    
+    
+</loggingFrontendConfiguration>

@@ -1,0 +1,10 @@
+<container>
+    
+    <simulator />
+    
+    <hubConnector>
+        <hub host="localhost"/>
+    </hubConnector>
+
+    
+</container>

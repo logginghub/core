@@ -1,0 +1,13 @@
+<hubConfiguration port="58770" maximumClientSendQueueSize="100" outputStats="true">
+
+    <container>
+
+        <channelSubscriptions />
+            
+        <inMemoryHistory blockSize="10 MB" maximumSize="400 MB"/> 
+
+        <binaryImport file="X:\temp\20130308.140000.logdata" outputStats="false"/>
+
+    </container>
+
+</hubConfiguration>

@@ -1,0 +1,34 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+        <groupId>com.logginghub</groupId>
+        <artifactId>vl-parent</artifactId>
+        <version>1.4.4</version>
+    </parent>
+	
+	<artifactId>vl-swing-utils</artifactId>
+	<name>VL Swing Utilities</name>
+	<description>Shared Swing utility classes used by Vertex Labs products</description>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.miglayout</groupId>
+			<artifactId>miglayout</artifactId>
+			<version>3.7.2</version>
+		</dependency>
+		<dependency>
+            <groupId>com.logginghub</groupId>
+            <artifactId>vl-utils</artifactId>
+            <version>${parent.version}</version>
+        </dependency>
+	</dependencies>
+
+	<scm>
+		<connection>scm:svn:svn://server/repository/products/utilities/trunk</connection>
+		<url>svn://server/repository/products/utilities/trunk</url>
+	</scm>
+
+</project>

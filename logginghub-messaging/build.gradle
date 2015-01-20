@@ -1,0 +1,7 @@
+
+
+dependencies {
+	compile project(':logginghub-utils')
+	compile("backport-util-concurrent:backport-util-concurrent:3.1")
+}
+

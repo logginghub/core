@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<loggingFrontendConfiguration  title="Multiple Environment Logging Sample Configuration"  showDashboard="true">
+
+    <environment name="env1" writeOutputLog="true">
+
+        <outputLogConfiguration
+            filename="env1"
+            extension=".txt"
+            folder="target/logs"
+            maximumFileSize="10000000"
+            numberOfFiles="10"
+            numberOfCompressed="10"
+            openWithAppend="true"/>
+
+    </environment>
+
+    <environment name="env2" writeOutputLog="true">
+        <outputLogConfiguration            
+            maximumFileSize="100000"
+            numberOfFiles="2"
+            numberOfCompressed="2"
+            openWithAppend="true"/>
+
+    </environment>
+
+    <environment name="env3" writeOutputLog="true"/>
+
+
+</loggingFrontendConfiguration>

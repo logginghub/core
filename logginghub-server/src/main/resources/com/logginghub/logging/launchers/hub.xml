@@ -1,0 +1,16 @@
+<hubConfiguration port="58770">
+
+	<socketTextReaders>
+		<socketTestReaderConfiguration port="12345" messageStart="Text :"/>
+		<socketTestReaderConfiguration port="12347" messageStart="Text 2 :"/>
+	</socketTextReaders>
+	
+	<aggregatedFileLogConfiguration filename="temp/hub.log" 
+									maximumFileSize="10000000" 
+									numberOfFiles="5" 
+									numberOfCompressed="10" 
+									openWithAppend="false"
+									writeAsynchronously="true"
+									asynchronousQueueWarningSize="10000"/>			
+
+</hubConfiguration>

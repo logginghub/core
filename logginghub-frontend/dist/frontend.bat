@@ -1,0 +1,1 @@
+pushd %~dp0 & javaw -cp CLASSPATH com.logginghub.logging.frontend.SwingFrontEnd

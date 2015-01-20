@@ -1,0 +1,19 @@
+<container>
+
+    <hubConnector>
+        <hub host="localhost" />
+    </hubConnector>
+    
+    <vmstatMonitor command="vmstat -n 1" logRawEvents="true" channel="telemetry/vmstat" />       
+    <iostatMonitor command="iostat -d -k -x 1" logRawEvents="true" channel="telemetry/iostat" />
+
+    <externalFileMonitor name="syslog" path="/var/log/syslog" prefix="syslog : " replayAll="true"/>
+  
+    <externalProcessMonitor name="top" command="top -n1 -b" valueEnum="Top" interval="1 second" logRawEvents="true" channel="telemetry/top" />
+    <externalProcessMonitor name="netstat" command="netstat -tnap" valueEnum="Netstat" interval="1 second" logRawEvents="true" channel="telemetry/netstat" prefix="netstat - " />
+    <externalProcessMonitor name="netstat-statistics" command="netstat -statistics" valueEnum="NetstatStatistics" interval="1 second" logRawEvents="true" channel="telemetry/netstat/statistics" />
+        
+    <sigarProcessTelemetryModule interval="1 second" />    
+    <sigarMachineTelemetryModule interval="1 second" />     
+
+</container>

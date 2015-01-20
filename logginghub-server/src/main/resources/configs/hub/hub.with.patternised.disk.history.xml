@@ -1,0 +1,21 @@
+<container>
+
+    <socketHub outputStats="true" statsInterval="1 second" />
+
+    <channelSubscriptions />
+
+    <patternManager dataFile="patterns.json" />
+
+    <patterniser />
+    
+    <patternisedDiskHistory />
+
+    <generator>
+        <message pattern="Request: ${sequence} was made by: ${counterparty} to: ${salesperson} : product was ${product}" rateMin="10" rateMax="20">
+            <variable name="counterparty" values="HSBC[70], Citi[30], JPM[10]" />
+            <variable name="salesperson" values="Rob[45], Mary[30], Frank[10], David[30], Helen[15], Sarah[5], Matt[15], Deepak[10]" />
+            <variable name="product" values="Forward[30],Spot[20],Future[5]" />
+        </message>
+    </generator>
+
+</container>

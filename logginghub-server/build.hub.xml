@@ -1,0 +1,55 @@
+<project name="vlpt-repository">
+
+	<import file="../vl-parent/build.library.xml" />
+	
+	<target name="all" depends="maven, package, test, backup, deploy, deploy.restart" />
+
+	<property name="remote" value="deployment@hosting" />
+	<property name="this" value="hub" />
+	
+	<target name="maven">
+
+		<mavenQuickInstall path="../vl-utils/pom.xml"/>
+		<mavenInstall path="pom.xml"/>
+			
+	</target>
+
+	<target name="package">
+		<packageWrapper2 name="hub" archiveName="vl-logging-hub" common="../vl-logging/dist/common" logfile="../logs/${this}.wrapper.log" />
+	</target>
+
+	<target name="test">
+		<testPackage archiveName="vl-logging-hub" name="${this}" version="${version}"/>
+	</target>
+ 
+	<target name="deploy.test">
+       	<deployDryRun remote="${remote}"/>
+	</target>
+
+	<target name="deploy">
+		<exec executable="rsync" dir="target/packagetest/">
+			<arg line="rsync -rvut . ${remote}:~" />
+		</exec>
+	</target>
+
+
+	<target name="clone">
+		
+	</target>
+
+	<target name="backup">
+		
+	</target>
+	
+	<target name="stage">
+	        
+		<stage name="hub" version="${version}" artifact="vl-logging-hub" path="com/logginghub/logging"/>		   
+		
+	</target>
+
+	<target name="deploy.restart">
+		<productionRestart name="${this}" version="${version}"/>		
+	</target>
+
+
+</project>

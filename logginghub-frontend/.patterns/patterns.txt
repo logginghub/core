@@ -1,0 +1,22 @@
+0,file_not_found,{file}: No such file or directory
+1,failed_password,Failed password for {user} from {ip} port {port} ssh2
+2,invalid_user,Invalid user {user} from {ip}
+3,user_unknown,pam_unix(sshd:auth): check pass; user unknown
+4,user_unknown,pam_unix\(sshd:auth\): check pass; user unknown
+5,auth_failure,pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost={host}  user={user}
+6,auth_failure_no_user,pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost={host}
+7,reverse_mapping,reverse mapping checking getaddrinfo for {host} [{ip}] failed - POSSIBLE BREAK-IN ATTEMPT!
+8,reverse_mapping_bad_match,Address {ip} maps to {host}
+9,pam_failure,PAM {failures} more authentication failures; logname= uid=0 euid=0 tty=ssh ruser= rhost={host}  user={user}
+10,pam_singular_failure,PAM {failures} more authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost={host}  user={user}
+11,no_id_string,Did not receive identification string from {ip}
+12,gethostby,gethostby*.getanswer: asked for "{host} IN A"
+13,accepted_password,Accepted password for {user} from {ip} port {port} ssh2
+14,session_opened,pam_unix(sshd:session): session opened for user {user} by (uid=0)
+15,nasty_ptr,Nasty PTR record "{host}" is set up for {ip}
+16,session_closed,pam_unix(sshd:session): session closed for user {user}
+17,accepted_publickey,Accepted publickey for {user} from {host} port {port} ssh2
+18,disconnected,Received disconnect from {ip}: 11: disconnected by user
+19,failed_none,Failed none for invalid user {user} from {ip} port {port} ssh2
+20,pam_ignore_retries,PAM service(sshd) ignoring max retries; 6 > 3
+21,order,Order placed in {ordertime} ms

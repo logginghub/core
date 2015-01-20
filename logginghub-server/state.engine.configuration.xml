@@ -1,0 +1,48 @@
+<container>
+
+    <hubConnector name="eventsIn" globalSubscription="true">
+        <hub host="localhost" port="58770"/>
+    </hubConnector>
+    
+    <emailConnector name="emailOut" smtpHost="smtp.gmail.com" username="vertexlabstest" password="4J1RptvEU4971JR7HmlZ" sendingThrottle="10 seconds">
+        <property>mail.smtps.host=smtp.gmail.com</property>
+        <property>mail.smtp.socketFactory.class=javax.net.ssl.SSLSocketFactory</property> 
+        <property>mail.smtp.socketFactory.fallback=false</property>
+        <property>mail.smtp.port=465</property>
+        <property>mail.smtp.socketFactory.port=465</property>
+        <property>mail.smtps.auth=true</property>
+        <property>mail.smtps.quitwait=false</property>        
+    </emailConnector>
+    
+    <transactionMonitor>
+
+        <stateEngine name="trade">
+    
+            <stateCapture name="received" pattern="Trade received successfully in {time} ms - Trade ID '{tradeID}' and transaction ID '[tid]'" />
+            <stateCapture name="stored" pattern="Trade stored successfully in {time} ms - Trade ID '{tradeID}' and transaction ID '[tid]'" />                                           
+            <stateCapture name="validated" pattern="Trade validated successfully in {time} ms - Trade ID '{tradeID}' and transaction ID '[tid]'" />
+            <stateCapture name="enriched" pattern="Trade enriched successfully - Trade ID '{tradeID}' and transaction ID '[tid]'" />
+            <stateCapture name="reported" pattern="Trade reported to regulator successfully in {time} ms - Trade ID '{tradeID}' and transaction ID '[tid]'" />
+    
+            <transition state="received">
+                <transition state="stored" timeout="10 seconds">
+                    <transition state="validated" timeout="10 seconds">
+                        <transition state="enriched" timeout="10 seconds">
+                            <transition state="reported" timeout="10 seconds"/>
+                        </transition>
+                    </transition>                    
+                </transition>
+            </transition>
+            
+            <eventReporter reportSuccess="true" reportFailure="true" successLevel="info" failureLevel="severe" warningAt="2 seconds"/>
+                
+            <emailReporter reportSuccess="false" reportFailure="true">
+                <failureTemplate toAddress="jamesshaw5@gmail.com" fromAddress="vertexlabstest@gmail.com" subject="Transaction failure report" html="true"/> 
+            </emailReporter>
+            
+        </stateEngine>
+     
+    </transactionMonitor>
+   
+
+</container>

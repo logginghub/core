@@ -1,0 +1,15 @@
+<container>
+    
+    <migFrame name="LoggingHub Monitor">
+        
+        <pingMonitor host="hosting" name="Hosting" layout="grow, cell 0 0"/>               
+        <pingMonitor host="54.171.42.240" name="VL EC2" layout="grow, cell 1 0"/>
+                
+        <pingMonitor host="192.168.0.5" name="Work Linux" layout="grow, cell 1 1"/>        
+        <pingMonitor host="192.168.0.22" name="Work Win7" layout="grow, cell 0 1"/>
+        
+        <hubMonitor host="54.171.42.240" name="VL EC2 Hub" layout="grow, cell 0 2"/>
+        
+    </migFrame>
+
+</container>

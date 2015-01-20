@@ -1,0 +1,61 @@
+apply plugin: 'distribution'
+
+dependencies {
+    compile project(':logginghub-utils')
+    compile project(':logginghub-client')
+    compile project(':logginghub-utilsjava6')
+    compile project(':logginghub-messaging3')
+    compile project(':logginghub-web')
+    compile project(':logginghub-analytics')
+
+    compile("net.minidev:json-smart:2.0-RC3")
+    compile("log4j:log4j:1.2.14")
+    compile("org.slf4j:slf4j-api:1.6.1")
+    compile("net.sf.opencsv:opencsv:2.0")
+    compile("javax.mail:mail:1.4")
+    compile("com.google.code.gson:gson:2.2.4")
+    compile("jline:jline:2.12")
+    testCompile("org.hsqldb:hsqldb:2.3.2")
+}
+
+distributions {
+    main {
+        baseName = 'logginghub'
+        contents {
+            from { "build/dist_temp/hub" }
+            from(jar) {
+                into "lib"
+            }
+            from(configurations.runtime) {
+                into "lib"
+            }
+        }
+    }
+}
+
+
+task buildDistribution << {
+
+    delete 'build/dist_temp/hub'
+    copy {
+        from 'dist/common'
+        into file('build/dist_temp/hub')
+    }
+    copy {
+        from 'dist/hub'
+        into file('build/dist_temp/hub')
+    }
+
+    StringBuilder classpath = new StringBuilder();
+    int counter = 1;
+    classpath.append("wrapper.java.classpath.${counter++}=../lib/${jar.archivePath.name}\n")
+    sourceSets.main.runtimeClasspath.collect {
+        classpath.append("wrapper.java.classpath.${counter++}=../lib/" + it.name + "\n")
+    }
+    classpath.append("wrapper.java.classpath.${counter++}=../lib/wrapper.jar\n")
+
+    ant.replace(file: "build/dist_temp/hub/conf/wrapper.conf", token: 'wrapper.java.classpath.1=../lib/*', value: classpath)
+}
+
+distZip.dependsOn("buildDistribution")
+

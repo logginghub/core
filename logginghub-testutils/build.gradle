@@ -1,0 +1,9 @@
+
+
+dependencies {
+	compile project(':logginghub-utils')
+	compile("com.logginghub.thirdparty:kryonet:2.12")
+	provided("junit:junit:4.8.1@jar")
+}
+
+
