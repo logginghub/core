@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<configuration>
+  
+  <pages>
+    <page title="Order performance" rows="3" columns="3">
+      <chart title="Orders placed" datapoints="300" forceYZero="true">
+        <matcher value="*/orderTime/Count" legend="Average order time"/>
+      </chart>
+      <chart title="Processing time" datapoints="300" forceYZero="true">
+        <matcher value="*/orderTime/Mean" legend="Mean order time"/>
+        <matcher value="*/orderTime/Median" legend="Median order time"/>
+        <matcher value="*/orderTime/Mode" legend="Mode order time"/>
+        <matcher value="*/orderTime/Percentile90" legend="90th percentile order time"/>
+      </chart>
+    </page>
+  </pages>
+
+  <parsers>
+    <chunker interval="1000">
+      <parser>
+        <format value="{host}/{source}/{label}" />
+          <patterns>                    
+            <pattern value="Order placed in {orderTime} ms"/>                              
+          </patterns>
+      </parser>     
+    </chunker>      
+  </parsers>
+  
+</configuration>

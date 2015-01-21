@@ -8,7 +8,7 @@ dependencies {
     compile project(':logginghub-web')
     compile project(':logginghub-analytics')
 
-    compile("net.minidev:json-smart:2.0-RC3")
+    //compile("net.minidev:json-smart:2.0-RC3")
     compile("log4j:log4j:1.2.14")
     compile("org.slf4j:slf4j-api:1.6.1")
     compile("net.sf.opencsv:opencsv:2.0")
@@ -32,7 +32,6 @@ distributions {
         }
     }
 }
-
 
 task buildDistribution << {
 
@@ -59,3 +58,15 @@ task buildDistribution << {
 
 distZip.dependsOn("buildDistribution")
 
+task deployDistribution << {
+    def targetDir = '/var/www/repository/com/logginghub/archives/' + version;
+    ssh.run {
+        session(remotes.hosting) {
+            execute 'mkdir -p ' + targetDir
+            put 'build/distributions/logginghub-' + version + '.zip', targetDir
+        }
+    }
+}
+
+deployDistribution.dependsOn("distZip");
+uploadArchives.dependsOn("deployDistribution")

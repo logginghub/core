@@ -1,5 +1,18 @@
 package com.logginghub.utils.logging;
 
+import com.logginghub.utils.CompareUtils;
+import com.logginghub.utils.DateFormatFactory;
+import com.logginghub.utils.EnvironmentProperties;
+import com.logginghub.utils.FactoryMapDecorator;
+import com.logginghub.utils.Out;
+import com.logginghub.utils.ResourceUtils;
+import com.logginghub.utils.StacktraceUtils;
+import com.logginghub.utils.Stopwatch;
+import com.logginghub.utils.StringUtils;
+import com.logginghub.utils.SystemTimeProvider;
+import com.logginghub.utils.TimeProvider;
+import com.logginghub.utils.WorkerThread;
+
 import java.io.File;
 import java.text.DateFormat;
 import java.text.NumberFormat;
@@ -14,19 +27,6 @@ import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-
-import com.logginghub.utils.CompareUtils;
-import com.logginghub.utils.DateFormatFactory;
-import com.logginghub.utils.EnvironmentProperties;
-import com.logginghub.utils.FactoryMapDecorator;
-import com.logginghub.utils.Out;
-import com.logginghub.utils.ResourceUtils;
-import com.logginghub.utils.StacktraceUtils;
-import com.logginghub.utils.Stopwatch;
-import com.logginghub.utils.StringUtils;
-import com.logginghub.utils.SystemTimeProvider;
-import com.logginghub.utils.TimeProvider;
-import com.logginghub.utils.WorkerThread;
 
 public class Logger {
 
@@ -63,52 +63,129 @@ public class Logger {
     public final static int warning = 900;
     public final static int severe = 1000;
 
-    private static final boolean debugFlag = Boolean.getBoolean("vllogging.debug");
+    private static boolean debugFlag = Boolean.getBoolean("logginghub.debug");
 
     private String threadContextOverride = null;
     private String name;
 
+    private static final boolean initialised;
+
     static {
+        internalDebug("Initialising LoggingHub logging framework - debug mode is ON");
         root = new Logger("");
         root.addStream(new SystemErrStream());
         root.setLevel(info);
         loggersForClass.put("", root);
 
         loadProperties();
+
+        initialised = true;
+    }
+
+    public static boolean isInitialised() {
+        return initialised;
+    }
+
+    public static void setInternalDebugging(boolean debug) {
+        Logger.debugFlag = debug;
     }
 
     public Logger(String name) {
         this.name = name;
     }
 
-    private static void loadProperties() {
+    public static void loadProperties() {
 
-        String propertyResourceLocation = EnvironmentProperties.getString("logginghub.levels.properties", "logginghub.levels.properties");
-        if (debugFlag) {
-            Out.out("[LHLogging] Loading properties from '{}'", propertyResourceLocation);
+        // Implement some sort of search ordering
+        String settings = null;
+
+        // First order : has the user set the environment or system property?
+        String override = EnvironmentProperties.getString("logginghub.levels.properties");
+        if (override != null) {
+            internalDebug("logginghub.levels.properties variable (from system property or environment) detected : '{}'",
+                          override);
+
+            // Yes they have, try it
+            File userSpecifiedFile = new File(override);
+            if (!userSpecifiedFile.exists()) {
+                // Check to see if it is on the class path
+                String read = ResourceUtils.readOrNull(override);
+                if (read != null) {
+                    internalDebug("Properties file found on the classpath");
+                    settings = override;
+                } else {
+                    // Going to take a punt and throw an exception here - the user has clearly shown their intention
+                    // for logging to be configured by setting the property, so they need to be told the file isn't there.
+                    throw new IllegalArgumentException(StringUtils.format(
+                            "logging.levels.properties property has been set to '{}', but we tried to find the file at '{}' and it wasn't found, and we tried to load it as a resource from the classpath, and that also failed. Please check your settings.",
+                            override,
+                            userSpecifiedFile.getAbsolutePath()));
+                }
+
+            } else {
+                settings = userSpecifiedFile.getAbsolutePath();
+            }
+        } else {
+            internalDebug(
+                    "No logginghub.levels.properties variable (from system property or environment) detected, using default search order");
         }
 
-        loadPropertiesFromResource(propertyResourceLocation);
-
-        String userhome = System.getProperty("user.home");
-        final File potentialGlobalSettings = new File(userhome, ".logginghub/logging.properties");
-        if (potentialGlobalSettings.exists()) {
-            WorkerThread.everyNowDaemon("LoggingHub-LoggerConfigReader", 1, TimeUnit.SECONDS, new Runnable() {
-                long time = 0;
-
-                public void run() {
-                    long fileTime = potentialGlobalSettings.lastModified();
-                    if (time != fileTime) {
-                        if (debugFlag) {
-                            Out.out("[LHLogging] Loading properties from '{}'", potentialGlobalSettings.getAbsolutePath());
-                        }
-
-                        resetLevels();
-                        loadPropertiesFromResource(potentialGlobalSettings.getAbsolutePath());
-                        time = fileTime;
-                    }
+        if (settings == null) {
+            String defaultFilename = "levels.properties";
+            // No user specified file was found, lets try some default locations
+            File workingDirectory = new File(defaultFilename);
+            internalDebug("Looking for '{}' in the working directory : '{}'",
+                          defaultFilename,
+                          workingDirectory.getAbsolutePath());
+            if (workingDirectory.exists()) {
+                internalDebug("Properties file found.");
+                settings = workingDirectory.getAbsolutePath();
+            } else {
+                String userhome = System.getProperty("user.home");
+                File userHome = new File(userhome + ".logginghub/", defaultFilename);
+                internalDebug("Properties file not found, looking the user's home directory : '{}'",
+                              userHome.getAbsolutePath());
+                if (userHome.exists()) {
+                    internalDebug("Properties file found.");
+                    settings = userHome.getAbsolutePath();
+                } else {
+                    // That's it, where else could we look?
+                    internalDebug(
+                            "Properties file not found in any of the usual places. We'll have to use the default configuration.");
                 }
-            });
+            }
+        }
+
+        if (settings != null) {
+
+            internalDebug("Loading properties from '{}'", settings);
+
+            loadPropertiesFromResource(settings);
+
+            // If the properties are in a file, we can start a thread to check for changes
+            final File propertiesInFile = new File(settings);
+            if (propertiesInFile.exists()) {
+                WorkerThread.everyNowDaemon("LoggingHub-LoggerConfigReader", 1, TimeUnit.SECONDS, new Runnable() {
+                    long time = propertiesInFile.lastModified();
+
+                    public void run() {
+                        long fileTime = propertiesInFile.lastModified();
+                        if (time != fileTime) {
+                            internalDebug("Reloading properties from '{}' due to modification",
+                                          propertiesInFile.getAbsolutePath());
+                            resetLevels();
+                            loadPropertiesFromResource(propertiesInFile.getAbsolutePath());
+                            time = fileTime;
+                        }
+                    }
+                });
+            }
+        }
+    }
+
+    private static void internalDebug(String message, Object... params) {
+        if (debugFlag) {
+            Out.err("[LoggingHub] " + StringUtils.format(message, params));
         }
     }
 
@@ -117,9 +194,7 @@ public class Logger {
             Collection<Logger> values = loggersForClass.values();
             for (Logger logger : values) {
                 if (logger != root) {
-                    if (debugFlag) {
-                        Out.out("Reseting {} to defer to root", logger.getName());
-                    }
+                    internalDebug("Resetting {} to defer to root", logger.getName());
                     logger.setLevel(deferToRoot);
                 }
             }
@@ -139,24 +214,16 @@ public class Logger {
 
                     if (key.trim().startsWith("#")) {
                         // Commented out
-                    }
-                    else {
-
+                    } else {
                         int level = parseLevel(value);
-
-                        if (debugFlag) {
-                            Out.out("[LHLogging] Setting level '{}' = {}", key, level);
-                        }
+                        internalDebug("Setting level '{}' = {}", key, level);
                         setLevel(key, level);
                     }
                 }
 
             }
-        }
-        else {
-            if (debugFlag) {
-                Out.out("[LHLogging] No file or resource found for '{}', skipping", propertyResourceLocation);
-            }
+        } else {
+            internalDebug("No file or resource found for '{}', skipping", propertyResourceLocation);
         }
     }
 
@@ -313,8 +380,7 @@ public class Logger {
         LogEvent event = new LogEvent();
         if (format != null) {
             event.setMessage(format(format, objects));
-        }
-        else {
+        } else {
             event.setMessage("null");
         }
         event.setSourceClassName(StacktraceUtils.getCallingClassName(2));
@@ -371,8 +437,7 @@ public class Logger {
             // Although this is faster, and I've never seen anyone create a sensible tree of
             // appenders!
             root.logEvent(event);
-        }
-        else {
+        } else {
             for (LoggerStream loggerStream : streams) {
                 loggerStream.onNewLogEvent(event);
             }
@@ -391,9 +456,8 @@ public class Logger {
     }
 
     /**
-     * Creates a new logger that is deemed "safe" as it is detached from its parent streams so can't
-     * be re-entrant
-     * 
+     * Creates a new logger that is deemed "safe" as it is detached from its parent streams so can't be re-entrant
+     *
      * @param clazz
      * @return
      */
@@ -664,7 +728,9 @@ public class Logger {
 
         Comparator<LevelSetter> comp = new Comparator<LevelSetter>() {
             public int compare(LevelSetter o1, LevelSetter o2) {
-                return CompareUtils.add(o1.getPartialClass(), o2.getPartialClass()).add(o1.getLevel(), o2.getLevel()).compare();
+                return CompareUtils.add(o1.getPartialClass(), o2.getPartialClass())
+                                   .add(o1.getLevel(), o2.getLevel())
+                                   .compare();
             }
         };
         Collections.sort(levelSetters, comp);
@@ -692,7 +758,9 @@ public class Logger {
     }
 
     public void setupUDPLogging(String destination) {
-        addStream(new UDPPatternisedLogEventStream(GlobalLoggingParameters.pid, GlobalLoggingParameters.applicationName, destination));
+        addStream(new UDPPatternisedLogEventStream(GlobalLoggingParameters.pid,
+                                                   GlobalLoggingParameters.applicationName,
+                                                   destination));
     }
 
     public void clearStreams() {
@@ -726,17 +794,13 @@ public class Logger {
             case 'f': {
                 if (lowerCase.equals("fatal")) {
                     levelValue = Logger.severe;
-                }
-                else if (lowerCase.equals("finer")) {
+                } else if (lowerCase.equals("finer")) {
                     levelValue = Logger.finer;
-                }
-                else if (lowerCase.equals("finest")) {
+                } else if (lowerCase.equals("finest")) {
                     levelValue = Logger.finest;
-                }
-                else if (lowerCase.equals("fine")) {
+                } else if (lowerCase.equals("fine")) {
                     levelValue = Logger.fine;
-                }
-                else {
+                } else {
                     // TODO : how to indicate a problem!
                     levelValue = Logger.info;
                 }
@@ -777,8 +841,7 @@ public class Logger {
             case Logger.debug:
                 if (useLog4jNames) {
                     name = "debug";
-                }
-                else {
+                } else {
                     name = "fine";
                 }
                 break;
@@ -788,8 +851,7 @@ public class Logger {
             case Logger.finest:
                 if (useLog4jNames) {
                     name = "trace";
-                }
-                else {
+                } else {
                     name = "finest";
                 }
                 break;

@@ -69,3 +69,16 @@ jar {
 //                'Main-Class': mainClassName
 //    }
 }
+
+task deployDistribution << {
+    def targetDir = '/var/www/repository/com/logginghub/archives/' + version;
+    ssh.run {
+        session(remotes.hosting) {
+            execute 'mkdir -p ' + targetDir
+            put 'build/distributions/logginghub-frontend-' + version + '.zip', targetDir
+        }
+    }
+}
+
+deployDistribution.dependsOn("distZip");
+uploadArchives.dependsOn("deployDistribution")

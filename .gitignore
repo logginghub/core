@@ -26,3 +26,4 @@ logginghub-frontend/data*
 logginghub-frontend/images*
 logginghub-frontend/lib*
 logginghub-frontend/logs*
+target/

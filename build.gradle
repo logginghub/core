@@ -1,3 +1,7 @@
+plugins {
+    id 'org.hidetake.ssh' version '1.0.1'
+}
+
 subprojects {
 
     version = '1.4.5'
@@ -5,7 +9,14 @@ subprojects {
 
     apply plugin: 'java'
     apply plugin: 'idea'
-    apply plugin: "maven"
+    apply plugin: 'maven'
+
+    repositories {
+        mavenCentral()
+        maven {
+            url "http://www.vertexlabs.co.uk/repository"
+        }
+    }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -34,10 +45,59 @@ subprojects {
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    repositories {
-        mavenCentral()
-        maven {
-            url "http://www.vertexlabs.co.uk/repository"
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// jshaw - workaround to fix the intellij resource copying bug
+//
+    task copyTestResources(type: Copy) {
+        from "${projectDir}/src/test/resources"
+        into "${buildDir}/classes/test"
+    }
+    processTestResources.dependsOn copyTestResources
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// jshaw - workaround to bring ant ssh/scp into the build
+//
+//    configurations {
+//        sshAntTask
+//    }
+//
+//    dependencies {
+//        sshAntTask 'org.apache.ant:ant-jsch:1.7.1'
+//        sshAntTask 'jsch:jsch:0.1.29'
+//    }
+//
+//    ant.taskdef(name: 'scp',
+//                classname: 'org.apache.tools.ant.taskdefs.optional.ssh.Scp',
+//                classpath: configurations.sshAntTask.asPath)
+
+    remotes {
+        hosting {
+            host = 'hosting'
+            user = 'mavenrepo'
+            identity = file(System.properties['user.home'] + "/.ssh/id_rsa")
+        }
+    }
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    configurations {
+        deployerJars
+    }
+
+    dependencies {
+        deployerJars "org.apache.maven.wagon:wagon-ssh:2.2"
+    }
+
+    uploadArchives {
+        repositories.mavenDeployer {
+            configuration = configurations.deployerJars
+            repository(url: "scp://mavenrepo@hosting:/var/www/repository")  {
+                authentication(userName: "mavenrepo", privateKey: System.properties['user.home'] + "/.ssh/id_rsa")
+            }
         }
     }
 

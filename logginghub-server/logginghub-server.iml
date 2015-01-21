@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module external.linked.project.id=":logginghub-server" external.linked.project.path="$MODULE_DIR$" external.root.project.path="$MODULE_DIR$" external.system.id="GRADLE" external.system.module.group="logginghub" external.system.module.version="unspecified" type="JAVA_MODULE" version="4">
+<module external.linked.project.id=":logginghub-server" external.linked.project.path="$MODULE_DIR$" external.root.project.path="$MODULE_DIR$/../logginghub-analytics" external.system.id="GRADLE" external.system.module.group="com.logginghub" external.system.module.version="1.4.5" type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="false">
     <output url="file://$MODULE_DIR$/build/classes/main" />
     <output-test url="file://$MODULE_DIR$/build/classes/test" />
@@ -24,16 +24,13 @@
     <orderEntry type="module" module-name="logginghub-messaging3" exported="" />
     <orderEntry type="module" module-name="logginghub-web" exported="" />
     <orderEntry type="module" module-name="logginghub-analytics" exported="" />
-    <orderEntry type="library" exported="" name="Gradle: net.minidev:json-smart:2.0-RC3" level="project" />
     <orderEntry type="library" exported="" name="Gradle: log4j:log4j:1.2.14" level="project" />
     <orderEntry type="library" exported="" name="Gradle: org.slf4j:slf4j-api:1.6.1" level="project" />
     <orderEntry type="library" exported="" name="Gradle: net.sf.opencsv:opencsv:2.0" level="project" />
     <orderEntry type="library" exported="" name="Gradle: javax.mail:mail:1.4" level="project" />
     <orderEntry type="library" exported="" name="Gradle: com.google.code.gson:gson:2.2.4" level="project" />
     <orderEntry type="library" exported="" name="Gradle: jline:jline:2.12" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: net.minidev:asm:1.0-RC3" level="project" />
     <orderEntry type="library" exported="" name="Gradle: javax.activation:activation:1.1" level="project" />
-    <orderEntry type="library" exported="" name="Gradle: asm:asm:3.3.1" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: org.hsqldb:hsqldb:2.3.2" level="project" />
   </component>
 </module>

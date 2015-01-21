@@ -1,0 +1,15 @@
+<loggingFrontendConfiguration title="MultiHub configuration" showDashboard="true" popoutCharting="true">
+
+    <environment name="environment1">
+        <hub name="FirstHub" host="192.168.2.21" port="58780"/>
+    </environment>
+    
+    <environment name="environment2">
+        <hub name="SecondHub" host="192.168.2.21" port="58781"/>
+    </environment>
+    
+    <environment name="environment3">
+        <hub name="ThirdHub" host="192.168.2.21" port="58782"/>
+    </environment>    
+
+</loggingFrontendConfiguration>

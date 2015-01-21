@@ -1,19 +1,6 @@
 sourceCompatibility = 1.5
 targetCompatibility = 1.5
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-// jshaw - workaround to fix the intellij resource copying bug
-//
-task copyTestResources(type: Copy) {
-    from "${projectDir}/src/test/resources"
-    into "${buildDir}/classes/test"
-}
-processTestResources.dependsOn copyTestResources
-//
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
 dependencies {
     compile project(':logginghub-utils')
     compile project(':logginghub-messaging2')

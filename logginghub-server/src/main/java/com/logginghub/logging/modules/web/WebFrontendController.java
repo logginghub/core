@@ -1,19 +1,8 @@
 package com.logginghub.logging.modules.web;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.Future;
-
-import net.minidev.json.JSONObject;
-import net.minidev.json.JSONValue;
-
-import org.eclipse.jetty.websocket.WebSocket.Connection;
-
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.api.patterns.Aggregation;
 import com.logginghub.logging.api.patterns.Pattern;
@@ -38,6 +27,15 @@ import com.logginghub.web.WebController;
 import com.logginghub.web.WebSocketHelper;
 import com.logginghub.web.WebSocketListener;
 import com.logginghub.web.WebSocketSupport;
+import org.eclipse.jetty.websocket.WebSocket.Connection;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.Future;
 
 @WebController(staticFiles = "/logginghubweb/") public class WebFrontendController implements WebSocketSupport {
 
@@ -83,8 +81,7 @@ import com.logginghub.web.WebSocketSupport;
             writer.writeProperty("userName", userName);
 
             RequestContext.getRequestContext().addCookie("sessionID", sessionID);
-        }
-        else {
+        } else {
             writer.writeProperty("success", false);
             writer.writeProperty("reason", result.getExternalReason());
         }
@@ -172,67 +169,63 @@ import com.logginghub.web.WebSocketSupport;
             @Override public void onMessage(final Connection connection, String data) {
 
                 logger.info("Handling websockets message : {}", data);
-                Object parse = JSONValue.parse(data);
-                if (parse instanceof JSONObject) {
 
-                    JSONObject jsonObject = (JSONObject) parse;
+                JsonParser parser = new JsonParser();
+                JsonObject jsonObject = parser.parse(data).getAsJsonObject();
 
-                    String action = jsonObject.get("action").toString();
+                String action = jsonObject.get("action").toString();
 
-                    if (action.equals("subscribe")) {
+                if (action.equals("subscribe")) {
 
-                        String channel = jsonObject.get("channel").toString();
+                    String channel = jsonObject.get("channel").toString();
 
-                        KeyedFactory<Connection, Destination<String>> factory = new KeyedFactory<Connection, Destination<String>>() {
+                    KeyedFactory<Connection, Destination<String>> factory = new KeyedFactory<Connection, Destination<String>>() {
 
-                            @Override public Destination<String> create(Connection key) {
-                                return new Destination<String>() {
-                                    @Override public void send(String data) {
-                                        try {
-                                            connection.sendMessage(data);
-                                        }
-                                        catch (IOException e) {
-                                            throw new RuntimeException(e);
-                                        }
-                                    };
-                                };
+                        @Override public Destination<String> create(Connection key) {
+                            return new Destination<String>() {
+                                @Override public void send(String data) {
+                                    try {
+                                        connection.sendMessage(data);
+                                    } catch (IOException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                }
 
-                            }
-                        };
+                                ;
+                            };
 
-                        Destination<String> destination = subscriptionCounterparts.create(connection, factory);
-                        subscriptions.addSubscription(channel, destination);
-
-                        JSONObject response = new JSONObject();
-                        response.put("requestID", jsonObject.get("requestID"));
-                        response.put("reason", "");
-                        response.put("state", Result.State.Successful);
-                        response.put("value", true);
-
-                        try {
-                            connection.sendMessage(response.toJSONString());
                         }
-                        catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                    };
+
+                    Destination<String> destination = subscriptionCounterparts.create(connection, factory);
+                    subscriptions.addSubscription(channel, destination);
+
+                    JsonObject response = new JsonObject();
+                    response.addProperty("requestID", jsonObject.get("requestID").toString());
+                    response.addProperty("reason", "");
+                    response.addProperty("state", Result.State.Successful.toString());
+                    response.addProperty("value", true);
+
+                    try {
+                        connection.sendMessage(response.toString());
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
-                    else if (action.equals("unsubscribe")) {
+                } else if (action.equals("unsubscribe")) {
 
-                        String channel = jsonObject.get("channel").toString();
-                        subscriptions.removeSubscription(channel, subscriptionCounterparts.remove(connection));
+                    String channel = jsonObject.get("channel").toString();
+                    subscriptions.removeSubscription(channel, subscriptionCounterparts.remove(connection));
 
-                        JSONObject response = new JSONObject();
-                        response.put("requestID", jsonObject.get("requestID"));
-                        response.put("reason", "");
-                        response.put("state", Result.State.Successful);
-                        response.put("value", true);
+                    JsonObject response = new JsonObject();
+                    response.addProperty("requestID", jsonObject.get("requestID").toString());
+                    response.addProperty("reason", "");
+                    response.addProperty("state", Result.State.Successful.toString());
+                    response.addProperty("value", true);
 
-                        try {
-                            connection.sendMessage(response.toJSONString());
-                        }
-                        catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                    try {
+                        connection.sendMessage(response.toString());
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
                 }
             }
@@ -248,35 +241,35 @@ import com.logginghub.web.WebSocketSupport;
 
         if (subscriptions.hasSubscriptions(channel)) {
             // TODO :use gson?
-            JSONObject eventJSON = toJSON(event);
+            JsonObject eventJSON = toJSON(event);
 
-            JSONObject broadcastJSON = new JSONObject();
-            broadcastJSON.put("channel", channel);
-            broadcastJSON.put("value", eventJSON);
+            JsonObject broadcastJSON = new JsonObject();
+            broadcastJSON.addProperty("channel", channel);
+            broadcastJSON.addProperty("value", eventJSON.toString());
 
-            String json = broadcastJSON.toJSONString();
+            String json = broadcastJSON.toString();
 
             subscriptions.dispatch(Channels.toArray(channel), json);
         }
     }
 
-    private JSONObject toJSON(LogEvent event) {
-        JSONObject eventJSON = new JSONObject();
-        eventJSON.put("channel", event.getChannel());
-        eventJSON.put("formattedException", event.getFormattedException());
-        eventJSON.put("level", event.getLevel());
-        eventJSON.put("levelDescription", event.getLevelDescription());
-        eventJSON.put("time", event.getOriginTime());
-        eventJSON.put("loggerName", event.getLoggerName());
-        eventJSON.put("message", event.getMessage());
-        eventJSON.put("pid", event.getPid());
-        eventJSON.put("sequenceNumber", event.getSequenceNumber());
-        eventJSON.put("sourceAddress", event.getSourceAddress());
-        eventJSON.put("sourceApplication", event.getSourceApplication());
-        eventJSON.put("sourceClassName", event.getSourceClassName());
-        eventJSON.put("sourceHost", event.getSourceHost());
-        eventJSON.put("sourceMethodName", event.getSourceMethodName());
-        eventJSON.put("threadName", event.getThreadName());
+    private JsonObject toJSON(LogEvent event) {
+        JsonObject eventJSON = new JsonObject();
+        eventJSON.addProperty("channel", event.getChannel());
+        eventJSON.addProperty("formattedException", event.getFormattedException());
+        eventJSON.addProperty("level", event.getLevel());
+        eventJSON.addProperty("levelDescription", event.getLevelDescription());
+        eventJSON.addProperty("time", event.getOriginTime());
+        eventJSON.addProperty("loggerName", event.getLoggerName());
+        eventJSON.addProperty("message", event.getMessage());
+        eventJSON.addProperty("pid", event.getPid());
+        eventJSON.addProperty("sequenceNumber", event.getSequenceNumber());
+        eventJSON.addProperty("sourceAddress", event.getSourceAddress());
+        eventJSON.addProperty("sourceApplication", event.getSourceApplication());
+        eventJSON.addProperty("sourceClassName", event.getSourceClassName());
+        eventJSON.addProperty("sourceHost", event.getSourceHost());
+        eventJSON.addProperty("sourceMethodName", event.getSourceMethodName());
+        eventJSON.addProperty("threadName", event.getThreadName());
         return eventJSON;
     }
 
@@ -286,8 +279,7 @@ import com.logginghub.web.WebSocketSupport;
             try {
                 logger.fine("Sending to connection '{}' : {}", connection, message);
                 connection.sendMessage(message);
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 logger.fine("Connection send failed, removing subscription");
                 failures.add(connection);
             }
