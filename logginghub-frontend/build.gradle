@@ -75,7 +75,7 @@ task deployDistribution << {
     ssh.run {
         session(remotes.hosting) {
             execute 'mkdir -p ' + targetDir
-            put 'build/distributions/logginghub-frontend-' + version + '.zip', targetDir
+            put buildDir.getAbsolutePath() + '/distributions/logginghub-frontend-' + version + '.zip', targetDir
         }
     }
 }

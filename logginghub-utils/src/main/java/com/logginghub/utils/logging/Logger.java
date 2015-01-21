@@ -142,7 +142,7 @@ public class Logger {
                 settings = workingDirectory.getAbsolutePath();
             } else {
                 String userhome = System.getProperty("user.home");
-                File userHome = new File(userhome + ".logginghub/", defaultFilename);
+                File userHome = new File(userhome + "/.logginghub/", defaultFilename);
                 internalDebug("Properties file not found, looking the user's home directory : '{}'",
                               userHome.getAbsolutePath());
                 if (userHome.exists()) {

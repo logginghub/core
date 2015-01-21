@@ -2,8 +2,10 @@ package com.logginghub.logging.internallogging;
 
 import com.logginghub.logging.utils.LoggingUtils;
 import com.logginghub.utils.FileUtils;
+import com.logginghub.utils.ThreadUtils;
 import com.logginghub.utils.VLPorts;
 import com.logginghub.utils.logging.Logger;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -17,6 +19,7 @@ import java.util.List;
 // TODO : make this a proper test!
 public class LoggingHubStreamTest {
 
+    @Ignore
     @Test public void test_properties_from_file() {
 
         File file = FileUtils.createRandomTestFileForClass(LoggingHubStreamTest.class);
@@ -39,20 +42,26 @@ public class LoggingHubStreamTest {
             loggingHubStream.setJava7GCLogging(true);
             loggingHubStream.setCpuLogging(true);
             loggingHubStream.setHeapLogging(true);
-            loggingHubStream.setPublishProcessTelemetry(true);
 
-            //            for (int i = 0; i < 1000; i++) {
-            //                Logger.getLoggerFor("test").info("This is a test : " + i);
-            //                byte[] block = new byte[10 * 1024 * 1024];
-            //                blocks.add(block);
-            //                ThreadUtils.sleep(100);
-            //            }
+            loggingHubStream.setPublishProcessTelemetry(true);
+            loggingHubStream.setPublishMachineTelemetry(true);
+            loggingHubStream.setPublishHumanReadableTelemetry(true);
+
+            loggingHubStream.setForceFlush(true);
+
+            for (int i = 0; i < 1000; i++) {
+                Logger.getLoggerFor("test").info("This is a test : " + i);
+                byte[] block = new byte[1 * 1024 * 1024];
+                blocks.add(block);
+                ThreadUtils.sleep(100);
+            }
         } finally {
             System.clearProperty("logginghub.debug");
             System.clearProperty("logginghub.levels.properties");
         }
     }
 
+    @Ignore
     @Test public void test_properties_from_resouce() {
 
         System.setProperty("logginghub.debug", "true");

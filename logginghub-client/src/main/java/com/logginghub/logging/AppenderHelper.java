@@ -21,7 +21,15 @@ import com.logginghub.logging.telemetry.SigarHelper;
 import com.logginghub.logging.telemetry.TelemetryHelper;
 import com.logginghub.logging.utils.InstanceDetailsContainsFilter;
 import com.logginghub.logging.utils.Java7GCMonitor;
-import com.logginghub.utils.*;
+import com.logginghub.utils.Destination;
+import com.logginghub.utils.NetUtils;
+import com.logginghub.utils.Result;
+import com.logginghub.utils.RunnableWorkerThread;
+import com.logginghub.utils.StringUtils;
+import com.logginghub.utils.ThreadUtils;
+import com.logginghub.utils.TimeProvider;
+import com.logginghub.utils.TimeUtils;
+import com.logginghub.utils.VLPorts;
 import com.logginghub.utils.data.DataStructure;
 import com.logginghub.utils.logging.GlobalLoggingParameters;
 import com.logginghub.utils.logging.Logger;
@@ -72,11 +80,23 @@ public class AppenderHelper {
     private boolean stackTraceModuleEnabled = true;
     private String stackTraceModuleBroadcastInterval = "0";
 
+    private boolean publishHumanReadableTelemetry = false;
+
     private Destination<DataStructure> telemetryListener = new Destination<DataStructure>() {
         public void send(DataStructure t) {
             try {
                 if (socketClient != null && socketClient.isConnected()) {
                     socketClient.send(new ChannelMessage(Channels.telemetryUpdates, t));
+
+                    if (publishHumanReadableTelemetry) {
+                        socketClient.send(new LogEventMessage(LogEventBuilder.start()
+                                                                             .setSourceApplication(sourceApplication)
+                                                                             .setChannel("telemetry")
+                                                                             .setLevel(Logger.fine)
+                                                                             .setMessage(t.toString())
+                                                                             .setPid(pid)
+                                                                             .toLogEvent()));
+                    }
                 }
             } catch (LoggingMessageSenderException e) {
                 // TODO : should we tell anyone about this?
@@ -435,6 +455,7 @@ public class AppenderHelper {
                         socketClient.send(new LogEventMessage(LogEventBuilder.start()
                                                                              .setChannel("gcmonitor")
                                                                              .setSourceApplication(sourceApplication)
+                                                                             .setPid(pid)
                                                                              .setMessage(
                                                                                      "GC pause {} ms collected {} kb - {}/{}/{}",
                                                                                      gcEvent.duration,
@@ -720,5 +741,9 @@ public class AppenderHelper {
 
     public int getAppended() {
         return appended;
+    }
+
+    public void setPublishHumanReadableTelemetry(boolean publishHumanReadableTelemetry) {
+        this.publishHumanReadableTelemetry = publishHumanReadableTelemetry;
     }
 }

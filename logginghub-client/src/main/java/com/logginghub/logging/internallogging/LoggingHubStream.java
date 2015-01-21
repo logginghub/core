@@ -284,6 +284,10 @@ public class LoggingHubStream implements LoggerStream, StandardAppenderFeatures 
         appenderHelper.setPublishMachineTelemetry(publishMachineTelemetry);
     }
 
+    public void setPublishHumanReadableTelemetry(boolean publishHumanReadableTelemetry) {
+        this.appenderHelper.setPublishHumanReadableTelemetry(publishHumanReadableTelemetry);
+    }
+
     public synchronized void setTelemetry(String connectionString) {
         appenderHelper.setTelemetry(connectionString);
     }
