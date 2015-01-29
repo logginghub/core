@@ -12,6 +12,7 @@ import com.logginghub.logging.messages.Channels;
 import com.logginghub.logging.messages.LogEventMessage;
 import com.logginghub.logging.messages.LoggingMessage;
 import com.logginghub.logging.messaging.SocketClient;
+import com.logginghub.logging.messaging.SocketClientManager;
 import com.logginghub.logging.messaging.SocketConnection.SlowSendingPolicy;
 import com.logginghub.logging.modules.StackCaptureConfiguration;
 import com.logginghub.logging.modules.StackCaptureModule;
@@ -56,6 +57,7 @@ public class AppenderHelper {
     private AppenderHelperCustomisationInterface customisationInterface;
 
     // private SocketPublisher m_publisher = new SocketPublisher();
+    private SocketClientManager socketClientManager;
     private SocketClient socketClient;
     private String sourceApplication = "<unknown source application>";
     // private LinkedList<DetailsSnapshot> eventsToBeDispatched = new
@@ -91,6 +93,7 @@ public class AppenderHelper {
                     if (publishHumanReadableTelemetry) {
                         socketClient.send(new LogEventMessage(LogEventBuilder.start()
                                                                              .setSourceApplication(sourceApplication)
+                                                                             .setSourceHost(hostOverride)
                                                                              .setChannel("telemetry")
                                                                              .setLevel(Logger.fine)
                                                                              .setMessage(t.toString())
@@ -122,6 +125,9 @@ public class AppenderHelper {
     private StackCaptureModule stackTraceModule;
     private int appended;
     private LevelSettingImplementation levelSettingImplementation;
+    private String environment;
+    private int instanceNumber = 1;
+    private String hostOverride = null;
 
     // public void setCustomisationInterface(AppenderHelperCustomisationInterface
     // customisationInterface) {
@@ -143,10 +149,9 @@ public class AppenderHelper {
         socketClient.setAutoSubscribe(false);
 
         // Add a default connection point for lazy configurations
-        socketClient.getConnector()
-                    .getConnectionPointManager()
-                    .setDefaultConnectionPoint(new InetSocketAddress("localhost",
-                                                                     LoggingPorts.getSocketHubDefaultPort()));
+        socketClient.getConnector().getConnectionPointManager().setDefaultConnectionPoint(new InetSocketAddress(
+                "localhost",
+                LoggingPorts.getSocketHubDefaultPort()));
 
         if (useDispatchThread) {
             Runnable runnable = new Runnable() {
@@ -239,7 +244,7 @@ public class AppenderHelper {
         host = StringUtils.environmentReplacement(host);
 
         List<InetSocketAddress> inetSocketAddresses = NetUtils.toInetSocketAddressList(host,
-                                                                                       VLPorts.getSocketHubDefaultPort());
+                VLPorts.getSocketHubDefaultPort());
         socketClient.addConnectionPoints(inetSocketAddresses);
 
         //        String[] split = host.split(":");
@@ -459,8 +464,8 @@ public class AppenderHelper {
                                                                              .setMessage(
                                                                                      "GC pause {} ms collected {} kb - {}/{}/{}",
                                                                                      gcEvent.duration,
-                                                                                     NumberFormat.getInstance()
-                                                                                                 .format(gcEvent.bytes / 1024f),
+                                                                                     NumberFormat.getInstance().format(
+                                                                                             gcEvent.bytes / 1024f),
                                                                                      gcEvent.type,
                                                                                      gcEvent.name,
                                                                                      gcEvent.cause)
@@ -548,24 +553,35 @@ public class AppenderHelper {
 
             StackCaptureConfiguration configuration = new StackCaptureConfiguration();
             configuration.setSnapshotInterval(stackTraceModuleBroadcastInterval);
-            configuration.setHost(NetUtils.getLocalHostname());
-            configuration.setEnvironment("environment");
+            if (hostOverride != null) {
+                configuration.setHost(hostOverride);
+            } else {
+                configuration.setHost(NetUtils.getLocalHostname());
+            }
+            configuration.setEnvironment(environment);
             configuration.parseApplicationName(sourceApplication);
+            configuration.setInstanceNumber(instanceNumber);
 
             // TODO : fill in other bits
-
             stackTraceModule.setChannelSubscriptions(socketClient);
             stackTraceModule.setLoggingMessageSender(socketClient);
             stackTraceModule.configure(configuration, null);
             stackTraceModule.start();
         }
 
+        socketClientManager = new SocketClientManager(socketClient);
+        socketClientManager.start();
     }
 
     public synchronized void stop() {
         if (stackTraceModule != null) {
             stackTraceModule.stop();
         }
+
+        if (socketClientManager != null) {
+            socketClientManager.stop();
+        }
+
     }
 
     public synchronized void close() {
@@ -745,5 +761,29 @@ public class AppenderHelper {
 
     public void setPublishHumanReadableTelemetry(boolean publishHumanReadableTelemetry) {
         this.publishHumanReadableTelemetry = publishHumanReadableTelemetry;
+    }
+
+    public void setEnvironment(String environment) {
+        this.environment = environment;
+    }
+
+    public String getEnvironment() {
+        return environment;
+    }
+
+    public void setInstanceNumber(int instanceNumber) {
+        this.instanceNumber = instanceNumber;
+    }
+
+    public int getInstanceNumber() {
+        return instanceNumber;
+    }
+
+    public void setHostOverride(String hostOverride) {
+        this.hostOverride = hostOverride;
+    }
+
+    public String getHostOverride() {
+        return hostOverride;
     }
 }

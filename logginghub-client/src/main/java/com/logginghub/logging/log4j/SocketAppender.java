@@ -121,6 +121,14 @@ public class SocketAppender extends AppenderSkeleton implements StandardAppender
         appenderHelper.setSourceApplication(sourceApplication);
     }
 
+    @Override public void setEnvironment(String environment) {
+        appenderHelper.setEnvironment(environment);
+    }
+
+    @Override public void setInstanceNumber(int instanceNumber) {
+        appenderHelper.setInstanceNumber(instanceNumber);
+    }
+
     public void setHost(String host) {
         appenderHelper.setHost(host);
     }

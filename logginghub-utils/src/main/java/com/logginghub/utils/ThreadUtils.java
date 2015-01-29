@@ -235,4 +235,8 @@ public class ThreadUtils {
 
         return threadAlive;
     }
+
+    public static void sleep(String s) {
+        sleep(TimeUtils.parseInterval(s));
+    }
 }

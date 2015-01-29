@@ -196,6 +196,14 @@ public class SocketAppender extends AppenderBase<ILoggingEvent> implements Stand
         appenderHelper.setSourceApplication(sourceApplication);
     }
 
+    @Override public void setEnvironment(String environment) {
+        appenderHelper.setEnvironment(environment);
+    }
+
+    @Override public void setInstanceNumber(int instanceNumber) {
+        appenderHelper.setInstanceNumber(instanceNumber);
+    }
+
     public String getSourceApplication() {
         return appenderHelper.getSourceApplication();
     }

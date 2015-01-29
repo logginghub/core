@@ -399,6 +399,10 @@ public abstract class WorkerThread {
         return executeOngoingPre(name, units.toMillis(interval), runnable);
     }
 
+    public static WorkerThread every(String name, String interval, Runnable runnable) {
+        return executeOngoingPre(name, TimeUtils.parseInterval(interval), runnable);
+    }
+
     public static WorkerThread everyNow(String name, long interval, TimeUnit units, Runnable runnable) {
         return executeOngoing(name, units.toMillis(interval), runnable);
     }

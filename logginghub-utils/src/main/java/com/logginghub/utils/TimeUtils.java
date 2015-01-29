@@ -305,6 +305,8 @@ public class TimeUtils {
 
     public static long parseInterval(String newValue) {
 
+        Is.notNullOrEmpty(newValue, "Value cannot be null or empty");
+
         String clean = newValue.replace(",", "");
         clean = clean.replace(" and", "");
         clean = clean.replace("and", "");

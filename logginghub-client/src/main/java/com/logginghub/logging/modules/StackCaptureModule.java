@@ -1,7 +1,5 @@
 package com.logginghub.logging.modules;
 
-import java.net.InetSocketAddress;
-
 import com.logginghub.logging.exceptions.ConnectorException;
 import com.logginghub.logging.interfaces.ChannelMessagingService;
 import com.logginghub.logging.interfaces.LoggingMessageSender;
@@ -15,6 +13,8 @@ import com.logginghub.utils.TimeUtils;
 import com.logginghub.utils.VLPorts;
 import com.logginghub.utils.module.Module;
 import com.logginghub.utils.module.ServiceDiscovery;
+
+import java.net.InetSocketAddress;
 
 public class StackCaptureModule implements Module<StackCaptureConfiguration> {
 
@@ -41,11 +41,16 @@ public class StackCaptureModule implements Module<StackCaptureConfiguration> {
 
     public void configure(StackCaptureConfiguration configuration, ServiceDiscovery discovery) {
         this.controller.configure(loggingMessageSender,
-                                  TimeUtils.parseInterval(configuration.getSnapshotInterval()),
-                                  configuration.getEnvironment(),
-                                  configuration.getHost(),
-                                  configuration.getInstanceType(),
-                                  configuration.getInstanceNumber());
+                TimeUtils.parseInterval(configuration.getSnapshotInterval()),
+                TimeUtils.parseInterval(configuration.getRequestInterval()),
+                configuration.isRespondToRequests(),
+                configuration.getEnvironment(),
+                configuration.getHost(),
+                configuration.getInstanceType(),
+                configuration.getInstanceNumber(),
+                0
+                // TODO : get the pid from somewhere, maybe another service?
+                                 );
     }
 
     public void start() {
@@ -89,8 +94,7 @@ public class StackCaptureModule implements Module<StackCaptureConfiguration> {
 
         try {
             Thread.sleep(Long.MAX_VALUE);
-        }
-        catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
 

@@ -7,11 +7,39 @@ import com.logginghub.logging.hub.configuration.FilterConfiguration;
 import com.logginghub.logging.hub.configuration.SocketHubConfiguration;
 import com.logginghub.logging.interfaces.FilteredMessageSender;
 import com.logginghub.logging.interfaces.LoggingMessageSender;
-import com.logginghub.logging.messages.*;
+import com.logginghub.logging.messages.ConnectedMessage;
+import com.logginghub.logging.messages.ConnectionTypeMessage;
+import com.logginghub.logging.messages.EventSubscriptionRequestMessage;
+import com.logginghub.logging.messages.EventSubscriptionResponseMessage;
+import com.logginghub.logging.messages.FilterRequestMessage;
+import com.logginghub.logging.messages.LogEventMessage;
+import com.logginghub.logging.messages.LoggingMessage;
+import com.logginghub.logging.messages.ResponseMessage;
+import com.logginghub.logging.messages.SubscriptionRequestMessage;
+import com.logginghub.logging.messages.SubscriptionResponseMessage;
+import com.logginghub.logging.messages.UnsubscriptionRequestMessage;
+import com.logginghub.logging.messages.UnsubscriptionResponseMessage;
 import com.logginghub.logging.messaging.SocketClient;
 import com.logginghub.logging.messaging.SocketConnection;
 import com.logginghub.logging.messaging.SocketConnectionInterface;
-import com.logginghub.utils.*;
+import com.logginghub.utils.Destination;
+import com.logginghub.utils.FactoryMap;
+import com.logginghub.utils.FileUtils;
+import com.logginghub.utils.FormattedRuntimeException;
+import com.logginghub.utils.IntegerStat;
+import com.logginghub.utils.Is;
+import com.logginghub.utils.Multiplexer;
+import com.logginghub.utils.NetUtils;
+import com.logginghub.utils.Source;
+import com.logginghub.utils.StreamListener;
+import com.logginghub.utils.StringUtils;
+import com.logginghub.utils.SystemErrExceptionHandler;
+import com.logginghub.utils.SystemTimeProvider;
+import com.logginghub.utils.Throttler;
+import com.logginghub.utils.TimeProvider;
+import com.logginghub.utils.TimeUtils;
+import com.logginghub.utils.VLPorts;
+import com.logginghub.utils.WorkerThread;
 import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.logging.UDPListener;
 import com.logginghub.utils.logging.UDPListener.PatternisedUDPData;
@@ -35,14 +63,13 @@ import java.util.logging.Level;
  *
  * @author James
  */
-@Provides({LogEvent.class, LoggingMessageSender.class})
-public class SocketHub implements ServerSocketConnectorListener,
-                                  Closeable,
-                                  Module<SocketHubConfiguration>,
-                                  Source<LogEvent>,
-                                  Destination<LogEvent>,
-                                  LoggingMessageSender,
-                                  SocketHubInterface {
+@Provides({LogEvent.class, LoggingMessageSender.class}) public class SocketHub implements ServerSocketConnectorListener,
+                                                                                          Closeable,
+                                                                                          Module<SocketHubConfiguration>,
+                                                                                          Source<LogEvent>,
+                                                                                          Destination<LogEvent>,
+                                                                                          LoggingMessageSender,
+                                                                                          SocketHubInterface {
 
     private static final Logger logger = Logger.getLoggerFor(SocketHub.class);
     private List<ServerSocketConnectorListener> connectionListeners = new CopyOnWriteArrayList<ServerSocketConnectorListener>();
@@ -77,8 +104,7 @@ public class SocketHub implements ServerSocketConnectorListener,
     private Throttler throttler = new Throttler(10, TimeUnit.SECONDS);
     private SocketHubConfiguration configuration;
     private FactoryMap<Class<? extends LoggingMessage>, List<SocketHubMessageHandler>> messageHandlers = new FactoryMap<Class<? extends LoggingMessage>, List<SocketHubMessageHandler>>() {
-        @Override
-        protected List<SocketHubMessageHandler> createEmptyValue(Class<? extends LoggingMessage> key) {
+        @Override protected List<SocketHubMessageHandler> createEmptyValue(Class<? extends LoggingMessage> key) {
             return new CopyOnWriteArrayList<SocketHubMessageHandler>();
         }
     };
@@ -110,8 +136,7 @@ public class SocketHub implements ServerSocketConnectorListener,
         subscribedConnections.add(logger);
     }
 
-    @Override
-    public void close() throws IOException {
+    @Override public void close() throws IOException {
         stop();
     }
 
@@ -124,7 +149,12 @@ public class SocketHub implements ServerSocketConnectorListener,
     }
 
     public int getPort() {
-        return listeningPort;
+
+        if (serverSocketConnector != null) {
+            return serverSocketConnector.getPort();
+        } else {
+            return listeningPort;
+        }
     }
 
     // //////////////////////////////////////////////////////////////////
@@ -164,8 +194,8 @@ public class SocketHub implements ServerSocketConnectorListener,
             connection.send(new ConnectedMessage(connectionID));
         } catch (LoggingMessageSenderException e) {
             logger.warn(e,
-                        "Failed to send connected message to connection '{}' - did they disconnect really quickly?",
-                        connection);
+                    "Failed to send connected message to connection '{}' - did they disconnect really quickly?",
+                    connection);
         }
 
         connectionsList.add(connection);
@@ -189,7 +219,7 @@ public class SocketHub implements ServerSocketConnectorListener,
                 source.send(new SubscriptionResponseMessage());
             } catch (LoggingMessageSenderException e) {
                 throw new RuntimeException("Failed to send subscription response message back to connection " + source,
-                                           e);
+                        e);
             }
         } else if (message instanceof UnsubscriptionRequestMessage) {
             logger.info("Unsubscribing {} from all events", source);
@@ -199,7 +229,7 @@ public class SocketHub implements ServerSocketConnectorListener,
                 source.send(new UnsubscriptionResponseMessage());
             } catch (LoggingMessageSenderException e) {
                 throw new RuntimeException("Failed to send subscription response message back to connection " + source,
-                                           e);
+                        e);
             }
         } else if (message instanceof EventSubscriptionRequestMessage) {
             EventSubscriptionRequestMessage request = (EventSubscriptionRequestMessage) message;
@@ -224,10 +254,10 @@ public class SocketHub implements ServerSocketConnectorListener,
 
             try {
                 source.send(new EventSubscriptionResponseMessage(request.getCorrelationID(),
-                                                                 request.isSubscribe(),
-                                                                 "",
-                                                                 true,
-                                                                 channels));
+                        request.isSubscribe(),
+                        "",
+                        true,
+                        channels));
             } catch (LoggingMessageSenderException e) {
                 logger.info(e, "Failed to send event subscription response  back to connection " + source);
             }
@@ -291,12 +321,12 @@ public class SocketHub implements ServerSocketConnectorListener,
         source.setLevelFilter(levelFilter);
     }
 
-//    public void processInternalLogEvent(LogEvent event) {
-//        forceHubTime(event);
-//
-//        LogEventMessage message = new LogEventMessage(event);
-//        processLogEvent(message, null);
-//    }
+    //    public void processInternalLogEvent(LogEvent event) {
+    //        forceHubTime(event);
+    //
+    //        LogEventMessage message = new LogEventMessage(event);
+    //        processLogEvent(message, null);
+    //    }
 
     // public void setTelemetryPort(int telemetryPort) {
     // this.telemetryPort = telemetryPort;
@@ -322,7 +352,10 @@ public class SocketHub implements ServerSocketConnectorListener,
             for (final FilteredMessageSender connection : subscribedConnections) {
                 if (connection != source) {
                     if (connection.getConnectionType() == SocketConnection.CONNECTION_TYPE_HUB_BRIDGE && source.getConnectionType() == SocketConnection.CONNECTION_TYPE_HUB_BRIDGE) {
-                        logger.finest("[{}] not sending message back to bridge connection {} (from {})", name, connection, source);
+                        logger.finest("[{}] not sending message back to bridge connection {} (from {})",
+                                name,
+                                connection,
+                                source);
                     } else {
                         logger.finest("[{}] sending to {} (from {})", name, connection, source);
                         connection.send(logEvent);
@@ -362,6 +395,7 @@ public class SocketHub implements ServerSocketConnectorListener,
     }
 
     public void start() {
+
         try {
             serverSocketConnector = new ServerSocketConnector(listeningPort, new SystemErrExceptionHandler());
         } catch (IOException e) {
@@ -376,8 +410,7 @@ public class SocketHub implements ServerSocketConnectorListener,
         if (useUDPListeners) {
             patternisedUDPListener = new UDPListener();
             patternisedUDPListener.getEventStream().addListener(new StreamListener<UDPListener.PatternisedUDPData>() {
-                @Override
-                public void onNewItem(PatternisedUDPData t) {
+                @Override public void onNewItem(PatternisedUDPData t) {
                     outputPatternisedEvent(t);
                 }
             });
@@ -461,8 +494,7 @@ public class SocketHub implements ServerSocketConnectorListener,
     private void startTimer() {
         long interval = TimeUtils.parseInterval(statsInterval);
         timer = WorkerThread.everyNow("SocketHub-stats", interval, TimeUnit.MILLISECONDS, new Runnable() {
-            @Override
-            public void run() {
+            @Override public void run() {
                 logStatus();
             }
         });
@@ -498,8 +530,7 @@ public class SocketHub implements ServerSocketConnectorListener,
 
     }
 
-    @Override
-    public void onBindFailure(ServerSocketConnector connector, IOException e) {
+    @Override public void onBindFailure(ServerSocketConnector connector, IOException e) {
         if (throttler.isOkToFire()) {
             logger.warning(
                     "Socket hub has failed to bind to port {} : {} - we'll try to bind 5 times every second until it succeeds, but you'll only see this error message once every 10 seconds.",
@@ -512,8 +543,7 @@ public class SocketHub implements ServerSocketConnectorListener,
         }
     }
 
-    @Override
-    public void onBound(ServerSocketConnector connector) {
+    @Override public void onBound(ServerSocketConnector connector) {
         throttler.reset();
         logger.info(StringUtils.format("Socket hub has successfully bound to port {}", connector.getPort()));
 
@@ -527,8 +557,7 @@ public class SocketHub implements ServerSocketConnectorListener,
         serverSocketConnector.waitUntilBound();
     }
 
-    @Override
-    public void configure(SocketHubConfiguration configuration, ServiceDiscovery serviceDiscovery) {
+    @Override public void configure(SocketHubConfiguration configuration, ServiceDiscovery serviceDiscovery) {
         this.configuration = configuration;
         setPort(configuration.getPort());
         setRestfulListenerPort(configuration.getRestfulListenerPort());
@@ -541,19 +570,16 @@ public class SocketHub implements ServerSocketConnectorListener,
         }
     }
 
-    @Override
-    public void send(LogEvent event) {
+    @Override public void send(LogEvent event) {
         LogEventMessage message = new LogEventMessage(event);
         processLogEvent(message, null);
     }
 
-    @Override
-    public void addDestination(Destination<LogEvent> listener) {
+    @Override public void addDestination(Destination<LogEvent> listener) {
         localListeners.addDestination(listener);
     }
 
-    @Override
-    public void removeDestination(Destination<LogEvent> listener) {
+    @Override public void removeDestination(Destination<LogEvent> listener) {
         localListeners.removeDestination(listener);
     }
 
@@ -592,13 +618,11 @@ public class SocketHub implements ServerSocketConnectorListener,
 
     }
 
-    @Override
-    public void addConnectionListener(ServerSocketConnectorListener listener) {
+    @Override public void addConnectionListener(ServerSocketConnectorListener listener) {
         connectionListeners.add(listener);
     }
 
-    @Override
-    public void removeConnectionListener(ServerSocketConnectorListener listener) {
+    @Override public void removeConnectionListener(ServerSocketConnectorListener listener) {
         connectionListeners.remove(listener);
     }
 

@@ -1,14 +1,18 @@
 <loggingFrontendConfiguration title="Local Configuration" showHistoryViewer="true" showChartingEditor="true" showHeapSlider="false">
 
+    <environment name="local" showHistoryTab="true">
+        <hub name="local" host="localhost:15000"/>
+    </environment>
+
     <!--
     <environment name="ec2" showHistoryTab="true">
         <hub name="vl-ec2" host="vl-ec2"/>
     </environment>
     -->
 
-    <environment name="local-cluster" clustered="true">
-        <hub name="hub1" host="localhost:15000"/>
-        <hub name="hub2" host="localhost:15001"/>
-    </environment>
+    <!--<environment name="local-cluster" clustered="true">-->
+        <!--<hub name="hub1" host="localhost:15000"/>-->
+        <!--<hub name="hub2" host="localhost:15001"/>-->
+    <!--</environment>-->
     
 </loggingFrontendConfiguration>

@@ -20,8 +20,8 @@ public class BrainScanController {
     private CountingTreeMap countingTreeMap = new CountingTreeMap();
     private EnvironmentMessagingService messagingService;
     
-    private Map<String, MutlipleThreadViewModel> threadViewModels = new HashMap<String, MutlipleThreadViewModel>();
-    private ObservableList<MutlipleThreadViewModel> threadViewModelsList= new ObservableList<MutlipleThreadViewModel>(new ArrayList<MutlipleThreadViewModel>());
+    private Map<String, ThreadsInProcessViewModel> threadViewModels = new HashMap<String, ThreadsInProcessViewModel>();
+    private ObservableList<ThreadsInProcessViewModel> threadViewModelsList= new ObservableList<ThreadsInProcessViewModel>(new ArrayList<ThreadsInProcessViewModel>());
     
     private ThreadGroupingModel threadGroupingModel = new ThreadGroupingModel();
 
@@ -45,31 +45,31 @@ public class BrainScanController {
 
     }
 
-    public MutlipleThreadViewModel getThreadViewModel(String key) {
+    public ThreadsInProcessViewModel getThreadViewModel(String key) {
         return threadViewModels.get(key);
     }
 
-    public ObservableList<MutlipleThreadViewModel> getThreadViewModelsList() {
+    public ObservableList<ThreadsInProcessViewModel> getThreadViewModelsList() {
         return threadViewModelsList;
     }
     
-    public void processStackTrace(StackSnapshot snapshot, StackTrace stackTrace) {
+    public synchronized void processStackTrace(StackSnapshot snapshot, StackTrace stackTrace) {
         long threadID = stackTrace.getThreadID();
         
         String instanceKey = snapshot.buildKey();
-        MutlipleThreadViewModel threadViewModel = threadViewModels.get(instanceKey);
+        ThreadsInProcessViewModel threadViewModel = threadViewModels.get(instanceKey);
         if(threadViewModel == null) {
-            threadViewModel = new MutlipleThreadViewModel();
+            threadViewModel = new ThreadsInProcessViewModel();
             threadViewModels.put(instanceKey, threadViewModel);
             threadViewModelsList.add(threadViewModel);
         }
         
         SingleThreadViewModel modelForThread = threadViewModel.getModelForThread(threadID, snapshot);
         
-        modelForThread.getEnvironment().set(snapshot.getEnvironment());
-        modelForThread.getHost().set(snapshot.getHost());
-        modelForThread.getInstanceType().set(snapshot.getInstanceType());
-        modelForThread.getInstanceNumber().set(snapshot.getInstanceNumber());
+//        modelForThread.getEnvironment().set(snapshot.getEnvironment());
+//        modelForThread.getHost().set(snapshot.getHost());
+//        modelForThread.getInstanceType().set(snapshot.getInstanceType());
+//        modelForThread.getInstanceNumber().set(snapshot.getInstanceNumber());
         
         modelForThread.getName().set(stackTrace.getThreadName());
         modelForThread.getStack().set(stackTrace.formatStack());
@@ -82,7 +82,7 @@ public class BrainScanController {
          
     }
 
-    public void clearData() {
+    public synchronized void clearData() {
         threadViewModelsList.clear();
         threadViewModels.clear();
     }

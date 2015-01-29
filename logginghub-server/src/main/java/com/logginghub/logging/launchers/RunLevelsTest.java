@@ -8,7 +8,7 @@ public class RunLevelsTest
 {
     public static void main(String[] args)
     {
-        LoggingUtils.loadLoggingConfiguration("/com/logginghub/logging/launchers/RunMockShopLogging.properties");
+        LoggingUtils.loadJDKLoggingConfiguration("/com/logginghub/logging/launchers/RunMockShopLogging.properties");
         Logger logger = Logger.getLogger(RunLevelsTest.class.getName());
         LoggingUtils.outputSampleLogging(logger);
     }

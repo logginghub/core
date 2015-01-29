@@ -16,10 +16,11 @@ public class StackSnapshot implements SerialisableObject {
     private int instanceNumber;
     private long timestamp;
     private StackTrace[] traces;
+    private int pid;
 
     public StackSnapshot() {}
 
-    public StackSnapshot(String environment, String host, String instanceType, int instanceNumber, long timestamp, StackTrace[] traces) {
+    public StackSnapshot(String environment, String host, String instanceType, int instanceNumber, int pid, long timestamp, StackTrace[] traces) {
         super();
         this.environment = environment;
         this.host = host;
@@ -27,6 +28,7 @@ public class StackSnapshot implements SerialisableObject {
         this.instanceNumber = instanceNumber;
         this.timestamp = timestamp;
         this.traces = traces;
+        this.pid = pid;
     }
 
     public String buildKey() {
@@ -86,8 +88,9 @@ public class StackSnapshot implements SerialisableObject {
         this.host = reader.readString(2);
         this.instanceType = reader.readString(3);
         this.instanceNumber = reader.readInt(4);
-        this.timestamp = reader.readLong(5);
-        this.traces = (StackTrace[]) reader.readObjectArray(6, StackTrace.class);
+        this.pid = reader.readInt(5);
+        this.timestamp = reader.readLong(6);
+        this.traces = (StackTrace[]) reader.readObjectArray(7, StackTrace.class);
     }
 
     public void write(SofWriter writer) throws SofException {
@@ -95,8 +98,9 @@ public class StackSnapshot implements SerialisableObject {
         writer.write(2, host);
         writer.write(3, instanceType);
         writer.write(4, instanceNumber);
-        writer.write(5, timestamp);
-        writer.write(6, traces, StackTrace.class);
+        writer.write(5, pid);
+        writer.write(6, timestamp);
+        writer.write(7, traces, StackTrace.class);
     }
 
     @Override public String toString() {
@@ -115,4 +119,11 @@ public class StackSnapshot implements SerialisableObject {
                "]";
     }
 
+    public int getPid() {
+        return pid;
+    }
+
+    public void setPid(int pid) {
+        this.pid = pid;
+    }
 }

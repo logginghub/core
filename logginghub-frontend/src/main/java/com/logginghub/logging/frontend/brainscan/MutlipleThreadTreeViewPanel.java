@@ -70,7 +70,7 @@ public class MutlipleThreadTreeViewPanel extends JPanel {
 
     }
 
-    public void bind(MutlipleThreadViewModel model) {
+    public void bind(ThreadsInProcessViewModel model) {
 
         model.getThreads().addListenerAndNotifyExisting(new ObservableListListener<SingleThreadViewModel>() {
             @Override public void onRemoved(SingleThreadViewModel t) {}

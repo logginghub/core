@@ -13,9 +13,11 @@ public interface StandardAppenderFeatures {
     void setMaximumQueuedMessages(int maximumQueuedMessages);
     void setDontThrowExceptionsIfHubIsntUp(boolean dontThrowExceptionsIfHubIsntUp);
     void setSourceApplication(String sourceApplication);
+    void setEnvironment(String environment);
+    void setInstanceNumber(int instanceNumber);
     void setHost(String host);
     void setCpuLogging(boolean value);
     void setGCLogging(String path);
     void setHeapLogging(boolean value);
-    
+
 }

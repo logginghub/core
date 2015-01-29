@@ -7,13 +7,15 @@ import com.logginghub.utils.StringUtils;
 public class StackCaptureConfiguration {
 
     // TODO : lower the default when we are done
-    private String snapshotInterval = "1 second";
+    private String snapshotInterval = "0";
 
     // TODO : have a go at guessing a lot of this stuff
     private int instanceNumber = 0;
     private String instanceType = "instance?";
     private String host = NetUtils.getLocalHostname();
     private String environment = "environment?";
+    private String requestInterval = "0";
+    private boolean respondToRequests = true;
 
     public void setSnapshotInterval(String snapshotInterval) {
         this.snapshotInterval = snapshotInterval;
@@ -83,4 +85,19 @@ public class StackCaptureConfiguration {
 
     }
 
+    public String getRequestInterval() {
+        return requestInterval;
+    }
+
+    public void setRequestInterval(String requestInterval) {
+        this.requestInterval = requestInterval;
+    }
+
+    public boolean isRespondToRequests() {
+        return respondToRequests;
+    }
+
+    public void setRespondToRequests(boolean respondToRequests) {
+        this.respondToRequests = respondToRequests;
+    }
 }

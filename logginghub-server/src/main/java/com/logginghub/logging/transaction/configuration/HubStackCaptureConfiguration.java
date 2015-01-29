@@ -10,15 +10,36 @@ import com.logginghub.utils.module.Configures;
 
 @Configures(HubStackCaptureModule.class) @XmlAccessorType(XmlAccessType.FIELD) public class HubStackCaptureConfiguration {
     // TODO : lower the default when we are done
-    @XmlAttribute private String snapshotInterval = "1 second";
+    @XmlAttribute private String snapshotInterval = "2000";
+    @XmlAttribute private String snapshotRequestInterval = "2000";
 
     // TODO : have a go at guessing a lot of this stuff
-    @XmlAttribute private int instanceNumber = 0;
-    @XmlAttribute private String instanceType = "instance?";
+    @XmlAttribute private int instanceNumber = 1;
+    @XmlAttribute private String instanceType = "logginghub";
     @XmlAttribute private String host = NetUtils.getLocalHostname();
     @XmlAttribute private String environment = "environment?";
 
     @XmlAttribute private String destinationRef;
+
+    @XmlAttribute private boolean respondToRequests=false;
+    @XmlAttribute private boolean outputToLog=false;
+    @XmlAttribute private String channel = "stack";
+
+    public boolean isOutputToLog() {
+        return outputToLog;
+    }
+
+    public void setOutputToLog(boolean outputToLog) {
+        this.outputToLog = outputToLog;
+    }
+
+    public void setRespondToRequests(boolean respondToRequests) {
+        this.respondToRequests = respondToRequests;
+    }
+
+    public boolean isRespondToRequests() {
+        return respondToRequests;
+    }
 
     public void setSnapshotInterval(String snapshotInterval) {
         this.snapshotInterval = snapshotInterval;
@@ -69,4 +90,19 @@ import com.logginghub.utils.module.Configures;
         this.destinationRef = destinationRef;
     }
 
+    public String getSnapshotRequestInterval() {
+        return snapshotRequestInterval;
+    }
+
+    public void setSnapshotRequestInterval(String snapshotRequestInterval) {
+        this.snapshotRequestInterval = snapshotRequestInterval;
+    }
+
+    public String getChannel() {
+        return channel;
+    }
+
+    public void setChannel(String channel) {
+        this.channel = channel;
+    }
 }

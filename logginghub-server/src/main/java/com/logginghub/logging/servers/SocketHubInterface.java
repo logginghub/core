@@ -1,5 +1,6 @@
 package com.logginghub.logging.servers;
 
+import com.logginghub.logging.DefaultLogEvent;
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.interfaces.FilteredMessageSender;
 import com.logginghub.logging.messages.LogEventMessage;
@@ -27,6 +28,7 @@ public interface SocketHubInterface {
     void processLogEvent(LogEventMessage message, SocketConnectionInterface source);
 
     void addAndSubscribeLocalListener(FilteredMessageSender logger);
-    
 
+
+    void send(LogEvent event);
 }

@@ -97,6 +97,14 @@ public class LoggingHubStream implements LoggerStream, StandardAppenderFeatures 
         appenderHelper.setSourceApplication(sourceApplication);
     }
 
+    @Override public void setEnvironment(String environment) {
+        appenderHelper.setEnvironment(environment);
+    }
+
+    @Override public void setInstanceNumber(int instanceNumber) {
+        appenderHelper.setInstanceNumber(instanceNumber);
+    }
+
     public String getSourceApplication() {
         return appenderHelper.getSourceApplication();
     }
@@ -157,7 +165,7 @@ public class LoggingHubStream implements LoggerStream, StandardAppenderFeatures 
         String property = metadata.getString("connectionPoints");
         if (property != null) {
             List<InetSocketAddress> parseAddressAndPortList = NetUtils.toInetSocketAddressList(property,
-                                                                                               LoggingPorts.getSocketHubDefaultPort());
+                    LoggingPorts.getSocketHubDefaultPort());
             appenderHelper.replaceConnectionList(parseAddressAndPortList);
         }
 
@@ -266,6 +274,14 @@ public class LoggingHubStream implements LoggerStream, StandardAppenderFeatures 
         }
 
         appenderHelper.start();
+    }
+
+    public void start() {
+        appenderHelper.start();
+    }
+
+    public void stop() {
+        appenderHelper.stop();
     }
 
     public void waitUntilAllRecordsHaveBeenPublished() {
@@ -394,12 +410,16 @@ public class LoggingHubStream implements LoggerStream, StandardAppenderFeatures 
 
             public LogEvent createLogEvent() {
                 VLLogEvent event = new VLLogEvent(vlevent,
-                                                  appenderHelper.getPid(),
-                                                  appenderHelper.getSourceApplication(),
-                                                  appenderHelper.getHost());
+                        appenderHelper.getPid(),
+                        appenderHelper.getSourceApplication(),
+                        appenderHelper.getHost());
                 event.setChannel(appenderHelper.getChannel());
                 return event;
             }
         });
+    }
+
+    public void setHostOverride(String hostOverride) {
+        appenderHelper.setHostOverride(hostOverride);
     }
 }

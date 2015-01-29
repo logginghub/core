@@ -1,19 +1,27 @@
 package com.logginghub.logging.launchers;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-
 import com.logginghub.logging.container.LoggingContainer;
 import com.logginghub.utils.MainUtils;
 import com.logginghub.utils.Out;
 import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.logging.SystemErrStream;
 
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
+
 public class RunHub implements Closeable {
 
     private static final Logger logger = Logger.getLoggerFor(RunHub.class);
     private LoggingContainer container;
+
+    public void stop() {
+        try {
+            close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public static void main(String[] args) throws Exception {
         mainInternal(args);
@@ -21,7 +29,7 @@ public class RunHub implements Closeable {
 
     public static RunHub mainInternal(String... args) throws Exception {
         Logger.setLevelFromSystemProperty();
-        SystemErrStream.gapThreshold = 1100;       
+        SystemErrStream.gapThreshold = 1100;
 
         String configurationFilename = MainUtils.getStringArgument(args, 0, "hub.xml");
         Out.out("config = {}", configurationFilename);
@@ -29,7 +37,8 @@ public class RunHub implements Closeable {
 
         File configurationFile = new File(configurationFilename);
         if (configSearch) {
-            logger.info("Original configuration is here '{}', but the config parent search feature has been turned on", configurationFilename);
+            logger.info("Original configuration is here '{}', but the config parent search feature has been turned on",
+                    configurationFilename);
             File parentConfig = searchParentFolders(configurationFile);
             if (parentConfig != null) {
                 configurationFile = parentConfig;
@@ -41,11 +50,16 @@ public class RunHub implements Closeable {
             RunHub hub = new RunHub();
             hub.container = LoggingContainer.createContainer(configurationFile.getAbsolutePath());
             return hub;
-        }
-        else {
+        } else {
             logger.warning("Failed to find configuration file '{}'", configurationFile.getAbsolutePath());
             return null;
         }
+    }
+
+    public static RunHub fromConfiguration(String resourcePath) {
+        RunHub hub = new RunHub();
+        hub.container = LoggingContainer.createContainer(resourcePath);
+        return hub;
     }
 
     private static File searchParentFolders(File configurationFile) {
@@ -55,12 +69,11 @@ public class RunHub implements Closeable {
 
         try {
             folder = folder.getCanonicalFile();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             // Probably means this is a dodgy folder
             logger.warning(e,
-                           "Failed to turn the configuration path provided ({}) into a real folder, can you double check its a legitimate folder?",
-                           configurationFile.getAbsolutePath());
+                    "Failed to turn the configuration path provided ({}) into a real folder, can you double check its a legitimate folder?",
+                    configurationFile.getAbsolutePath());
         }
 
         File found = configurationFile;
@@ -80,14 +93,12 @@ public class RunHub implements Closeable {
         if (attempt.exists()) {
             found = attempt;
             logger.debug("A parent configuration has been found here '{}'", found.getAbsolutePath());
-        }
-        else {
+        } else {
 
             File grandParent = parent.getParentFile();
             if (grandParent != null) {
                 found = recursiveSearch(filename, grandParent);
-            }
-            else {
+            } else {
                 found = null;
             }
         }
@@ -97,13 +108,13 @@ public class RunHub implements Closeable {
     }
 
     @Override public void close() throws IOException {
-        if(container != null) {
+        if (container != null) {
             container.stop();
         }
     }
 
     public <T> T getFirst(Class<T> clazz) {
-        return (T)container.getFirst(clazz);
+        return (T) container.getFirst(clazz);
     }
 
 }

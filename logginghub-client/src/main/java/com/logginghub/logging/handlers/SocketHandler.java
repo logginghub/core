@@ -100,6 +100,14 @@ public class SocketHandler extends Handler implements PropertyChangeListener, St
         appenderHelper.setSourceApplication(sourceApplication);
     }
 
+    @Override public void setEnvironment(String environment) {
+        appenderHelper.setEnvironment(environment);
+    }
+
+    @Override public void setInstanceNumber(int instanceNumber) {
+        appenderHelper.setInstanceNumber(instanceNumber);
+    }
+
     public String getSourceApplication() {
         return appenderHelper.getSourceApplication();
     }

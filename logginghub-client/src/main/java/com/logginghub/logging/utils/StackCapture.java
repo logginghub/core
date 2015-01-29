@@ -23,7 +23,7 @@ public class StackCapture {
         this.timeProvider = timeProvider;
     }
 
-    public StackSnapshot capture(String environment, String host, String instanceType, int instanceNumber) {
+    public StackSnapshot capture(String environment, String host, String instanceType, int instanceNumber, int pid) {
 
         long time = timeProvider.getTime();
         Map<Thread, StackTraceElement[]> allStackTraces = Thread.getAllStackTraces();
@@ -66,7 +66,7 @@ public class StackCapture {
             }
         });
 
-        StackSnapshot snapshot = new StackSnapshot(environment, host, instanceType, instanceNumber, time, traces.toArray(new StackTrace[traces.size()]));
+        StackSnapshot snapshot = new StackSnapshot(environment, host, instanceType, instanceNumber, pid, time, traces.toArray(new StackTrace[traces.size()]));
         return snapshot;
     }
 

@@ -870,7 +870,7 @@ public class FileUtils {
         return randomFolder;
     }
 
-    public static File getRandomFolder(String string) {
+    public static synchronized File getRandomFolder(String string) {
         int index = 0;
         File folder = new File(string + index);
         while (folder.exists()) {
@@ -881,7 +881,7 @@ public class FileUtils {
         return folder;
     }
 
-    public static File getRandomFile(String foldername, String prefix, String postfix) {
+    public static synchronized File getRandomFile(String foldername, String prefix, String postfix) {
         File folder = new File(foldername);
         folder.mkdirs();
         File file = new File(folder, StringUtils.format("{}{}{}", prefix, StringUtils.randomString(5), postfix));
@@ -1857,6 +1857,18 @@ public class FileUtils {
         }
         catch (IOException e) {
             throw new FormattedRuntimeException(e, "Failed to append line '{}' to file '{}'", key, progressFile.getAbsolutePath());
+        }
+    }
+
+    public static void appendLine(File file, String message, Object... params) {
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(file, true));
+            writer.append(StringUtils.format(message, params));
+            writer.newLine();
+            writer.close();
+        }
+        catch (IOException e) {
+            throw new FormattedRuntimeException(e, "Failed to append line '{}' to file '{}'", message, file.getAbsolutePath());
         }
     }
 

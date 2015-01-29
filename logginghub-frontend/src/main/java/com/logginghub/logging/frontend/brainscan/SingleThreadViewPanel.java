@@ -5,6 +5,7 @@ import java.awt.Font;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
+import javax.swing.text.DefaultCaret;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -33,6 +34,8 @@ public class SingleThreadViewPanel extends JPanel {
         add(stateLabel, "cell 1 0");
 
         stackArea = new JTextArea();
+        DefaultCaret caret = (DefaultCaret) stackArea.getCaret();
+        caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
         stackArea.setFont(monospaced10);
         stackArea.setEditable(false);
         add(stackArea, "cell 0 1 2 1,grow");

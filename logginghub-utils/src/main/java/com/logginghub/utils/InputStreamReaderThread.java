@@ -18,6 +18,7 @@ public class InputStreamReaderThread {
 
     private StringBuilder lineBuffer = new StringBuilder();
     private InputStream inputStream;
+    private boolean daemon = false;
     private PrintStream echo;
 
     private List<InputStreamReaderThreadListener> listeners = new CopyOnWriteArrayList<InputStreamReaderThreadListener>();
@@ -30,6 +31,14 @@ public class InputStreamReaderThread {
 
     public InputStreamReaderThread(InputStream errorStream, InputStreamReaderThreadListener listener) {
         this.inputStream = errorStream;
+        if (listener != null) {
+            addListener(listener);
+        }
+    }
+
+    public InputStreamReaderThread(InputStream errorStream, InputStreamReaderThreadListener listener, boolean daemon) {
+        this.inputStream = errorStream;
+        this.daemon = daemon;
         if (listener != null) {
             addListener(listener);
         }
@@ -89,6 +98,7 @@ public class InputStreamReaderThread {
             }
         }, name);
 
+        thread.setDaemon(daemon);
         thread.start();
     }
 

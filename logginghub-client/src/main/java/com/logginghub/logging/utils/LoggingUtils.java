@@ -164,7 +164,7 @@ public class LoggingUtils {
         return level;
     }
 
-    public static void loadLoggingConfiguration(String filename) {
+    public static void loadJDKLoggingConfiguration(String filename) {
         try {
             InputStream resourceAsStream = LoggingUtils.class.getResourceAsStream(filename);
 

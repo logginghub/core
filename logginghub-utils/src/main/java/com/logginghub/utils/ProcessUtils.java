@@ -127,4 +127,48 @@ public class ProcessUtils {
         }
     }
 
+    public static void startOutputThreads(Process exec) {
+        new InputStreamReaderThread(exec.getInputStream(), new InputStreamReaderThreadListener() {
+            @Override public void onCharacter(char c) {
+
+            }
+
+            @Override public void onLine(String line) {
+                System.out.println(line);
+            }
+        }).start();
+
+        new InputStreamReaderThread(exec.getErrorStream(), new InputStreamReaderThreadListener() {
+            @Override public void onCharacter(char c) {
+
+            }
+
+            @Override public void onLine(String line) {
+                System.err.println(line);
+            }
+        }).start();
+
+    }
+
+    public static void startDaemonOutputThreads(Process exec) {
+        new InputStreamReaderThread(exec.getInputStream(), new InputStreamReaderThreadListener() {
+            @Override public void onCharacter(char c) {
+
+            }
+
+            @Override public void onLine(String line) {
+                System.out.println(line);
+            }
+        }, true).start();
+
+        new InputStreamReaderThread(exec.getErrorStream(), new InputStreamReaderThreadListener() {
+            @Override public void onCharacter(char c) {
+
+            }
+
+            @Override public void onLine(String line) {
+                System.err.println(line);
+            }
+        }, true).start();
+    }
 }
