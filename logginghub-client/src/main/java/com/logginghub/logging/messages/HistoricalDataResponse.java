@@ -20,6 +20,8 @@ public class HistoricalDataResponse extends BaseRequestResponseMessage implement
         return events;
     }
 
+    private int jobNumber;
+
     public void setEvents(DefaultLogEvent[] events) {
         this.events = events;
     }
@@ -29,6 +31,7 @@ public class HistoricalDataResponse extends BaseRequestResponseMessage implement
         this.compressedBlock = (CompressedBlock<DefaultLogEvent>) reader.readObject(2);
         this.events = compressedBlock.decodeAll(DefaultLogEvent.class);
         this.lastBatch = reader.readBoolean(3);
+        this.jobNumber = reader.readInt(4);
     }
 
     public void write(SofWriter writer) throws SofException {
@@ -37,7 +40,16 @@ public class HistoricalDataResponse extends BaseRequestResponseMessage implement
         writer.write(1, getCorrelationID());
         writer.write(2, compressedBlock);
         writer.write(3, lastBatch);
+        writer.write(4, jobNumber);
         
+    }
+
+    public void setJobNumber(int jobNumber) {
+        this.jobNumber = jobNumber;
+    }
+
+    public int getJobNumber() {
+        return jobNumber;
     }
 
     public void setLastBatch(boolean lastBatch) {

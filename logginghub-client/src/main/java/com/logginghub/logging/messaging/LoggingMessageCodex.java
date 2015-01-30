@@ -158,8 +158,10 @@ public class LoggingMessageCodex {
             registerType(HealthCheckRequest.class, 55);
             registerType(HealthCheckResponse.class, 56);
 
-
             registerType(ConnectionTypeMessage.class, 57);
+
+            registerType(HistoricalDataJobKillRequest.class, 58);
+            registerType(BaseRequestResponseMessage.class, 59);
 
         }
     };

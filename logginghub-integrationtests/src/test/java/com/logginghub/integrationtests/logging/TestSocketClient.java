@@ -72,6 +72,13 @@ public class TestSocketClient {
         client.connect();
         assertThat(client.isConnected(), is(true));
 
+        // Wait for the hub to send the client it's connectionId
+        ThreadUtils.repeatUntilTrue(new Callable<Boolean>() {
+            @Override public Boolean call() throws Exception {
+                return client.getConnectionID() != -1;
+            }
+        });
+
         assertThat(client.getConnectionID(), is(0));
 
     }

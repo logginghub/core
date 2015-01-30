@@ -10,7 +10,7 @@ import com.logginghub.utils.module.Configures;
 
 @Configures(HubStackCaptureModule.class) @XmlAccessorType(XmlAccessType.FIELD) public class HubStackCaptureConfiguration {
     // TODO : lower the default when we are done
-    @XmlAttribute private String snapshotInterval = "2000";
+    @XmlAttribute private String snapshotBroadcastInterval = "2000";
     @XmlAttribute private String snapshotRequestInterval = "2000";
 
     // TODO : have a go at guessing a lot of this stuff
@@ -41,12 +41,12 @@ import com.logginghub.utils.module.Configures;
         return respondToRequests;
     }
 
-    public void setSnapshotInterval(String snapshotInterval) {
-        this.snapshotInterval = snapshotInterval;
+    public void setSnapshotBroadcastInterval(String snapshotBroadcastInterval) {
+        this.snapshotBroadcastInterval = snapshotBroadcastInterval;
     }
 
-    public String getSnapshotInterval() {
-        return snapshotInterval;
+    public String getSnapshotBroadcastInterval() {
+        return snapshotBroadcastInterval;
     }
 
     public void setEnvironment(String environment) {

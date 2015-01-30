@@ -1,19 +1,13 @@
 package com.logginghub.logging.modules;
 
-import java.io.EOFException;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 import com.logginghub.logging.DefaultLogEvent;
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.exceptions.LoggingMessageSenderException;
 import com.logginghub.logging.filters.LogEventLevelFilter;
 import com.logginghub.logging.filters.MultipleEventContainsFilter;
 import com.logginghub.logging.interfaces.QueueAwareLoggingMessageSender;
+import com.logginghub.logging.messages.BaseRequestResponseMessage;
+import com.logginghub.logging.messages.HistoricalDataJobKillRequest;
 import com.logginghub.logging.messages.HistoricalDataRequest;
 import com.logginghub.logging.messages.HistoricalDataResponse;
 import com.logginghub.logging.messages.LoggingMessage;
@@ -41,6 +35,17 @@ import com.logginghub.utils.sof.SerialisableObject;
 import com.logginghub.utils.sof.SofConfiguration;
 import com.logginghub.utils.sof.SofException;
 
+import java.io.EOFException;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class DiskHistoryModule implements Module<DiskHistoryConfiguration>, HistoryService {
 
     private static final Logger logger = Logger.getLoggerFor(DiskHistoryModule.class);
@@ -54,15 +59,19 @@ public class DiskHistoryModule implements Module<DiskHistoryConfiguration>, Hist
     private SofBlockStreamRotatingWriter writer;
     private SofBlockStreamRotatingReader reader;
 
+    private AtomicInteger nextJobNumber = new AtomicInteger(0);
+
+    private Map<Integer, Boolean> jobKillFlags = new HashMap<Integer, Boolean>();
+
     /**
-     * Used for testing that things have been flushed, it bypasses checking the unflushed data
-     * buffers
+     * Used for testing that things have been flushed, it bypasses checking the unflushed data buffers
      */
     private boolean checkLatest = true;
 
     private WorkerThread indexPublisher;
 
-    @SuppressWarnings("unchecked") @Override public void configure(DiskHistoryConfiguration configuration, ServiceDiscovery discovery) {
+    @SuppressWarnings("unchecked") @Override
+    public void configure(DiskHistoryConfiguration configuration, ServiceDiscovery discovery) {
         this.configuration = configuration;
 
         File folder = new File(configuration.getFolder());
@@ -92,16 +101,36 @@ public class DiskHistoryModule implements Module<DiskHistoryConfiguration>, Hist
             }
         });
 
+        socketHub.addMessageListener(HistoricalDataJobKillRequest.class, new SocketHubMessageHandler() {
+            @Override public void handle(final LoggingMessage message, final SocketConnectionInterface source) {
+                handleJobKillRequest((HistoricalDataJobKillRequest) message, source);
+            }
+        });
+
         if (!configuration.isReadOnly()) {
             @SuppressWarnings("unchecked") Source<LogEvent> eventSource = discovery.findService(Source.class,
-                                                                                                LogEvent.class,
-                                                                                                configuration.getLogEventSourceRef());
+                    LogEvent.class,
+                    configuration.getLogEventSourceRef());
             eventSource.addDestination(new Destination<LogEvent>() {
                 @Override public void send(LogEvent t) {
                     DiskHistoryModule.this.send(t);
                 }
             });
         }
+    }
+
+    private void handleJobKillRequest(HistoricalDataJobKillRequest message, SocketConnectionInterface source) {
+
+        jobKillFlags.put(message.getJobNumber(), true);
+
+        BaseRequestResponseMessage response = new BaseRequestResponseMessage();
+        response.setCorrelationID(message.getCorrelationID());
+        try {
+            source.send(response);
+        } catch (LoggingMessageSenderException e) {
+            logger.info(e, "Failed to send job kill response");
+        }
+
     }
 
     public void dumpIndex() throws IOException, SofException {
@@ -111,8 +140,8 @@ public class DiskHistoryModule implements Module<DiskHistoryConfiguration>, Hist
     public HistoricalDataResponse handleDataRequest(HistoricalDataRequest message) {
 
         logger.fine("Handling data request : from '{}' to '{}'",
-                    Logger.toDateString(message.getStart()),
-                    Logger.toDateString(message.getEnd()));
+                Logger.toDateString(message.getStart()),
+                Logger.toDateString(message.getEnd()));
 
         final List<LogEvent> matchingEvents = new ArrayList<LogEvent>();
 
@@ -124,19 +153,16 @@ public class DiskHistoryModule implements Module<DiskHistoryConfiguration>, Hist
 
         try {
             reader.visit(message.getStart(), message.getEnd(), visitor, message.isMostRecentFirst());
-        }
-        catch (SofException e) {
+        } catch (SofException e) {
             logger.warn(e, "Failed to extract historical index elements for request '{}'", message);
         }
 
         if (checkLatest) {
             try {
-                writer.visitLatest(message.getStart(), message.getEnd(), visitor);
-            }
-            catch (SofException e) {
+                writer.visitLatest(message.getStart(), message.getEnd(), visitor, message.isMostRecentFirst());
+            } catch (SofException e) {
                 logger.warn(e, "Failed to extract historical index elements for request '{}'", message);
-            }
-            catch (EOFException e) {
+            } catch (EOFException e) {
                 logger.warn(e, "Failed to extract historical index elements for request '{}'", message);
             }
         }
@@ -150,13 +176,18 @@ public class DiskHistoryModule implements Module<DiskHistoryConfiguration>, Hist
         return response;
     }
 
-    public void handleDataRequestStreaming(final HistoricalDataRequest message, final QueueAwareLoggingMessageSender source) {
+    public void handleDataRequestStreaming(final HistoricalDataRequest message,
+                                           final QueueAwareLoggingMessageSender source) {
+
+        final int jobNumber = nextJobNumber.getAndIncrement();
+        jobKillFlags.put(jobNumber, false);
+
         Stopwatch sw = Stopwatch.start("");
         logger.info("Handling streaming data request : from '{}' to '{}' : level filter '{}' and quick filter '{}'",
-                    Logger.toDateString(message.getStart()),
-                    Logger.toDateString(message.getEnd()),
-                    message.getLevelFilter(),
-                    message.getQuickfilter());
+                Logger.toDateString(message.getStart()),
+                Logger.toDateString(message.getEnd()),
+                message.getLevelFilter(),
+                message.getQuickfilter());
 
         final List<LogEvent> batch = new ArrayList<LogEvent>();
 
@@ -175,7 +206,14 @@ public class DiskHistoryModule implements Module<DiskHistoryConfiguration>, Hist
                 if (eventFilter.passes(event)) {
                     batch.add(event);
                     if (batch.size() == configuration.getStreamingBatchSize()) {
-                        sendBatch(batch, message, source, false);
+
+                        if (jobKillFlags.get(jobNumber)) {
+                            logger.info("Job kill flag detected, killing historical search job");
+                            throw new JobKilledException();
+                        }
+
+                        logger.debug("Sending batched data");
+                        sendBatch(batch, message, source, jobNumber, false);
                         batch.clear();
                         counter.increment();
                     }
@@ -184,61 +222,99 @@ public class DiskHistoryModule implements Module<DiskHistoryConfiguration>, Hist
             }
         };
 
+        boolean killed = false;
+
+        if(message.isMostRecentFirst()) {
+            if (!killed) {
+                killed = visitLatest(message, visitor);
+            }
+
+            if(!killed) {
+                killed = visitOlder(message, visitor);
+            }
+        }else{
+            if(!killed) {
+                killed = visitOlder(message, visitor);
+            }
+
+            if (!killed) {
+                killed = visitLatest(message, visitor);
+            }
+        }
+
+        if (!killed) {
+            sendBatch(batch, message, source, jobNumber, true);
+            counter.increment();
+        }
+
+        logger.info(
+                "Handling streaming data request completed successfully in {} : from '{}' to '{}' : {} elements sent in {} batches",
+                sw.stopAndFormat(),
+                Logger.toDateString(message.getStart()),
+                Logger.toDateString(message.getEnd()),
+                elements.value,
+                counter.value);
+
+    }
+
+    private boolean visitOlder(HistoricalDataRequest message, Destination<SerialisableObject> visitor) {
+        boolean killed = false;
         try {
             reader.visit(message.getStart(), message.getEnd(), visitor, message.isMostRecentFirst());
-        }
-        catch (SofException e) {
+        } catch (SofException e) {
             logger.warn(e, "Failed to extract historical index elements for request '{}'", message);
+        } catch (JobKilledException e) {
+            killed = true;
+            logger.info("Job was killed, all done");
+        }
+        return killed;
+    }
+
+    private boolean visitLatest(HistoricalDataRequest message, Destination<SerialisableObject> visitor) {
+        boolean killed = false;
+        try {
+            Stopwatch latestSW = Stopwatch.start("Visiting latest events");
+            writer.visitLatest(message.getStart(), message.getEnd(), visitor, message.isMostRecentFirst());
+            logger.info("{}", latestSW.stopAndFormat());
+        } catch (SofException e) {
+            logger.warn(e, "Failed to extract historical index elements for request '{}'", message);
+        } catch (EOFException e) {
+            logger.warn(e, "Failed to extract historical index elements for request '{}'", message);
+        } catch (JobKilledException e) {
+            logger.info("Job was killed, all done");
+            killed = true;
         }
 
-        if (checkLatest) {
-            try {
-                Stopwatch latestSW = Stopwatch.start("Visiting latest events");
-                writer.visitLatest(message.getStart(), message.getEnd(), visitor);
-                logger.info("{}", latestSW.stopAndFormat());
-            }
-            catch (SofException e) {
-                logger.warn(e, "Failed to extract historical index elements for request '{}'", message);
-            }
-            catch (EOFException e) {
-                logger.warn(e, "Failed to extract historical index elements for request '{}'", message);
-            }
-        }
-
-        sendBatch(batch, message, source, true);
-        counter.increment();
-
-        logger.info("Handling streaming data request completed successfully in {} : from '{}' to '{}' : {} elements sent in {} batches",
-                    sw.stopAndFormat(),
-                    Logger.toDateString(message.getStart()),
-                    Logger.toDateString(message.getEnd()),
-                    elements.value,
-                    counter.value);
-
+        return killed;
     }
 
     private void sendBatch(List<LogEvent> eventBatch,
                            final HistoricalDataRequest message,
                            final QueueAwareLoggingMessageSender source,
+                           int jobNumber,
                            boolean lastBatch) {
         DefaultLogEvent[] responseEvents = eventBatch.toArray(new DefaultLogEvent[eventBatch.size()]);
         HistoricalDataResponse response = new HistoricalDataResponse();
         response.setEvents(responseEvents);
         response.setCorrelationID(message.getCorrelationID());
         response.setLastBatch(lastBatch);
-
+        response.setJobNumber(jobNumber);
         try {
+            boolean first = true;
             while (!source.isSendQueueEmpty()) {
+                if (first) {
+                    logger.debug("Pausing historical stream to wait for client to catch up...");
+                    first = false;
+                }
                 ThreadUtils.sleep(10);
             }
             source.send(response);
-        }
-        catch (LoggingMessageSenderException e) {
+        } catch (LoggingMessageSenderException e) {
             logger.warning(e,
-                           "Data request failed in {} ms : responding to requestID '{}' with '{}' elements",
-                           "?",
-                           response.getCorrelationID(),
-                           response.getEvents().length);
+                    "Data request failed in {} ms : responding to requestID '{}' with '{}' elements",
+                    "?",
+                    response.getCorrelationID(),
+                    response.getEvents().length);
         }
 
     }
@@ -269,15 +345,12 @@ public class DiskHistoryModule implements Module<DiskHistoryConfiguration>, Hist
             DefaultLogEvent defaultLogEvent = (DefaultLogEvent) t;
             try {
                 writer.send(defaultLogEvent);
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
+                logger.warn(e, "Failed to write log event to disk");
+            } catch (SofException e) {
                 logger.warn(e, "Failed to write log event to disk");
             }
-            catch (SofException e) {
-                logger.warn(e, "Failed to write log event to disk");
-            }
-        }
-        else {
+        } else {
             logger.fine("Ignoring non-default log event '{}'", t);
         }
     }

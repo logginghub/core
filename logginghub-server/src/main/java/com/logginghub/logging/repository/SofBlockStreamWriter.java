@@ -4,13 +4,16 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.BufferOverflowException;
+import java.nio.ByteBuffer;
 
 import com.logginghub.utils.ByteUtils;
 import com.logginghub.utils.Destination;
 import com.logginghub.utils.logging.Logger;
+import com.logginghub.utils.sof.ByteBufferReaderAbstraction;
 import com.logginghub.utils.sof.SerialisableObject;
 import com.logginghub.utils.sof.SofConfiguration;
 import com.logginghub.utils.sof.SofException;
+import com.logginghub.utils.sof.SofSerialiser;
 
 public class SofBlockStreamWriter {
 
@@ -33,12 +36,13 @@ public class SofBlockStreamWriter {
         while (!written && retry < 2) {
             try {
                 block.write(object);
+                logger.trace("Writing object to in memory block : {} [attempt {}]", object, retry);
                 written = true;
             }
             catch (BufferOverflowException boe) {
                 String blockInfo = block.toString();
                 writeCurrentBlock();
-                logger.fine("Writing current block after overflow '{}' - now written {} MB", blockInfo, ByteUtils.formatMB((double) bytesWritten));
+                logger.trace("Writing current block to after overflow '{}' - now written {} MB", blockInfo, ByteUtils.formatMB((double) bytesWritten));
                 retry++;
             }
         }
@@ -50,6 +54,7 @@ public class SofBlockStreamWriter {
 
     public synchronized void writeCurrentBlock() throws SofException, IOException {
         bytesWritten += block.writeTo(outputStream);
+        outputStream.flush();
 
         long compressLength = block.getCompressLength();
         long uncompressedLength = block.getUncompressedLength();
@@ -57,6 +62,7 @@ public class SofBlockStreamWriter {
                     compressLength,
                     uncompressedLength,
                     100d * compressLength / (double) uncompressedLength);
+
 
         block.reset();
     }
@@ -87,8 +93,15 @@ public class SofBlockStreamWriter {
         return bytesWritten + block.position();
     }
 
-    public void visitLatest(long start, long end, Destination<SerialisableObject> destination) throws EOFException, SofException {        
-        block.visitLatest(start, end, destination);
+    public void visitLatest(long start, long end, Destination<SerialisableObject> destination, boolean mostRecentFirst) throws EOFException, SofException {
+
+        TimeFilterDestination filter = new TimeFilterDestination(destination, start, end);
+
+        if(mostRecentFirst){
+            block.visitBackwards(filter);
+        } else {
+            block.visitForwards(filter);
+        }
     }
 
 }

@@ -67,7 +67,7 @@ public class TestSofBlockStreamRotatingReader {
         
         SofBlockStreamRotatingReader reader = new SofBlockStreamRotatingReader(folder, prefix, postfix, configuration);
 
-        File[] sortedFileList = RotatingHelper.getSortedFileList(folder, prefix, postfix);
+        File[] sortedFileList = RotatingHelper.getSortedFileList(folder, prefix, postfix, false);
         assertThat(sortedFileList.length, is(3));
         assertThat(sortedFileList[0].getName(), is("prefix.19700101.000000.0.postfix"));
         assertThat(sortedFileList[1].getName(), is("prefix.19700101.000000.1.postfix"));

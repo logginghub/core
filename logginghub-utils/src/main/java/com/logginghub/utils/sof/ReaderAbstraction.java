@@ -34,5 +34,6 @@ public interface ReaderAbstraction {
 
     void read(byte[] array, int position, int length) throws IOException;
 
+    void setPosition(long position);
 
 }

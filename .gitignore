@@ -27,3 +27,5 @@ logginghub-frontend/images*
 logginghub-frontend/lib*
 logginghub-frontend/logs*
 target/
+logginghub-integrationtests/results/
+logginghub-server/binarylogs/

@@ -28,7 +28,7 @@
 
     </socketTextReader>
     
-    <stackCapture snapshotInterval="1s" environment="local" instanceType="LoggingHub" instanceNumber="1"/>
+    <stackCapture snapshotBroadcastInterval="1s" environment="local" instanceType="LoggingHub" instanceNumber="1"/>
     
     <telemetry>
         <vmstatConfiguration logRawEvents="true"/>

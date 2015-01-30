@@ -1,18 +1,7 @@
 package com.logginghub.logging.repository;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.fail;
-
-import java.io.EOFException;
-import java.nio.BufferOverflowException;
-import java.nio.ByteBuffer;
-
-import com.logginghub.utils.sof.SofWriter;
-import org.junit.Test;
-
 import com.logginghub.logging.DefaultLogEvent;
-import com.logginghub.logging.repository.InMemorySofBlock;
+import com.logginghub.logging.modules.LogEventFixture1;
 import com.logginghub.utils.Bucket;
 import com.logginghub.utils.Destination;
 import com.logginghub.utils.FixedTimeProvider;
@@ -20,7 +9,17 @@ import com.logginghub.utils.sof.SerialisableObject;
 import com.logginghub.utils.sof.SofConfiguration;
 import com.logginghub.utils.sof.SofException;
 import com.logginghub.utils.sof.SofSerialiser;
-import com.logginghub.logging.modules.LogEventFixture1;
+import org.junit.Test;
+
+import java.io.EOFException;
+import java.nio.BufferOverflowException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.fail;
 
 public class TestInMemorySofBlock {
 
@@ -42,7 +41,7 @@ public class TestInMemorySofBlock {
         assertThat(block.getEndTime(), is(1500L));
         assertThat(block.getCompressLength(), is(0L));
 
-        ByteBuffer compressed = block.compress();
+        block.compress();
 
         byte[] bytes = SofSerialiser.toBytes(block);
 
@@ -53,7 +52,7 @@ public class TestInMemorySofBlock {
         assertThat(reloaded.getEndTime(), is(1500L));
 
         final Bucket<SerialisableObject> bucket = new Bucket<SerialisableObject>();
-        reloaded.visit(new Destination<SerialisableObject>() {
+        reloaded.visitForwards(new Destination<SerialisableObject>() {
             @Override public void send(SerialisableObject t) {
                 bucket.add(t);
             }
@@ -90,7 +89,7 @@ public class TestInMemorySofBlock {
         assertThat(block.getEndTime(), is(1232L));
         assertThat(block.getCompressLength(), is(0L));
 
-        ByteBuffer compressed = block.compress();
+        block.compress();
 
         byte[] bytes = SofSerialiser.toBytes(block);
 
@@ -101,7 +100,7 @@ public class TestInMemorySofBlock {
         assertThat(reloaded.getEndTime(), is(1232L));
 
         final Bucket<SerialisableObject> bucket = new Bucket<SerialisableObject>();
-        reloaded.visit(new Destination<SerialisableObject>() {
+        reloaded.visitForwards(new Destination<SerialisableObject>() {
             @Override public void send(SerialisableObject t) {
                 bucket.add(t);
             }
@@ -129,10 +128,112 @@ public class TestInMemorySofBlock {
         try {
             block.write(LogEventFixture1.event10);
             fail("The block should have overfloweth");
-        }
-        catch (BufferOverflowException boe) {
+        } catch (BufferOverflowException boe) {
 
         }
+    }
+
+    @Test public void test_visit_backwards_not_compressed() throws SofException, EOFException {
+        SofConfiguration configuration = new SofConfiguration();
+        configuration.registerType(SofString.class, 0);
+
+        InMemorySofBlock block = new InMemorySofBlock(configuration, 50);
+
+        block.write(new SofString("a"));
+        block.write(new SofString("b"));
+        block.write(new SofString("c"));
+
+        final List<SofString> results = new ArrayList<SofString>();
+
+        block.visitBackwards(new Destination<SerialisableObject>() {
+            @Override public void send(SerialisableObject serialisableObject) {
+                results.add((SofString) serialisableObject);
+            }
+        });
+
+        assertThat(results.size(), is(3));
+        assertThat(results.get(0).getValue(), is("c"));
+        assertThat(results.get(1).getValue(), is("b"));
+        assertThat(results.get(2).getValue(), is("a"));
+
+    }
+
+    @Test public void test_visit_forwards_not_compressed() throws SofException, EOFException {
+        SofConfiguration configuration = new SofConfiguration();
+        configuration.registerType(SofString.class, 0);
+
+        InMemorySofBlock block = new InMemorySofBlock(configuration, 50);
+
+        block.write(new SofString("a"));
+        block.write(new SofString("b"));
+        block.write(new SofString("c"));
+
+        final List<SofString> results = new ArrayList<SofString>();
+
+        block.visitForwards(new Destination<SerialisableObject>() {
+            @Override public void send(SerialisableObject serialisableObject) {
+                results.add((SofString) serialisableObject);
+            }
+        });
+
+        assertThat(results.size(), is(3));
+        assertThat(results.get(0).getValue(), is("a"));
+        assertThat(results.get(1).getValue(), is("b"));
+        assertThat(results.get(2).getValue(), is("c"));
+
+
+    }
+
+    @Test public void test_visit_forwards_compressed() throws SofException, EOFException {
+        SofConfiguration configuration = new SofConfiguration();
+        configuration.registerType(SofString.class, 0);
+
+        InMemorySofBlock block = new InMemorySofBlock(configuration, 50);
+
+        block.write(new SofString("a"));
+        block.write(new SofString("b"));
+        block.write(new SofString("c"));
+        block.compress();
+
+        final List<SofString> results = new ArrayList<SofString>();
+
+        block.visitForwards(new Destination<SerialisableObject>() {
+            @Override public void send(SerialisableObject serialisableObject) {
+                results.add((SofString) serialisableObject);
+            }
+        });
+
+        assertThat(results.size(), is(3));
+        assertThat(results.get(0).getValue(), is("a"));
+        assertThat(results.get(1).getValue(), is("b"));
+        assertThat(results.get(2).getValue(), is("c"));
+    }
+
+    @Test public void test_visit_backwards_compressed() throws SofException, EOFException {
+        SofConfiguration configuration = new SofConfiguration();
+        configuration.registerType(SofString.class, 0);
+
+        InMemorySofBlock block = new InMemorySofBlock(configuration, 50);
+
+        block.write(new SofString("a"));
+        block.write(new SofString("b"));
+        block.write(new SofString("c"));
+        block.compress();
+        block.setNeedsDecompression(true);
+
+        final List<SofString> results = new ArrayList<SofString>();
+
+        block.visitBackwards(new Destination<SerialisableObject>() {
+            @Override public void send(SerialisableObject serialisableObject) {
+                results.add((SofString) serialisableObject);
+            }
+        });
+
+        assertThat(results.size(), is(3));
+        assertThat(results.get(0).getValue(), is("c"));
+        assertThat(results.get(1).getValue(), is("b"));
+        assertThat(results.get(2).getValue(), is("a"));
+
     }
 
 }

@@ -11,7 +11,7 @@ public class HistoricalDataRequest extends BaseRequestResponseMessage implements
     private long end;
     private int levelFilter;
     private String quickfilter;
-    private boolean mostRecentFirst = true;
+    private boolean mostRecentFirst = false;
 
     public HistoricalDataRequest() {}
 

@@ -40,7 +40,7 @@ public class HubStackCaptureModule implements Module<HubStackCaptureConfiguratio
         this.controller = new StackCaptureController();
 
         controller.configure(loggingMessageSender,
-                TimeUtils.parseInterval(configuration.getSnapshotInterval()),
+                TimeUtils.parseInterval(configuration.getSnapshotBroadcastInterval()),
                 TimeUtils.parseInterval(configuration.getSnapshotRequestInterval()),
                 configuration.isRespondToRequests(),
                 configuration.getEnvironment(),

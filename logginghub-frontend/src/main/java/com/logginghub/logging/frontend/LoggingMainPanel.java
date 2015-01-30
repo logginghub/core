@@ -20,6 +20,7 @@ import com.logginghub.logging.frontend.views.detail.DetailedLogEventTablePanel;
 import com.logginghub.logging.frontend.views.detail.time.TimeController;
 import com.logginghub.logging.frontend.views.environmentsummary.DashboardPanel;
 import com.logginghub.logging.frontend.views.environmentsummary.DashboardSelectionListener;
+import com.logginghub.logging.frontend.views.historical.HistoryViewModule;
 import com.logginghub.logging.messaging.PatternModel;
 import com.logginghub.logging.messaging.SocketClient;
 import com.logginghub.logging.messaging.SocketClientManager;
@@ -342,12 +343,12 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
 
     private void addHistoryTab(EnvironmentModel environmentModel) {
 
-        HistoryViewModule module = new HistoryViewModule();
-
         EnvironmentAdaptor environmentAdaptor = new EnvironmentAdaptor(environmentModel);
 
-        module.setMessagingService(environmentAdaptor);
-        module.setEnvironmentNotificationService(environmentAdaptor);
+        HistoryViewModule module = new HistoryViewModule(environmentAdaptor);
+
+//        module.setMessagingService(environmentAdaptor);
+//        module.setEnvironmentNotificationService(environmentAdaptor);
 
         final String name = environmentModel.get(EnvironmentModel.Fields.Name) + " history";
         module.setLayoutService(new LayoutService() {
@@ -1246,29 +1247,29 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
             MainFrameModule frame = new MainFrameModule();
             frame.setName("History Viewer");
 
-            MenuBarModule menuBar = new MenuBarModule();
-            menuBar.setFrameService(frame);
-            menuBar.setLayoutService(frame);
+//            MenuBarModule menuBar = new MenuBarModule();
+//            menuBar.setFrameService(frame);
+//            menuBar.setLayoutService(frame);
 
-            TabbedPaneModule tab = new TabbedPaneModule();
-            tab.setLayoutService(frame);
+//            TabbedPaneModule tab = new TabbedPaneModule();
+//            tab.setLayoutService(frame);
 
             EnvironmentAdaptor adaptor = new EnvironmentAdaptor(currentSelectedTabx.getEnvironmentModel());
 
-            HistoryViewModule history = new HistoryViewModule();
+            HistoryViewModule history = new HistoryViewModule(adaptor);
             history.setName("History View");
-            history.setLayoutService(tab);
-            history.setEnvironmentNotificationService(adaptor);
-            history.setMessagingService(adaptor);
+            history.setLayoutService(frame);
+//            history.setEnvironmentNotificationService(adaptor);
+//            history.setMessagingService(adaptor);
 
             frame.initialise();
-            menuBar.initialise();
-            tab.initialise();
+//            menuBar.initialise();
+//            tab.initialise();
             history.initialise();
 
             frame.start();
-            menuBar.start();
-            tab.start();
+//            menuBar.start();
+//            tab.start();
             history.start();
 
         }

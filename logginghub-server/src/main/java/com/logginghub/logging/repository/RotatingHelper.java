@@ -16,7 +16,7 @@ public class RotatingHelper {
     
     private static DateFormat dateFormat = new FileDateFormat();
     
-    public static File[] getSortedFileList(File folder, final String prefix, final String postfix) {
+    public static File[] getSortedFileList(File folder, final String prefix, final String postfix, boolean mostRecentFirst) {
         File[] listFiles = folder.listFiles(new FileFilter() {
             @Override public boolean accept(File file) {
                 String fullTimeRegex = "{}\\d{8}\\.\\d{6}(\\.\\d+)?{}";
@@ -25,11 +25,14 @@ public class RotatingHelper {
             }
         });
 
-        sortArrayByTimestamp(listFiles, prefix, postfix);
+        sortArrayByTimestamp(listFiles, prefix, postfix, mostRecentFirst);
         return listFiles;
     }
 
-    public static synchronized void sortArrayByTimestamp(File[] listFiles, final String prefix, final String postfix) {
+    public static synchronized void sortArrayByTimestamp(File[] listFiles,
+                                                         final String prefix,
+                                                         final String postfix,
+                                                         final boolean mostRecentFirst) {
         Arrays.sort(listFiles, new Comparator<File>() {
             @Override public int compare(File a, File b) {
 
@@ -62,7 +65,11 @@ public class RotatingHelper {
                     Date aDate = dateFormat.parse(aJustTimePart);
                     Date bDate = dateFormat.parse(bJustTimePart);
 
-                    return CompareUtils.add(aDate, bDate).add(aIncrement, bIncrement).compare();
+                    if(mostRecentFirst) {
+                        return CompareUtils.add(bDate, aDate).add(bIncrement, aIncrement).compare();
+                    }else{
+                        return CompareUtils.add(aDate, bDate).add(aIncrement, bIncrement).compare();
+                    }
                 }
                 catch (ParseException e) {
                     throw new RuntimeException(String.format("Failed to parse date part of files %s and %s", a.getAbsolutePath(), b.getAbsoluteFile()),

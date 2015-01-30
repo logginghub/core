@@ -134,13 +134,13 @@ public class SofBlockStreamRotatingWriter implements Asynchronous {
         boolean rotate = false;
         if (trigger == RotationTrigger.Size) {
             if (writer.getBytesWritten() >= rotationSize) {
-                logger.info("Rolling file as size is greater than the rotation size");
+                logger.debug("Rolling file as size is greater than the rotation size");
                 rotate = true;
             }
         }
         else if (trigger == RotationTrigger.Time) {
             if (time - currentFileTime > rotationTime) {
-                logger.info("Rolling file as the time is greater than the rotation interval");
+                logger.debug("Rolling file as the time is greater than the rotation interval");
                 rotate = true;
             }
         }
@@ -153,12 +153,12 @@ public class SofBlockStreamRotatingWriter implements Asynchronous {
 
     private void checkForDirectoryLimit() {
         long size = 0;
-        File[] sortedFileList = RotatingHelper.getSortedFileList(folder, prefix, postfix);
+        File[] sortedFileList = RotatingHelper.getSortedFileList(folder, prefix, postfix, false);
         for (File file : sortedFileList) {
             size += file.length();
         }
 
-        logger.info("Total file size is now '{}' ({} files) vs the limit of '{}'",
+        logger.debug("Total file size is now '{}' ({} files) vs the limit of '{}'",
                     ByteUtils.format(size),
                     sortedFileList.length,
                     ByteUtils.format(totalFileSizeLimit));
@@ -189,10 +189,10 @@ public class SofBlockStreamRotatingWriter implements Asynchronous {
         }
     }
 
-    public void visitLatest(long start, long end, Destination<SerialisableObject> destination) throws EOFException, SofException {
+    public void visitLatest(long start, long end, Destination<SerialisableObject> destination, boolean mostRecentFirst) throws EOFException, SofException {
         if (writer != null) {
             logger.fine("Visiting current writing");
-            writer.visitLatest(start, end, destination);
+            writer.visitLatest(start, end, destination, mostRecentFirst);
         }else{
             logger.fine("No writer to visit");
         }

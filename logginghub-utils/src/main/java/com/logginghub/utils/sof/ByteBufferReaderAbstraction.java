@@ -81,7 +81,11 @@ public class ByteBufferReaderAbstraction implements ReaderAbstraction {
     public void read(byte[] array, int position, int length) throws IOException {
         buffer.put(array, position, length);
     }
-    
+
+    @Override public void setPosition(long position) {
+        buffer.position((int)position);
+    }
+
     @Override public String toString() {
         return buffer.toString();         
     }

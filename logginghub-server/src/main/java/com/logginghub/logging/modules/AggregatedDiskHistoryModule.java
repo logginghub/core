@@ -180,7 +180,7 @@ public class AggregatedDiskHistoryModule implements Module<AggregatedDiskHistory
 
         if (checkLatest) {
             try {
-                writer.visitLatest(message.getStart(), message.getEnd(), visitor);
+                writer.visitLatest(message.getStart(), message.getEnd(), visitor, false);
             }
             catch (SofException e) {
                 logger.warn(e, "Failed to extract historical index elements for request '{}'", message);
@@ -251,7 +251,7 @@ public class AggregatedDiskHistoryModule implements Module<AggregatedDiskHistory
         if (checkLatest) {
             try {
                 Stopwatch latestSW = Stopwatch.start("Visiting latest events");
-                writer.visitLatest(message.getStart(), message.getEnd(), visitor);
+                writer.visitLatest(message.getStart(), message.getEnd(), visitor, false);
                 logger.info("{}", latestSW.stopAndFormat());
             }
             catch (SofException e) {

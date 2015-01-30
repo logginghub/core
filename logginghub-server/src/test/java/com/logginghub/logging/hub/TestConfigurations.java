@@ -86,6 +86,18 @@ public class TestConfigurations {
 
             }
         });
+
+        validators.put("hub.with.periodic.stack.capture.xml", new Validator() {
+            @Override public void validate(RunHub hub) {
+
+            }
+        });
+
+        validators.put("hub.with.disk.history.xml", new Validator() {
+            @Override public void validate(RunHub hub) {
+
+            }
+        });
     }
 
     protected void validateFilters(RunHub hubWrapper) {

@@ -1,13 +1,5 @@
 package com.logginghub.logging.modules;
 
-import java.io.EOFException;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.exceptions.LoggingMessageSenderException;
 import com.logginghub.logging.interfaces.QueueAwareLoggingMessageSender;
@@ -41,6 +33,14 @@ import com.logginghub.utils.sof.SerialisableObject;
 import com.logginghub.utils.sof.SofConfiguration;
 import com.logginghub.utils.sof.SofException;
 
+import java.io.EOFException;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 public class DiskHistoryIndexModule implements Module<DiskHistoryIndexConfiguration>, HistoryService {
 
     private static final Logger logger = Logger.getLoggerFor(DiskHistoryIndexModule.class);
@@ -59,13 +59,15 @@ public class DiskHistoryIndexModule implements Module<DiskHistoryIndexConfigurat
     private SofBlockStreamRotatingWriter writer;
     private SofBlockStreamRotatingReader reader;
 
-    private ExecutorService threadPool = Executors.newCachedThreadPool(new NamedThreadFactory("LoggingHub-DiskHistoryIndexModule-Worker-"));
+    private ExecutorService threadPool = Executors.newCachedThreadPool(new NamedThreadFactory(
+            "LoggingHub-DiskHistoryIndexModule-Worker-"));
 
     private WorkerThread indexPublisher;
 
     private long currentIndexStartTime = -1;
 
-    @SuppressWarnings("unchecked") @Override public void configure(DiskHistoryIndexConfiguration configuration, ServiceDiscovery discovery) {
+    @SuppressWarnings("unchecked") @Override
+    public void configure(DiskHistoryIndexConfiguration configuration, ServiceDiscovery discovery) {
         this.configuration = configuration;
 
         // resetCurrentIndex();
@@ -104,8 +106,8 @@ public class DiskHistoryIndexModule implements Module<DiskHistoryIndexConfigurat
 
         if (!configuration.isReadOnly()) {
             @SuppressWarnings("unchecked") Source<LogEvent> eventSource = discovery.findService(Source.class,
-                                                                                                LogEvent.class,
-                                                                                                configuration.getLogEventSourceRef());
+                    LogEvent.class,
+                    configuration.getLogEventSourceRef());
             eventSource.addDestination(new Destination<LogEvent>() {
                 @Override public void send(LogEvent t) {
                     DiskHistoryIndexModule.this.send(t);
@@ -122,8 +124,8 @@ public class DiskHistoryIndexModule implements Module<DiskHistoryIndexConfigurat
     public HistoricalIndexResponse handleIndexRequest(HistoricalIndexRequest message) {
 
         logger.info("Handling index request : from '{}' to '{}'",
-                    Logger.toDateString(message.getStart()),
-                    Logger.toDateString(message.getEnd()));
+                Logger.toDateString(message.getStart()),
+                Logger.toDateString(message.getEnd()));
 
         final List<HistoricalIndexElement> index = new ArrayList<HistoricalIndexElement>();
 
@@ -133,8 +135,7 @@ public class DiskHistoryIndexModule implements Module<DiskHistoryIndexConfigurat
                     index.add((HistoricalIndexElement) t);
                 }
             }, false);
-        }
-        catch (SofException e) {
+        } catch (SofException e) {
             logger.warn(e, "Failed to extract historical index elements for request '{}'", message);
         }
 
@@ -143,13 +144,11 @@ public class DiskHistoryIndexModule implements Module<DiskHistoryIndexConfigurat
                 @Override public void send(SerialisableObject t) {
                     index.add((HistoricalIndexElement) t);
                 }
-            });
-        }
-        catch (EOFException e) {
+            }, false);
+        } catch (EOFException e) {
             // This probably means we've tried to read a bit of
             logger.warn(e, "Failed to extract historical index elements for request '{}'", message);
-        }
-        catch (SofException e) {
+        } catch (SofException e) {
             logger.warn(e, "Failed to extract historical index elements for request '{}'", message);
         }
 
@@ -165,12 +164,11 @@ public class DiskHistoryIndexModule implements Module<DiskHistoryIndexConfigurat
         return response;
     }
 
-    public void handleIndexRequestStreaming(final HistoricalIndexRequest message, final QueueAwareLoggingMessageSender source) {
+    public void handleIndexRequestStreaming(final HistoricalIndexRequest message,
+                                            final QueueAwareLoggingMessageSender source) {
         Stopwatch sw = Stopwatch.start("");
-        logger.info("Handling streaming index request : from '{}' to '{}' : from connection '{}'",
-                    Logger.toDateString(message.getStart()),
-                    Logger.toDateString(message.getEnd()),
-                    source);
+        logger.info("Handling streaming index request : from '{}' to '{}' : from connection '{}'", Logger.toDateString(
+                message.getStart()), Logger.toDateString(message.getEnd()), source);
 
         final List<HistoricalIndexElement> batch = new ArrayList<HistoricalIndexElement>();
 
@@ -191,31 +189,29 @@ public class DiskHistoryIndexModule implements Module<DiskHistoryIndexConfigurat
 
         try {
             reader.visit(message.getStart(), message.getEnd(), visitor, false);
-        }
-        catch (SofException e) {
+        } catch (SofException e) {
             logger.warn(e, "Failed to extract historical index elements for request '{}'", message);
         }
 
         try {
-            writer.visitLatest(message.getStart(), message.getEnd(), visitor);
-        }
-        catch (EOFException e) {
+            writer.visitLatest(message.getStart(), message.getEnd(), visitor, false);
+        } catch (EOFException e) {
             // This probably means we've tried to read a bit of
             logger.warn(e, "Failed to extract historical index elements for request '{}'", message);
-        }
-        catch (SofException e) {
+        } catch (SofException e) {
             logger.warn(e, "Failed to extract historical index elements for request '{}'", message);
         }
 
         sendBatch(batch, message, source, true);
         counter.increment();
 
-        logger.info("Handling streaming data request completed successfully in {} : from '{}' to '{}' : {} elements sent in {} batches",
-                    sw.stopAndFormat(),
-                    Logger.toDateString(message.getStart()),
-                    Logger.toDateString(message.getEnd()),
-                    elements.value,
-                    counter.value);
+        logger.info(
+                "Handling streaming data request completed successfully in {} : from '{}' to '{}' : {} elements sent in {} batches",
+                sw.stopAndFormat(),
+                Logger.toDateString(message.getStart()),
+                Logger.toDateString(message.getEnd()),
+                elements.value,
+                counter.value);
 
     }
 
@@ -226,11 +222,10 @@ public class DiskHistoryIndexModule implements Module<DiskHistoryIndexConfigurat
 
         if (eventBatch.size() > 0) {
             logger.fine("Sending index response of {} elements from '{}' to '{}'",
-                        eventBatch.size(),
-                        Logger.toDateString(eventBatch.get(0).getTime()),
-                        Logger.toDateString(eventBatch.get(eventBatch.size() - 1).getTime()));
-        }
-        else {
+                    eventBatch.size(),
+                    Logger.toDateString(eventBatch.get(0).getTime()),
+                    Logger.toDateString(eventBatch.get(eventBatch.size() - 1).getTime()));
+        } else {
             logger.fine("Sending index response of {} elements", eventBatch.size());
         }
 
@@ -245,13 +240,12 @@ public class DiskHistoryIndexModule implements Module<DiskHistoryIndexConfigurat
                 ThreadUtils.sleep(10);
             }
             source.send(response);
-        }
-        catch (LoggingMessageSenderException e) {
+        } catch (LoggingMessageSenderException e) {
             logger.warning(e,
-                           "Index request failed in {} ms : responding to requestID '{}' with '{}' elements",
-                           "?",
-                           response.getCorrelationID(),
-                           response.getElements().length);
+                    "Index request failed in {} ms : responding to requestID '{}' with '{}' elements",
+                    "?",
+                    response.getCorrelationID(),
+                    response.getElements().length);
         }
 
     }
@@ -269,8 +263,7 @@ public class DiskHistoryIndexModule implements Module<DiskHistoryIndexConfigurat
                             publishIndex();
                             resetCurrentIndex(timeProvider.getTime());
                         }
-                    }
-                    catch (SofException e) {
+                    } catch (SofException e) {
                         logger.warn(e, "Failed to write index to disk");
                     }
                 }
@@ -283,7 +276,7 @@ public class DiskHistoryIndexModule implements Module<DiskHistoryIndexConfigurat
     protected void publishIndex() throws SofException {
 
         HistoricalIndexResponse response = new HistoricalIndexResponse();
-        response.setElements(new HistoricalIndexElement[] { new HistoricalIndexElement(currentIndex) });
+        response.setElements(new HistoricalIndexElement[]{new HistoricalIndexElement(currentIndex)});
         response.setCorrelationID(-1);
         ChannelMessage message = new ChannelMessage(Channels.historyUpdates, response);
         logger.finer("Publishing current index '{}'", currentIndex);
@@ -294,8 +287,7 @@ public class DiskHistoryIndexModule implements Module<DiskHistoryIndexConfigurat
         // Push the index out to disk
         try {
             writer.send(currentIndex);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             logger.warn(e, "Failed to write index to disk");
         }
 
@@ -341,17 +333,17 @@ public class DiskHistoryIndexModule implements Module<DiskHistoryIndexConfigurat
 
         try {
             source.send(response);
-            logger.info("Index request successfully processed in {} ms : responding to requestID '{}' with '{}' elements",
-                        sw.stopAndGetFormattedDurationMillis(),
-                        response.getCorrelationID(),
-                        response.getElements().length);
-        }
-        catch (LoggingMessageSenderException e) {
+            logger.info(
+                    "Index request successfully processed in {} ms : responding to requestID '{}' with '{}' elements",
+                    sw.stopAndGetFormattedDurationMillis(),
+                    response.getCorrelationID(),
+                    response.getElements().length);
+        } catch (LoggingMessageSenderException e) {
             logger.warning(e,
-                           "Index request failed in {} ms : responding to requestID '{}' with '{}' elements",
-                           sw.stopAndGetFormattedDurationMillis(),
-                           response.getCorrelationID(),
-                           response.getElements().length);
+                    "Index request failed in {} ms : responding to requestID '{}' with '{}' elements",
+                    sw.stopAndGetFormattedDurationMillis(),
+                    response.getCorrelationID(),
+                    response.getElements().length);
         }
     }
 
@@ -361,8 +353,7 @@ public class DiskHistoryIndexModule implements Module<DiskHistoryIndexConfigurat
         long time;
         if (configuration.isTriggerFromEventTimes()) {
             time = t.getOriginTime();
-        }
-        else {
+        } else {
             time = timeProvider.getTime();
         }
 
@@ -374,15 +365,13 @@ public class DiskHistoryIndexModule implements Module<DiskHistoryIndexConfigurat
         if (configuration.isTriggerFromEventTimes()) {
             if (currentIndexStartTime == -1) {
                 currentIndexStartTime = time;
-            }
-            else {
+            } else {
 
                 if (time - currentIndexStartTime > 1000) {
                     try {
                         publishIndex();
                         resetCurrentIndex(time);
-                    }
-                    catch (SofException e) {
+                    } catch (SofException e) {
                         logger.warn(e, "Failed to publish index");
                     }
 

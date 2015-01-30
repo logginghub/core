@@ -93,7 +93,7 @@ public class DiskValidationModule implements Module<DiskValidationConfiguration>
         String prefix = "hub.log.";
         String postfix = ".index";
 
-        File[] sortedFileList = RotatingHelper.getSortedFileList(folder, prefix, postfix);
+        File[] sortedFileList = RotatingHelper.getSortedFileList(folder, prefix, postfix, true);
         for (File file : sortedFileList) {
             logger.info("Checking blocks in file : '{}'", file.getAbsolutePath());
             SofBlockStreamReader reader = new SofBlockStreamReader(sofConfiguration);

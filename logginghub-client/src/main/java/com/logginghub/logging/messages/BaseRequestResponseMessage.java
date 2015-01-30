@@ -1,6 +1,11 @@
 package com.logginghub.logging.messages;
 
-public class BaseRequestResponseMessage implements RequestResponseMessage {
+import com.logginghub.utils.sof.SerialisableObject;
+import com.logginghub.utils.sof.SofException;
+import com.logginghub.utils.sof.SofReader;
+import com.logginghub.utils.sof.SofWriter;
+
+public class BaseRequestResponseMessage implements RequestResponseMessage, SerialisableObject {
     private int correlationID;
 
     public BaseRequestResponseMessage() {
@@ -14,4 +19,11 @@ public class BaseRequestResponseMessage implements RequestResponseMessage {
         this.correlationID = correlationID;
     }
 
+    @Override public void read(SofReader reader) throws SofException {
+        this.setCorrelationID(reader.readInt(1));
+    }
+
+    @Override public void write(SofWriter writer) throws SofException {
+        writer.write(1, getCorrelationID());
+    }
 }

@@ -1,10 +1,6 @@
 package com.logginghub.logging.repository;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
+import com.logginghub.logging.modules.JobKilledException;
 import com.logginghub.utils.ByteUtils;
 import com.logginghub.utils.Destination;
 import com.logginghub.utils.StacktraceUtils;
@@ -15,6 +11,12 @@ import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.sof.SerialisableObject;
 import com.logginghub.utils.sof.SofConfiguration;
 import com.logginghub.utils.sof.SofException;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class SofBlockStreamRotatingReader {
 
@@ -33,17 +35,19 @@ public class SofBlockStreamRotatingReader {
         this.configuration = configuration;
     }
 
-    public void visit(final long start, final long end, final Destination<SerialisableObject> destination, boolean mostRecentFirst)
-                    throws SofException {
+    public void visit(final long start,
+                      final long end,
+                      final Destination<SerialisableObject> destination,
+                      boolean mostRecentFirst) throws SofException {
 
         // TODO : implement most recent first
 
         Stopwatch fileListStopwatch = Stopwatch.start("Getting file list");
-        File[] listFiles = RotatingHelper.getSortedFileList(folder, prefix, postfix);
+        File[] listFiles = RotatingHelper.getSortedFileList(folder, prefix, postfix, mostRecentFirst);
         logger.fine(fileListStopwatch.stopAndFormat());
 
         for (File file : listFiles) {
-            logger.fine("Visiting file '{}' ({} MB)", file.getName(), ByteUtils.formatMB((double) file.length()));
+            logger.debug("Visiting file '{}' ({} MB)", file.getName(), ByteUtils.formatMB((double) file.length()));
             // Stopwatch sw = Stopwatch.start("");
 
             SofBlockStreamReader reader = new SofBlockStreamReader(configuration);
@@ -55,7 +59,7 @@ public class SofBlockStreamRotatingReader {
                 List<SofBlockPointer> interestingPointers = new ArrayList<SofBlockPointer>();
 
                 for (SofBlockPointer sofBlockPointer : loadPointers) {
-                    if(logger.willLog(Logger.finest)) {
+                    if (logger.willLog(Logger.finest)) {
                         logger.finest("Checking pointer {} against start {} and end {}", sofBlockPointer, start, end);
                     }
                     if (sofBlockPointer.overlaps(start, end)) {
@@ -63,19 +67,31 @@ public class SofBlockStreamRotatingReader {
                     }
                 }
 
-                logger.fine("Found {} interesting pointers out of {} total pointers", interestingPointers.size(), loadPointers.size());
+                if(mostRecentFirst) {
+                    Collections.reverse(interestingPointers);
+                }
+
+                logger.fine("Found {} interesting pointers out of {} total pointers",
+                        interestingPointers.size(),
+                        loadPointers.size());
                 if (interestingPointers.size() > 0) {
                     TimeFilterDestination filterDestination = new TimeFilterDestination(destination, start, end);
-                    reader.visit(file, interestingPointers, filterDestination);
+
+                    if(mostRecentFirst) {
+                        reader.visitBackwards(file, interestingPointers, filterDestination);
+                    }else{
+                        reader.visit(file, interestingPointers, filterDestination);
+                    }
                     logger.fine("Decoded {} : {} passed the filter",
-                                filterDestination.getPassed() + filterDestination.getFailed(),
-                                filterDestination.getPassed());
+                            filterDestination.getPassed() + filterDestination.getFailed(),
+                            filterDestination.getPassed());
 
                 }
-            }
-            catch (Exception e) {
+            } catch (JobKilledException e) {
+                throw e;
+            } catch (Exception e) {
                 logger.fine("Failed to visit file '{}' :  {}", file.getAbsolutePath(), e.getMessage());
-//                logger.warn(e, "Failed to visit file '{}'", file.getAbsolutePath());
+                //                logger.warn(e, "Failed to visit file '{}'", file.getAbsolutePath());
             }
 
             // logger.info("File '{}' visited in {}", file.getName(), sw.stopAndFormat());
@@ -85,7 +101,7 @@ public class SofBlockStreamRotatingReader {
 
     public void dumpIndex() throws IOException, SofException {
 
-        File[] sortedFileList = RotatingHelper.getSortedFileList(folder, prefix, postfix);
+        File[] sortedFileList = RotatingHelper.getSortedFileList(folder, prefix, postfix, true);
         for (File file : sortedFileList) {
             System.out.println(file.getAbsolutePath());
             SofBlockStreamReader reader = new SofBlockStreamReader(configuration);
@@ -98,22 +114,22 @@ public class SofBlockStreamRotatingReader {
     }
 
     public void healthCheck(Destination<String> destination) {
-        
+
         StringUtilsBuilder sb = new StringUtils.StringUtilsBuilder();
         Stopwatch fileListStopwatch = Stopwatch.start("Getting file list");
-        File[] listFiles = RotatingHelper.getSortedFileList(folder, prefix, postfix);
+        File[] listFiles = RotatingHelper.getSortedFileList(folder, prefix, postfix, true);
         sb.appendLine(fileListStopwatch.stopAndFormat());
         for (File file : listFiles) {
             sb.appendLine("{} | {}", file.getAbsolutePath(), file.length());
         }
-        
-        destination.send(sb.toString());        
+
+        destination.send(sb.toString());
         sb.clear();
-        
+
         for (File file : listFiles) {
-            
+
             sb.appendLine("Data file '{}'", file.getAbsolutePath());
-            
+
             SofBlockStreamReader reader = new SofBlockStreamReader(configuration);
             List<SofBlockPointer> loadPointers;
             try {
@@ -121,18 +137,16 @@ public class SofBlockStreamRotatingReader {
                 for (SofBlockPointer sofBlockPointer : loadPointers) {
                     sb.appendLine(sofBlockPointer);
                 }
-            }
-            catch (IOException e) {                
-                sb.appendLine(StacktraceUtils.toString(e));                
-            }
-            catch (SofException e) {
+            } catch (IOException e) {
+                sb.appendLine(StacktraceUtils.toString(e));
+            } catch (SofException e) {
                 sb.appendLine(StacktraceUtils.toString(e));
             }
-            
-            destination.send(sb.toString());        
+
+            destination.send(sb.toString());
             sb.clear();
         }
-        
+
     }
 
 }

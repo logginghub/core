@@ -1,0 +1,13 @@
+<container>
+
+    <socketHub/>
+
+    <channelSubscriptions />
+
+    <diskHistory />
+
+    <generator>
+        <message pattern="Logging entry ${sequence}" rateMin="1000" rateMax="1000"/>
+    </generator>
+
+</container>

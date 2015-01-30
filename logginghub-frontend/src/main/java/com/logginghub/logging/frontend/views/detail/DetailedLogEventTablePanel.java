@@ -450,11 +450,15 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
                         Stopwatch start = Stopwatch.start("Updating table with new batch");
                         LogEventContainer newEvents;
                         synchronized (incommingEventBatchLock) {
-                            newEvents = incommingEventBatch;
-                            incommingEventBatch = new LogEventContainer();
+                            if(incommingEventBatch.size() > 0) {
+                                newEvents = incommingEventBatch;
+                                incommingEventBatch = new LogEventContainer();
+                            }else{
+                                 newEvents = null;
+                            }
                         }
 
-                        if (newEvents.size() > 0) {
+                        if (newEvents != null) {
                             tableModel.onNewLogEvent(newEvents);
                             start.stop();
                             VisualStopwatchController.getInstance().add(start);

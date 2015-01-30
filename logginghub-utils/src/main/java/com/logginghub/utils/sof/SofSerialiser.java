@@ -698,6 +698,20 @@ public class SofSerialiser {
         }
     }
 
+    public static void readAllWithBackwardsPointers(ReaderAbstraction readerAbstraction, SofConfiguration configuration, Destination<SerialisableObject> destination) throws
+                                                                                                                                                                      EOFException,
+                                                                                                                                                                      SofException {
+        while (readerAbstraction.hasMore()) {
+            SerialisableObject object = read(readerAbstraction, configuration);
+            destination.send(object);
+            try {
+                readerAbstraction.readInt();
+            }catch(IOException e) {
+                throw new SofException(e);
+            }
+        }
+    }
+
     public static <T extends SerialisableObject> void readAll(InputStream bis, Class<T> clazz, Destination<T> destination) {
         SofConfiguration configuration = new SofConfiguration();
         configuration.registerType(clazz, 0);

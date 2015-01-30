@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,6 +14,8 @@ import com.logginghub.utils.Destination;
 import com.logginghub.utils.Stopwatch;
 import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.sof.DefaultSofReader;
+import com.logginghub.utils.sof.RandomAccessFileReaderAbstraction;
+import com.logginghub.utils.sof.ReaderAbstraction;
 import com.logginghub.utils.sof.SerialisableObject;
 import com.logginghub.utils.sof.SofConfiguration;
 import com.logginghub.utils.sof.SofException;
@@ -82,7 +85,7 @@ public class SofBlockStreamReader {
         InMemorySofBlock block = SofSerialiser.read(readerAbstraction, temporaryConfiguration);
         block.setSofConfiguration(configuration);
 
-        block.visit(destination);
+        block.visitForwards(destination);
     }
 
     public void visit(File file, List<SofBlockPointer> pointers, Destination<SerialisableObject> destination) throws IOException, SofException {
@@ -106,7 +109,34 @@ public class SofBlockStreamReader {
             block.setSofConfiguration(configuration);
             
             Stopwatch sw = Stopwatch.start("Visiting block");
-            block.visit(destination);
+            block.visitForwards(destination);
+            logger.finer(sw);
+        }
+
+    }
+
+    public void visitBackwards(File file, List<SofBlockPointer> pointers, Destination<SerialisableObject> destination) throws IOException, SofException {
+
+        RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
+
+        long length = file.length();
+
+        ReaderAbstraction reader = new RandomAccessFileReaderAbstraction(randomAccessFile);
+
+        SofConfiguration temporaryConfiguration = new SofConfiguration();
+        temporaryConfiguration.registerType(InMemorySofBlock.class, 0);
+
+        for (SofBlockPointer sofBlockPointer : pointers) {
+
+            logger.finer("Visiting pointer '{}'", sofBlockPointer);
+
+            reader.setPosition(sofBlockPointer.getPosition());
+
+            InMemorySofBlock block = SofSerialiser.read(reader, temporaryConfiguration);
+            block.setSofConfiguration(configuration);
+
+            Stopwatch sw = Stopwatch.start("Visiting block");
+            block.visitBackwards(destination);
             logger.finer(sw);
         }
 
@@ -119,7 +149,7 @@ public class SofBlockStreamReader {
             while (readerAbstraction.hasMore()) {
                 InMemorySofBlock block = SofSerialiser.read(readerAbstraction, InMemorySofBlock.class);
                 block.setSofConfiguration(configuration);
-                block.visit(destination);
+                block.visitForwards(destination);
             }
         }
         catch (EOFException e) {
