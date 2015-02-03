@@ -68,7 +68,7 @@ public class ChartingController implements LogEventListener {
                 generators.add(timeChunkingGenerator);
             }
 
-            @Override public void onRemoved(TimeChunkerModel timeChunkerModel) {
+            @Override public void onRemoved(TimeChunkerModel timeChunkerModel, int index) {
                 TimeChunkingGenerator timeChunkingGenerator = timeChunkerModel.getCounterpart();
                 timeChunkingGenerator.removeChunkedResultHandler(chunkedResultMultiplexer);
                 generators.remove(timeChunkingGenerator);
@@ -85,7 +85,7 @@ public class ChartingController implements LogEventListener {
 
         timeChunkerModel.getParserModels().addListenerAndNotifyExisting(new ObservableListListener<ParserModel>() {
 
-            @Override public void onRemoved(ParserModel parserModel) {
+            @Override public void onRemoved(ParserModel parserModel, int index) {
                 ResultKeyBuilder resultKeyBuilder = parserModel.getCounterpart();
                 resultKeyBuilder.removeResultListener(generator);
             }
@@ -109,7 +109,7 @@ public class ChartingController implements LogEventListener {
 
         parserModel.getPatterns().addListenerAndNotifyExisting(new ObservableListListener<PatternModel>() {
 
-            @Override public void onRemoved(PatternModel t) {
+            @Override public void onRemoved(PatternModel t, int index) {
                 ValueStripper2 valueStripper = t.getCounterpart();
                 valueStripper.removeResultListener(resultKeyBuilder);
             }

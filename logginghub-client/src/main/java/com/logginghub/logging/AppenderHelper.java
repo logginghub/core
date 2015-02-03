@@ -46,8 +46,7 @@ import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
 
 /**
- * Because the j.u.l and log4j handlers/appenders need to extend base classes, we have to include our generic
- * implementation via composition.
+ * Because the j.u.l and log4j handlers/appenders need to extend base classes, we have to include our generic implementation via composition.
  *
  * @author James
  */
@@ -93,7 +92,8 @@ public class AppenderHelper {
                     if (publishHumanReadableTelemetry) {
                         socketClient.send(new LogEventMessage(LogEventBuilder.start()
                                                                              .setSourceApplication(sourceApplication)
-                                                                             .setSourceHost(hostOverride)
+                                                                             .setSourceHost(getSourceHost())
+                                                                             .setSourceAddress(getSourceAddress())
                                                                              .setChannel("telemetry")
                                                                              .setLevel(Logger.fine)
                                                                              .setMessage(t.toString())
@@ -128,6 +128,9 @@ public class AppenderHelper {
     private String environment;
     private int instanceNumber = 1;
     private String hostOverride = null;
+    private String hostAddressOverride;
+    private String sourceHost;
+    private String sourceAddress;
 
     // public void setCustomisationInterface(AppenderHelperCustomisationInterface
     // customisationInterface) {
@@ -149,9 +152,7 @@ public class AppenderHelper {
         socketClient.setAutoSubscribe(false);
 
         // Add a default connection point for lazy configurations
-        socketClient.getConnector().getConnectionPointManager().setDefaultConnectionPoint(new InetSocketAddress(
-                "localhost",
-                LoggingPorts.getSocketHubDefaultPort()));
+        socketClient.getConnector().getConnectionPointManager().setDefaultConnectionPoint(new InetSocketAddress("localhost", LoggingPorts.getSocketHubDefaultPort()));
 
         if (useDispatchThread) {
             Runnable runnable = new Runnable() {
@@ -209,9 +210,7 @@ public class AppenderHelper {
                 eventsToBeDispatched.putFirst(snapshot);
 
                 if (!isDontThrowExceptionsIfHubIsntUp()) {
-                    String message = StringUtils.format(
-                            "Couldnt connect to any hubs; waiting {} ms until the next connection attempt",
-                            currentFailureDelay);
+                    String message = StringUtils.format("Couldnt connect to any hubs; waiting {} ms until the next connection attempt", currentFailureDelay);
                     LoggingMessageSenderException topLevel = new LoggingMessageSenderException(message, ftse);
                     topLevel.printStackTrace();
                 }
@@ -243,8 +242,7 @@ public class AppenderHelper {
 
         host = StringUtils.environmentReplacement(host);
 
-        List<InetSocketAddress> inetSocketAddresses = NetUtils.toInetSocketAddressList(host,
-                VLPorts.getSocketHubDefaultPort());
+        List<InetSocketAddress> inetSocketAddresses = NetUtils.toInetSocketAddressList(host, VLPorts.getSocketHubDefaultPort());
         socketClient.addConnectionPoints(inetSocketAddresses);
 
         //        String[] split = host.split(":");
@@ -396,8 +394,7 @@ public class AppenderHelper {
         this.publishProcessTelemetry = publishProcessTelemetry;
 
         if (publishProcessTelemetry) {
-            ProcessTelemetryGenerator processTelemetryGenerator = telemetryClient.startProcessTelemetryGenerator(
-                    sourceApplication);
+            ProcessTelemetryGenerator processTelemetryGenerator = telemetryClient.startProcessTelemetryGenerator(sourceApplication);
             processTelemetryGenerator.getDataStructureMultiplexer().addDestination(telemetryListener);
         }
     }
@@ -457,19 +454,13 @@ public class AppenderHelper {
             gcMonitor.getEventMultiplexer().addDestination(new Destination<Java7GCMonitor.GCEvent>() {
                 @Override public void send(Java7GCMonitor.GCEvent gcEvent) {
                     try {
-                        socketClient.send(new LogEventMessage(LogEventBuilder.start()
-                                                                             .setChannel("gcmonitor")
-                                                                             .setSourceApplication(sourceApplication)
-                                                                             .setPid(pid)
-                                                                             .setMessage(
-                                                                                     "GC pause {} ms collected {} kb - {}/{}/{}",
-                                                                                     gcEvent.duration,
-                                                                                     NumberFormat.getInstance().format(
-                                                                                             gcEvent.bytes / 1024f),
-                                                                                     gcEvent.type,
-                                                                                     gcEvent.name,
-                                                                                     gcEvent.cause)
-                                                                             .toLogEvent()));
+                        socketClient.send(new LogEventMessage(LogEventBuilder.start().setChannel("gcmonitor").setSourceHost(getSourceHost()).setSourceAddress(getSourceAddress()).setSourceApplication(
+                                sourceApplication).setPid(pid).setMessage("GC pause {} ms collected {} kb - {}/{}/{}",
+                                gcEvent.duration,
+                                NumberFormat.getInstance().format(gcEvent.bytes / 1024f),
+                                gcEvent.type,
+                                gcEvent.name,
+                                gcEvent.cause).toLogEvent()));
                     } catch (LoggingMessageSenderException e) {
 
                     }
@@ -785,5 +776,34 @@ public class AppenderHelper {
 
     public String getHostOverride() {
         return hostOverride;
+    }
+
+    public void setHostAddressOverride(String hostAddressOverride) {
+        this.hostAddressOverride = hostAddressOverride;
+    }
+
+    public String getHostAddressOverride() {
+        return hostAddressOverride;
+    }
+
+    public String getSourceHost() {
+        if (hostOverride == null) {
+            return host.getHostName();
+        } else {
+            return hostOverride;
+        }
+    }
+
+    public void setSourceHost(String sourceHost) {
+        this.sourceHost = sourceHost;
+    }
+
+
+    public String getSourceAddress() {
+        if (hostAddressOverride == null) {
+            return host.getHostAddress();
+        } else {
+            return hostAddressOverride;
+        }
     }
 }

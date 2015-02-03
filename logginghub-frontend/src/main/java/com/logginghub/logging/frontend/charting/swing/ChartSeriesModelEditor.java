@@ -1,14 +1,17 @@
 package com.logginghub.logging.frontend.charting.swing;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.util.List;
+import com.logginghub.logging.frontend.charting.NewChartingController;
+import com.logginghub.logging.frontend.charting.model.BatchedArraryListTableModel;
+import com.logginghub.logging.frontend.charting.model.ChartSeriesFilterModel;
+import com.logginghub.logging.frontend.charting.model.ChartSeriesModel;
+import com.logginghub.logging.frontend.charting.model.NewChartingModel;
+import com.logginghub.logging.messages.AggregationType;
+import com.logginghub.logging.messaging.PatternModel;
+import com.logginghub.logging.utils.ValueStripper2;
+import com.logginghub.utils.logging.Logger;
+import com.logginghub.utils.observable.Binder2;
+import com.logginghub.utils.observable.ObservableList;
+import net.miginfocom.swing.MigLayout;
 
 import javax.swing.DefaultCellEditor;
 import javax.swing.DefaultComboBoxModel;
@@ -26,20 +29,15 @@ import javax.swing.SwingConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableColumn;
-
-import net.miginfocom.swing.MigLayout;
-
-import com.logginghub.logging.frontend.charting.NewChartingController;
-import com.logginghub.logging.frontend.charting.model.BatchedArraryListTableModel;
-import com.logginghub.logging.frontend.charting.model.ChartSeriesFilterModel;
-import com.logginghub.logging.frontend.charting.model.ChartSeriesModel;
-import com.logginghub.logging.frontend.charting.model.NewChartingModel;
-import com.logginghub.logging.messages.AggregationType;
-import com.logginghub.logging.messaging.PatternModel;
-import com.logginghub.logging.utils.ValueStripper2;
-import com.logginghub.utils.logging.Logger;
-import com.logginghub.utils.observable.Binder2;
-import com.logginghub.utils.observable.ObservableList;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.List;
 
 public class ChartSeriesModelEditor extends JPanel {
 
@@ -83,7 +81,7 @@ public class ChartSeriesModelEditor extends JPanel {
     public ChartSeriesModelEditor() {
 
         setName("ChartSeriesModelEditor");
-        setLayout(new MigLayout("", "[][grow]", "[][][][][][][][][134.00,grow]"));
+        setLayout(new MigLayout("", "[][grow]", "[][][][][][][][][][134.00,grow]"));
 
         setBackground(Color.white);
         setOpaque(true);
@@ -127,27 +125,32 @@ public class ChartSeriesModelEditor extends JPanel {
         add(intervalTextField, "cell 1 3,growx");
         intervalTextField.setColumns(10);
 
+        JLabel eventPartsExamples = new JLabel("For examples 'Source Host/Source IP/Source Application'");
+        eventPartsExamples.setForeground(Color.GRAY);
+        eventPartsExamples.setFont(new Font("Tahoma", Font.ITALIC, 11));
+        add(eventPartsExamples, "cell 1 4,alignx trailing");
+
         JLabel lblNewLabel_5 = new JLabel("Event parts");
-        add(lblNewLabel_5, "cell 0 4,alignx trailing");
+        add(lblNewLabel_5, "cell 0 5,alignx trailing");
 
         eventPartsTextField = new JTextField();
-        add(eventPartsTextField, "cell 1 4,growx");
+        add(eventPartsTextField, "cell 1 5,growx");
         eventPartsTextField.setColumns(10);
 
         lblNewLabel_6 = new JLabel("Group by");
-        add(lblNewLabel_6, "cell 0 5,alignx trailing");
+        add(lblNewLabel_6, "cell 0 6,alignx trailing");
 
         groupByComboModel = new DefaultComboBoxModel();
         groupByCombo = new JComboBox(groupByComboModel);
         groupByCombo.setEditable(true);
         groupByCombo.setName("Group by");
 
-        add(groupByCombo, "cell 1 5,growx");
+        add(groupByCombo, "cell 1 6,growx");
 
-        add(new JLabel("Generate empty ticks"), "cell 1 6,alignx trailing");
+        add(new JLabel("Generate empty ticks"), "cell 1 7,alignx trailing");
         generateEmptyTicks = new JCheckBox();
         generateEmptyTicks.setOpaque(false);
-        add(generateEmptyTicks, "cell 1 6");
+        add(generateEmptyTicks, "cell 1 7");
 
         btnNewButton = new JButton("Add filter");
         btnNewButton.addActionListener(new ActionListener() {
@@ -156,12 +159,12 @@ public class ChartSeriesModelEditor extends JPanel {
             }
         });
         btnNewButton.setName("Add filter");
-        add(btnNewButton, "flowx,cell 1 7");
+        add(btnNewButton, "flowx,cell 1 8");
 
         lblFilters = new JLabel("Filters");
         lblFilters.setHorizontalAlignment(SwingConstants.RIGHT);
         lblFilters.setVerticalAlignment(SwingConstants.TOP);
-        add(lblFilters, "cell 0 8");
+        add(lblFilters, "cell 0 9");
 
         scrollPane = new JScrollPane();
 
@@ -229,7 +232,7 @@ public class ChartSeriesModelEditor extends JPanel {
 
         };
 
-        add(scrollPane, "cell 1 8,grow");
+        add(scrollPane, "cell 1 9,grow");
 
         table = new JTable(tableModel);
         table.setName("Filter table");
@@ -241,12 +244,12 @@ public class ChartSeriesModelEditor extends JPanel {
                 removeSelectedFilter();
             }
         });
-        add(removeFilterButton, "cell 1 7");
+        add(removeFilterButton, "cell 1 8");
 
         lblNewLabel_7 = new JLabel("Hold the alt key whilst clicking cells to open in a larger editor window");
         lblNewLabel_7.setForeground(Color.GRAY);
         lblNewLabel_7.setFont(new Font("Tahoma", Font.ITALIC, 11));
-        add(lblNewLabel_7, "cell 1 7");
+        add(lblNewLabel_7, "cell 1 8");
 
         table.setRowHeight(24);
 

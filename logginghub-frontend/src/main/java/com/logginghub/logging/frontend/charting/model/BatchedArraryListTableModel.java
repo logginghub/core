@@ -310,7 +310,7 @@ public abstract class BatchedArraryListTableModel<T> extends AbstractTableModel 
     public void bindTo(ObservableList<T> list) {
         list.addListenerAndNotifyExisting(new ObservableListListener<T>() {
 
-            @Override public void onRemoved(T t) {
+            @Override public void onRemoved(T t, int index) {
                 remove(t);
             }
 

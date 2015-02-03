@@ -45,7 +45,7 @@ public class QuickFilterController {
         quickFilterModels = environmentModel.getQuickFilterModels();
         quickFilterModels.addListenerAndNotifyExisting(new ObservableListListener<QuickFilterModel>() {
 
-            @Override public void onRemoved(QuickFilterModel t) {
+            @Override public void onRemoved(QuickFilterModel t, int index) {
                 FilterWrapper filterWrapper = filterWrappersByQuickFilterModel.remove(t);
                 filter.removeFilter(filterWrapper.compositeFilter);
                 environmentModel.getFilterUpdateCount().increment(1);

@@ -1,10 +1,5 @@
 package com.logginghub.logging.frontend.charting.model;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
-
 import com.logginghub.logging.api.patterns.Pattern;
 import com.logginghub.logging.frontend.services.PatternManagementService;
 import com.logginghub.logging.messaging.PatternisedLogEvent;
@@ -14,6 +9,11 @@ import com.logginghub.utils.EnvironmentProperties;
 import com.logginghub.utils.StringUtils;
 import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.observable.ObservableList;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class StreamBuilder implements ValueStripper2ResultListener2 {
 
@@ -187,11 +187,12 @@ public class StreamBuilder implements ValueStripper2ResultListener2 {
     public void setStream(String string) {
         if (string != null && !string.equals("null") && string.length() > 0) {
             String[] split = string.split("/");
-            patternID = Integer.parseInt(split[0]);
-            labelIndex = Integer.parseInt(split[1]);
+//            patternID = Integer.parseInt(split[0]);
+//            labelIndex = Integer.parseInt(split[1]);
 
-            eventParts = new String[split.length - 2];
-            System.arraycopy(split, 2, eventParts, 0, eventParts.length);
+//            eventParts = new String[split.length - 2];
+//            System.arraycopy(split, 2, eventParts, 0, eventParts.length);
+            eventParts = split;
         }
         else {
             eventParts = new String[] {};

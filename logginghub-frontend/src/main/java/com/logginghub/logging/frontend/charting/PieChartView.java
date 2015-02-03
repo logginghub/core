@@ -1,14 +1,5 @@
 package com.logginghub.logging.frontend.charting;
 
-import java.awt.Color;
-import java.io.File;
-
-import javax.swing.BorderFactory;
-import javax.swing.SwingUtilities;
-
-import org.jfree.chart.JFreeChart;
-import org.jfree.ui.RectangleEdge;
-
 import com.logginghub.logging.frontend.analysis.ChartInterface;
 import com.logginghub.logging.frontend.analysis.ChunkedResult;
 import com.logginghub.logging.frontend.analysis.PieChart;
@@ -22,6 +13,13 @@ import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.observable.ObservableList;
 import com.logginghub.utils.observable.ObservableListListener;
 import com.logginghub.utils.observable.ObservablePropertyListener;
+import org.jfree.chart.JFreeChart;
+import org.jfree.ui.RectangleEdge;
+
+import javax.swing.BorderFactory;
+import javax.swing.SwingUtilities;
+import java.awt.Color;
+import java.io.File;
 
 public class PieChartView extends MigPanel {
 
@@ -187,7 +185,7 @@ public class PieChartView extends MigPanel {
                 stream.addListener(listener);
                 
                 matcherModel.getFilters().addListener(new ObservableListListener<ChartSeriesFilterModel>() {
-                    @Override public void onRemoved(ChartSeriesFilterModel t) {
+                    @Override public void onRemoved(ChartSeriesFilterModel t, int index) {
                         clearChartData();
                     }
                     @Override public void onCleared() {
@@ -201,7 +199,7 @@ public class PieChartView extends MigPanel {
             }
 
             @Override
-            public void onRemoved(ChartSeriesModel t) {
+            public void onRemoved(ChartSeriesModel t, int index) {
                 logger.info("Unbinding chart series model '{}' from chart", t);
                 Stream<ChunkedResult> stream = controller.getResultStreamFor(t);
                 stream.removeListener(listener);

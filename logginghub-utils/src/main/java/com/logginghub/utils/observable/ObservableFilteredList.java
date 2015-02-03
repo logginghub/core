@@ -1,8 +1,8 @@
 package com.logginghub.utils.observable;
 
-import java.util.List;
-
 import com.logginghub.utils.filter.Filter;
+
+import java.util.List;
 
 @SuppressWarnings("unchecked") public class ObservableFilteredList<T> extends ObservableList<T> {
 
@@ -16,7 +16,7 @@ import com.logginghub.utils.filter.Filter;
                 }
             }
 
-            public void onRemoved(T t) {
+            public void onRemoved(T t, int index) {
                 remove(t);
             }
 

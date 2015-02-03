@@ -1,39 +1,5 @@
 package com.logginghub.logging.frontend.charting.swing;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.io.File;
-import java.io.IOException;
-import java.util.Enumeration;
-
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
-import javax.swing.JTree;
-import javax.swing.SwingUtilities;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeCellRenderer;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
-
-import net.miginfocom.swing.MigLayout;
-
 import com.logginghub.logging.LogEventMultiplexer;
 import com.logginghub.logging.frontend.charting.NewChartingController;
 import com.logginghub.logging.frontend.charting.NewChartingView;
@@ -65,6 +31,38 @@ import com.logginghub.utils.observable.ObservableListListener;
 import com.logginghub.utils.observable.ObservableListener;
 import com.logginghub.utils.observable.ObservablePropertyListener;
 import com.logginghub.utils.swing.VLFrame;
+import net.miginfocom.swing.MigLayout;
+
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTree;
+import javax.swing.SwingUtilities;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.File;
+import java.io.IOException;
+import java.util.Enumeration;
 
 public class ChartingTreeEditorView extends JPanel {
 
@@ -586,7 +584,7 @@ public class ChartingTreeEditorView extends JPanel {
                 });
             }
 
-            @Override public void onRemoved(final PageModel t) {
+            @Override public void onRemoved(final PageModel t, int index) {
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override public void run() {
                         DefaultMutableTreeNode remove = pageCounterparts.remove(t);
@@ -615,7 +613,7 @@ public class ChartingTreeEditorView extends JPanel {
                 });
             }
 
-            @Override public void onRemoved(final PatternModel t) {
+            @Override public void onRemoved(final PatternModel t, int index) {
                 SwingHelper.invoke(new Runnable() {
                     @Override public void run() {
                         DefaultMutableTreeNode remove = patternCounterparts.remove(t);
@@ -653,7 +651,7 @@ public class ChartingTreeEditorView extends JPanel {
                 bindLineChart(node, t, lineChartModel);
             }
 
-            @Override public void onRemoved(LineChartModel t) {
+            @Override public void onRemoved(LineChartModel t, int index) {
                 DefaultMutableTreeNode remove = lineChartCounterparts.remove(t);
                 treeModel.removeNodeFromParent(remove);
             }
@@ -667,7 +665,7 @@ public class ChartingTreeEditorView extends JPanel {
                 bindPieChart(node, t, pieChartModel);
             }
 
-            @Override public void onRemoved(PieChartModel t) {
+            @Override public void onRemoved(PieChartModel t, int index) {
                 DefaultMutableTreeNode remove = pieChartCounterparts.remove(t);
                 treeModel.removeNodeFromParent(remove);
             }
@@ -711,7 +709,7 @@ public class ChartingTreeEditorView extends JPanel {
                 seriesCounterparts.put(t, seriesNode);
             }
 
-            @Override public void onRemoved(ChartSeriesModel t) {
+            @Override public void onRemoved(ChartSeriesModel t, int index) {
                 logger.info("Chart series model '{}' has been removed from chart '{}'", t, lineChartModel);
                 DefaultMutableTreeNode remove = seriesCounterparts.remove(t);
                 treeModel.removeNodeFromParent(remove);
@@ -758,7 +756,7 @@ public class ChartingTreeEditorView extends JPanel {
                 seriesCounterparts.put(chartSeriesModel, seriesNode);
             }
 
-            @Override public void onRemoved(ChartSeriesModel t) {
+            @Override public void onRemoved(ChartSeriesModel t, int index) {
                 logger.info("Chart series model '{}' has been removed from chart '{}'", t, pieChartModel);
                 DefaultMutableTreeNode remove = seriesCounterparts.remove(t);
                 treeModel.removeNodeFromParent(remove);
@@ -924,7 +922,7 @@ public class ChartingTreeEditorView extends JPanel {
         // Capture the last model added, so we can select it later
         final Pointer<PatternModel> lastAdded = new Pointer<PatternModel>(null);
         controller.getModel().getPatternModels().addListener(new ObservableListListener<PatternModel>() {
-            @Override public void onRemoved(PatternModel t) {}
+            @Override public void onRemoved(PatternModel t, int index) {}
 
             @Override public void onCleared() {}
 

@@ -42,7 +42,7 @@ public class NewChartingView extends JPanel {
 
         model.getPages().addListenerAndNotifyExisting(new ObservableListListener<PageModel>() {
             @Override
-            public void onRemoved(PageModel t) {
+            public void onRemoved(PageModel t, int index) {
                 removePage(t);
             }
 

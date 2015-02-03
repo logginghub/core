@@ -1,12 +1,10 @@
 package com.logginghub.logging.frontend.charting.swing;
 
-import java.awt.Component;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import com.logginghub.logging.messaging.PatternModel;
+import com.logginghub.utils.InsertSortedArrayList;
+import com.logginghub.utils.observable.ObservableList;
+import com.logginghub.utils.observable.ObservableListListener;
+import com.logginghub.utils.observable.ObservableProperty;
 
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultListCellRenderer;
@@ -16,12 +14,13 @@ import javax.swing.JList;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-
-import com.logginghub.logging.messaging.PatternModel;
-import com.logginghub.utils.InsertSortedArrayList;
-import com.logginghub.utils.observable.ObservableList;
-import com.logginghub.utils.observable.ObservableListListener;
-import com.logginghub.utils.observable.ObservableProperty;
+import java.awt.Component;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class PatternSelectionCombo extends JComboBox {
     private Model model;
@@ -141,7 +140,7 @@ public class PatternSelectionCombo extends JComboBox {
 
         patternModels.addListenerAndNotifyExisting(new ObservableListListener<PatternModel>() {
 
-            @Override public void onRemoved(final PatternModel t) {
+            @Override public void onRemoved(final PatternModel t, int index) {
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override public void run() {
                         model.removeItem(t);

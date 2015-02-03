@@ -1,5 +1,15 @@
 package com.logginghub.logging.frontend.components;
 
+import com.logginghub.utils.logging.Logger;
+import com.logginghub.utils.observable.ObservableList;
+import com.logginghub.utils.observable.ObservableListListener;
+import com.logginghub.utils.observable.ObservablePropertyListener;
+import com.logginghub.utils.swing.TestFrame;
+
+import javax.swing.JDialog;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.border.Border;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Point;
@@ -9,17 +19,6 @@ import java.util.Deque;
 import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
-
-import javax.swing.JDialog;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
-import javax.swing.border.Border;
-
-import com.logginghub.utils.logging.Logger;
-import com.logginghub.utils.observable.ObservableList;
-import com.logginghub.utils.observable.ObservableListListener;
-import com.logginghub.utils.observable.ObservablePropertyListener;
-import com.logginghub.utils.swing.TestFrame;
 
 public class QuickFilterHistoryTextField extends JTextField {
     private static final long serialVersionUID = 1L;
@@ -287,7 +286,7 @@ public class QuickFilterHistoryTextField extends JTextField {
         this.controller = controller;
         this.model = controller.getModel();
         model.getEntries().addListenerAndNotifyExisting(new ObservableListListener<QuickFilterHistoryEntryModel>() {
-            @Override public void onRemoved(QuickFilterHistoryEntryModel t) {
+            @Override public void onRemoved(QuickFilterHistoryEntryModel t, int index) {
                 popupPanel.removeEntry(t);
             }
 

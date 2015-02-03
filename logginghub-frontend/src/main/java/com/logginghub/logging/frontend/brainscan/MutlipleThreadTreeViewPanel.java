@@ -1,7 +1,10 @@
 package com.logginghub.logging.frontend.brainscan;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.logginghub.swingutils.treetable.JTreeTable;
+import com.logginghub.utils.observable.ObservableItemContainer;
+import com.logginghub.utils.observable.ObservableListListener;
+import com.logginghub.utils.observable.ObservableListener;
+import net.miginfocom.swing.MigLayout;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -9,13 +12,8 @@ import javax.swing.JTree;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-
-import net.miginfocom.swing.MigLayout;
-
-import com.logginghub.swingutils.treetable.JTreeTable;
-import com.logginghub.utils.observable.ObservableItemContainer;
-import com.logginghub.utils.observable.ObservableListListener;
-import com.logginghub.utils.observable.ObservableListener;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MutlipleThreadTreeViewPanel extends JPanel {
 
@@ -73,7 +71,7 @@ public class MutlipleThreadTreeViewPanel extends JPanel {
     public void bind(ThreadsInProcessViewModel model) {
 
         model.getThreads().addListenerAndNotifyExisting(new ObservableListListener<SingleThreadViewModel>() {
-            @Override public void onRemoved(SingleThreadViewModel t) {}
+            @Override public void onRemoved(SingleThreadViewModel t, int index) {}
 
             @Override public void onCleared() {}
 

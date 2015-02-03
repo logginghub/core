@@ -1,17 +1,5 @@
 package com.logginghub.logging.utils;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.UnknownHostException;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.LogManager;
-import java.util.logging.Logger;
-
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.LoggingPorts;
 import com.logginghub.logging.VLLogEvent;
@@ -27,6 +15,18 @@ import com.logginghub.utils.SizeOf;
 import com.logginghub.utils.VLPorts;
 import com.logginghub.utils.logging.LoggerStream;
 import com.logginghub.utils.logging.SingleLineFormatter;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.UnknownHostException;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 public class LoggingUtils {
     
@@ -249,7 +249,7 @@ public class LoggingUtils {
 
             com.logginghub.utils.logging.Logger.root().addStream(new LoggerStream() {
                 public void onNewLogEvent(com.logginghub.utils.logging.LogEvent event) {
-                    VLLogEvent vlevent = new VLLogEvent(event, finalPid, sourceApplication, finalHost);
+                    VLLogEvent vlevent = new VLLogEvent(event, finalPid, sourceApplication, finalHost.getHostAddress(), finalHost.getHostName());
                     try {
                         socketClient.send(new LogEventMessage(vlevent));
                     }
@@ -309,7 +309,7 @@ public class LoggingUtils {
 
         com.logginghub.utils.logging.Logger.root().addStream(new LoggerStream() {
             public void onNewLogEvent(com.logginghub.utils.logging.LogEvent event) {
-                VLLogEvent vlevent = new VLLogEvent(event, finalPid, sourceApplication, finalHost);
+                VLLogEvent vlevent = new VLLogEvent(event, finalPid, sourceApplication, finalHost.getHostAddress(), finalHost.getHostName());
                 try {
                     socketClient.send(new LogEventMessage(vlevent));
                 }

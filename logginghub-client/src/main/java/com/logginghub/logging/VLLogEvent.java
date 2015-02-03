@@ -17,11 +17,11 @@ public class VLLogEvent extends BaseLogEvent {
     private com.logginghub.utils.logging.LogEvent event;
     private static String lineSeparator = StringUtils.newline;
 
-    public VLLogEvent(com.logginghub.utils.logging.LogEvent event, int pid, String sourceApplication, InetAddress sourceHost) {
+    public VLLogEvent(com.logginghub.utils.logging.LogEvent event, int pid, String sourceApplication, String sourceAddress, String sourceHost) {
         this.event = event;
         setSourceApplication(sourceApplication);
-        setSourceAddress(sourceHost.getHostAddress());
-        setSourceHost(sourceHost.getHostName());
+        setSourceAddress(sourceAddress);
+        setSourceHost(sourceHost);
         setPid(pid);
     }
 

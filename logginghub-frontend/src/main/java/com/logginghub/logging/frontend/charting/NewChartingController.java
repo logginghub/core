@@ -1,14 +1,5 @@
 package com.logginghub.logging.frontend.charting;
 
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.logginghub.logging.LogEventMultiplexer;
 import com.logginghub.logging.frontend.analysis.ChunkedResult;
 import com.logginghub.logging.frontend.charting.model.AbstractChartModel;
@@ -41,6 +32,15 @@ import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.observable.ObservableList;
 import com.logginghub.utils.observable.ObservableListListener;
 import com.logginghub.utils.observable.ObservablePropertyListener;
+
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class NewChartingController {
 
@@ -131,7 +131,7 @@ public class NewChartingController {
                 bindPageModel(pageModel);
             }
 
-            @Override public void onRemoved(PageModel t) {}
+            @Override public void onRemoved(PageModel t, int index) {}
 
             @Override public void onCleared() {}
         });
@@ -145,7 +145,7 @@ public class NewChartingController {
                 bindLineChartModel(lineChartModel);
             }
 
-            @Override public void onRemoved(LineChartModel t) {}
+            @Override public void onRemoved(LineChartModel t, int index) {}
 
             @Override public void onCleared() {}
         });
@@ -156,7 +156,7 @@ public class NewChartingController {
                 bindPieChartModel(pieChartModel);
             }
 
-            @Override public void onRemoved(PieChartModel t) {}
+            @Override public void onRemoved(PieChartModel t, int index) {}
 
             @Override public void onCleared() {}
         });
@@ -174,7 +174,7 @@ public class NewChartingController {
     private void bindAggregators(NewChartingModel model) {
         model.getAggregationModels().addListenerAndNotifyExisting(new ObservableListListener<AggregationConfiguration>() {
 
-            @Override public void onRemoved(AggregationConfiguration t) {
+            @Override public void onRemoved(AggregationConfiguration t, int index) {
                 // Decouple the aggregator from the stream
                 NewAggregatorSplitter removed = aggregatorsByAggregationConfiguration.remove(t);
                 StreamBuilder streamBuilder = getStreamBuilder(t.getStreamID().get());
@@ -212,7 +212,7 @@ public class NewChartingController {
     private void bindValueStrippers(final NewChartingModel model) {
         // Wire up value strippers to pattern models
         model.getPatternModels().addListenerAndNotifyExisting(new ObservableListListener<PatternModel>() {
-            @Override public void onRemoved(PatternModel t) {
+            @Override public void onRemoved(PatternModel t, int index) {
                 ValueStripper2 removed = valueStrippersByPattern.remove(t);
                 logEventMultiplexer.removeLogEventListener(removed);
             }
@@ -349,7 +349,7 @@ public class NewChartingController {
                 });
             }
 
-            @Override public void onRemoved(ChartSeriesModel t) {
+            @Override public void onRemoved(ChartSeriesModel t, int index) {
 
                 logger.debug("ChartSeriesModel '{}' removed from chart '{}'", t, lineChartModel);
 
@@ -475,7 +475,7 @@ public class NewChartingController {
                 });
             }
 
-            @Override public void onRemoved(ChartSeriesModel t) {
+            @Override public void onRemoved(ChartSeriesModel t, int index) {
 
                 logger.debug("ChartSeriesModel '{}' removed from chart '{}'", t, chartModel);
 
@@ -802,6 +802,12 @@ public class NewChartingController {
         builder.setEventParts(new String[] {});
         chartSeriesModel.getEventParts().addListenerAndNotifyCurrent(new ObservablePropertyListener<String>() {
             public void onPropertyChanged(String oldValue, String newValue) {
+
+                int patternID = chartSeriesModel.getPatternID().get();
+                int labelIndex = chartSeriesModel.getLabelIndex().get();
+
+                builder.setPatternID(patternID);
+                builder.setLabelIndex(labelIndex);
                 builder.setStream(newValue);
             }
         });
@@ -834,7 +840,7 @@ public class NewChartingController {
         // });
 
         chartSeriesModel.getFilters().addListenerAndNotifyExisting(new ObservableListListener<ChartSeriesFilterModel>() {
-            @Override public void onRemoved(ChartSeriesFilterModel t) {
+            @Override public void onRemoved(ChartSeriesFilterModel t, int index) {
                 builder.removeFilter(t);
             }
 

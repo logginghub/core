@@ -1,8 +1,12 @@
 <loggingFrontendConfiguration title="Local Configuration" showHistoryViewer="true" showChartingEditor="true" showHeapSlider="false">
 
     <environment name="local" showHistoryTab="true">
-        <hub name="local" host="localhost:15000"/>
+    <hub name="local" host="localhost:15000"/>
     </environment>
+
+    <!--<environment name="ske" showHistoryTab="true">-->
+        <!--<hub name="ske" host="54.77.166.227:15000"/>-->
+    <!--</environment>-->
 
     <!--
     <environment name="ec2" showHistoryTab="true">
@@ -11,8 +15,8 @@
     -->
 
     <!--<environment name="local-cluster" clustered="true">-->
-        <!--<hub name="hub1" host="localhost:15000"/>-->
-        <!--<hub name="hub2" host="localhost:15001"/>-->
+    <!--<hub name="hub1" host="localhost:15000"/>-->
+    <!--<hub name="hub2" host="localhost:15001"/>-->
     <!--</environment>-->
-    
+
 </loggingFrontendConfiguration>

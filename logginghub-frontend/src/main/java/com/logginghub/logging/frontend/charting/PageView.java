@@ -63,7 +63,7 @@ public class PageView extends JPanel {
                 doLayout();
             }
 
-            @Override public void onRemoved(LineChartModel t) {
+            @Override public void onRemoved(LineChartModel t, int index) {
                 LineChartView chart = lineChartCounterparts.remove(t);
                 // TODO : invoke later?
                 remove(chart);
@@ -102,7 +102,7 @@ public class PageView extends JPanel {
                 doLayout();
             }
 
-            @Override public void onRemoved(PieChartModel t) {
+            @Override public void onRemoved(PieChartModel t, int index) {
                 PieChartView chart = pieChartCounterparts.remove(t);
                 // TODO : invoke later?
                 remove(chart);

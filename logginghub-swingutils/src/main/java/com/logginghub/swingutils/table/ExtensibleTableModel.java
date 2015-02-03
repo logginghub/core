@@ -1,5 +1,14 @@
 package com.logginghub.swingutils.table;
 
+import com.logginghub.utils.Asynchronous;
+import com.logginghub.utils.Is;
+import com.logginghub.utils.TimerUtils;
+import com.logginghub.utils.filter.Filter;
+import com.logginghub.utils.observable.ObservableList;
+import com.logginghub.utils.observable.ObservableListListener;
+
+import javax.swing.SwingUtilities;
+import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -7,16 +16,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Timer;
 import java.util.concurrent.TimeUnit;
-
-import javax.swing.SwingUtilities;
-import javax.swing.table.AbstractTableModel;
-
-import com.logginghub.utils.Asynchronous;
-import com.logginghub.utils.Is;
-import com.logginghub.utils.TimerUtils;
-import com.logginghub.utils.filter.Filter;
-import com.logginghub.utils.observable.ObservableList;
-import com.logginghub.utils.observable.ObservableListListener;
 
 public abstract class ExtensibleTableModel<T> extends AbstractTableModel implements Asynchronous {
     private static final long serialVersionUID = 1L;
@@ -331,7 +330,7 @@ public abstract class ExtensibleTableModel<T> extends AbstractTableModel impleme
     public void bindTo(ObservableList<T> list) {
         list.addListenerAndNotifyExisting(new ObservableListListener<T>() {
 
-            @Override public void onRemoved(T t) {
+            @Override public void onRemoved(T t, int index) {
                 remove(t);
             }
 

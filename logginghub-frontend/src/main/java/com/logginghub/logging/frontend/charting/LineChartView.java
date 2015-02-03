@@ -209,7 +209,7 @@ public class LineChartView extends MigPanel {
                 stream.addListener(listener);
             }
 
-            @Override public void onRemoved(ChartSeriesModel t) {
+            @Override public void onRemoved(ChartSeriesModel t, int index) {
                 logger.info("Unbinding chart series model '{}' from chart");
                 Stream<ChunkedResult> stream = controller.getResultStreamFor(t);
                 stream.removeListener(listener);

@@ -1,14 +1,14 @@
 package com.logginghub.utils.observable;
 
+import com.logginghub.utils.NotImplementedException;
+import com.logginghub.utils.ReflectionUtils;
+import com.logginghub.utils.StringUtils;
+
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.concurrent.CopyOnWriteArrayList;
-
-import com.logginghub.utils.NotImplementedException;
-import com.logginghub.utils.ReflectionUtils;
-import com.logginghub.utils.StringUtils;
 
 public class ObservableList<T> implements List<T>, ObservableItem, ObservableItemContainer {
 
@@ -150,9 +150,11 @@ public class ObservableList<T> implements List<T>, ObservableItem, ObservableIte
         synchronized (decoratee) {
             if (listListeners != null) {
 
-                for (T item : decoratee) {
+                for(int i = 0; i < decoratee.size(); i++) {
+                    T item = decoratee.get(i);
+
                     for (ObservableListListener<T> observableListListener : listListeners) {
-                        observableListListener.onRemoved(item);
+                        observableListListener.onRemoved(item, i);
                     }
                 }
             }
@@ -248,7 +250,7 @@ public class ObservableList<T> implements List<T>, ObservableItem, ObservableIte
             // and unbind on remove.
             for (int i = size() - 1; i > 0; i--) {
                 ObservableListListener<T> observableListListener = listListeners.get(i);
-                observableListListener.onRemoved(removed);
+                observableListListener.onRemoved(removed, index);
             }
         }
 
@@ -260,7 +262,9 @@ public class ObservableList<T> implements List<T>, ObservableItem, ObservableIte
     public boolean remove(Object o) {
 
         boolean removed;
+        int index;
         synchronized (decoratee) {
+            index = decoratee.indexOf(o);
             removed = decoratee.remove(o);
         }
 
@@ -270,7 +274,7 @@ public class ObservableList<T> implements List<T>, ObservableItem, ObservableIte
             int size = listListeners.size();
             for (int i = size - 1; i >= 0; i--) {
                 ObservableListListener<T> observableListListener = listListeners.get(i);
-                observableListListener.onRemoved((T) o);
+                observableListListener.onRemoved((T) o, index);
             }
         }
 

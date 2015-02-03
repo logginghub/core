@@ -129,7 +129,7 @@ public class PatternModelListView extends JPanel {
 
             @Override public void onCleared() {}
 
-            @Override public void onRemoved(PatternModel t) {
+            @Override public void onRemoved(PatternModel t, int index) {
                 tableModel.remove(t);
                 t.removeListener(listeners.remove(t));
             }

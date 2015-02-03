@@ -64,7 +64,7 @@ public class LoggingFrontendController {
         ObservableList<EnvironmentModel> environments = model.getEnvironments();
         for (final EnvironmentModel environmentModel : environments) {
             environmentModel.getQuickFilterHistoryModel().getEntries().addListener(new ObservableListListener<QuickFilterHistoryEntryModel>() {
-                @Override public void onRemoved(QuickFilterHistoryEntryModel t) {
+                @Override public void onRemoved(QuickFilterHistoryEntryModel t, int index) {
                     if (t.getUserDefined().get()) {
                         writeQuickFilters(environmentModel);
                     }

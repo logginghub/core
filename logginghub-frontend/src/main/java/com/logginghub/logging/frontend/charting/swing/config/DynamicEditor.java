@@ -1,21 +1,5 @@
 package com.logginghub.logging.frontend.charting.swing.config;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.lang.reflect.Field;
-
-import javax.swing.DefaultListModel;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSpinner;
-import javax.swing.JTextField;
-
 import com.logginghub.swingutils.MigPanel;
 import com.logginghub.utils.FormattedRuntimeException;
 import com.logginghub.utils.Is;
@@ -28,6 +12,21 @@ import com.logginghub.utils.observable.ObservableListListener;
 import com.logginghub.utils.observable.ObservableLong;
 import com.logginghub.utils.observable.ObservableProperty;
 import com.logginghub.utils.swing.DoubleSpinner;
+
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.lang.reflect.Field;
 
 public class DynamicEditor {
 
@@ -143,7 +142,7 @@ public class DynamicEditor {
                 listModel.addElement(t);
             }
 
-            @Override public void onRemoved(Object t) {
+            @Override public void onRemoved(Object t, int index) {
                 listModel.removeElement(t);
             }
 

@@ -1,9 +1,7 @@
 package com.logginghub.logging.frontend.brainscan;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.List;
+import com.logginghub.utils.observable.ObservableListListener;
+import net.miginfocom.swing.MigLayout;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -11,10 +9,10 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
-
-import net.miginfocom.swing.MigLayout;
-
-import com.logginghub.utils.observable.ObservableListListener;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ThreadGroupingEditorPanel extends JPanel {
 
@@ -117,7 +115,7 @@ public class ThreadGroupingEditorPanel extends JPanel {
     public void bind(ThreadGroupingModel model) {
         this.model = model;
         model.getGroups().addListenerAndNotifyExisting(new ObservableListListener<ThreadGroupModel>() {
-            @Override public void onRemoved(ThreadGroupModel t) {}
+            @Override public void onRemoved(ThreadGroupModel t, int index) {}
 
             @Override public void onCleared() {}
 

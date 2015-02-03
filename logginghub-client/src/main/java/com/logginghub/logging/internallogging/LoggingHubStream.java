@@ -412,7 +412,8 @@ public class LoggingHubStream implements LoggerStream, StandardAppenderFeatures 
                 VLLogEvent event = new VLLogEvent(vlevent,
                         appenderHelper.getPid(),
                         appenderHelper.getSourceApplication(),
-                        appenderHelper.getHost());
+                        appenderHelper.getSourceAddress(),
+                        appenderHelper.getSourceHost());
                 event.setChannel(appenderHelper.getChannel());
                 return event;
             }
@@ -421,5 +422,9 @@ public class LoggingHubStream implements LoggerStream, StandardAppenderFeatures 
 
     public void setHostOverride(String hostOverride) {
         appenderHelper.setHostOverride(hostOverride);
+    }
+
+    public void setHostAddressOverride(String hostAddressOverride) {
+        appenderHelper.setHostAddressOverride(hostAddressOverride);
     }
 }

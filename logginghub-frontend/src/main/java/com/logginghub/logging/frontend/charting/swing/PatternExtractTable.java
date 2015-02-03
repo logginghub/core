@@ -1,8 +1,11 @@
 package com.logginghub.logging.frontend.charting.swing;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.util.List;
+import com.logginghub.logging.frontend.charting.model.BatchedArraryListTableModel;
+import com.logginghub.logging.frontend.charting.model.PatternisedDataModel;
+import com.logginghub.logging.frontend.charting.model.PatternisedDataSeriesModel;
+import com.logginghub.utils.StringUtils;
+import com.logginghub.utils.observable.ObservableListListener;
+import net.miginfocom.swing.MigLayout;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -11,14 +14,9 @@ import javax.swing.JTable;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableCellRenderer;
-
-import net.miginfocom.swing.MigLayout;
-
-import com.logginghub.logging.frontend.charting.model.BatchedArraryListTableModel;
-import com.logginghub.logging.frontend.charting.model.PatternisedDataModel;
-import com.logginghub.logging.frontend.charting.model.PatternisedDataSeriesModel;
-import com.logginghub.utils.StringUtils;
-import com.logginghub.utils.observable.ObservableListListener;
+import java.awt.Color;
+import java.awt.Component;
+import java.util.List;
 
 public class PatternExtractTable extends JPanel {
 
@@ -87,7 +85,7 @@ public class PatternExtractTable extends JPanel {
                 tableModel.clear();
             }
 
-            @Override public void onRemoved(PatternisedDataModel t) {
+            @Override public void onRemoved(PatternisedDataModel t, int index) {
                 tableModel.remove(t);
             }
         });

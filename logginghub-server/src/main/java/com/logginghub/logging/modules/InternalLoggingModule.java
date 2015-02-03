@@ -1,13 +1,9 @@
 package com.logginghub.logging.modules;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-
 import com.logginghub.logging.VLLogEvent;
 import com.logginghub.logging.messages.LogEventMessage;
 import com.logginghub.logging.messaging.InternalConnection;
 import com.logginghub.logging.messaging.SocketConnection;
-import com.logginghub.logging.messaging.SocketConnectionInterface;
 import com.logginghub.logging.modules.configuration.InternalLoggingConfiguration;
 import com.logginghub.logging.servers.SocketHubInterface;
 import com.logginghub.utils.ProcessUtils;
@@ -15,6 +11,9 @@ import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.logging.LoggerStream;
 import com.logginghub.utils.module.Module;
 import com.logginghub.utils.module.ServiceDiscovery;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 public class InternalLoggingModule implements Module<InternalLoggingConfiguration> {
 
@@ -48,7 +47,7 @@ public class InternalLoggingModule implements Module<InternalLoggingConfiguratio
 
             root.addStream(new LoggerStream() {
                 @Override public void onNewLogEvent(com.logginghub.utils.logging.LogEvent event) {
-                    VLLogEvent vlevent = new VLLogEvent(event, finalPid, sourceApplication, finalHost);
+                    VLLogEvent vlevent = new VLLogEvent(event, finalPid, sourceApplication, finalHost.getHostAddress(), finalHost.getHostName());
                     vlevent.setChannel("private/hubinternal");
                     socketHubInterface.processLogEvent(new LogEventMessage(vlevent), internal);
                 }

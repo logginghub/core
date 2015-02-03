@@ -1,18 +1,5 @@
 package com.logginghub.logging.launchers;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.LogManager;
-
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.LogEventFormatter;
 import com.logginghub.logging.VLLogEvent;
@@ -45,6 +32,19 @@ import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.logging.LoggerStream;
 import com.logginghub.utils.logging.SystemErrStream;
 import com.logginghub.utils.module.ProxyServiceDiscovery;
+
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
 
 @Deprecated
 public class LegacyRunHub implements Closeable {
@@ -218,7 +218,7 @@ public class LegacyRunHub implements Closeable {
 
         root.addStream(new LoggerStream() {
             @Override public void onNewLogEvent(com.logginghub.utils.logging.LogEvent event) {
-                VLLogEvent vlevent = new VLLogEvent(event, finalPid, sourceApplication, finalHost);
+                VLLogEvent vlevent = new VLLogEvent(event, finalPid, sourceApplication, finalHost.getHostAddress(), finalHost.getHostName());
                 vlevent.setChannel("private/hubinternal");
                 hub.processLogEvent(new LogEventMessage(vlevent), internal);
             }

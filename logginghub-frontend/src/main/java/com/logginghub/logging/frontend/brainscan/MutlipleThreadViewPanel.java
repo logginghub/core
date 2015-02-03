@@ -334,14 +334,14 @@ public class MutlipleThreadViewPanel extends JPanel {
 
                     @Override public void onCleared() {}
 
-                    @Override public void onRemoved(SingleThreadViewModel t) {}
+                    @Override public void onRemoved(SingleThreadViewModel t, int index) {}
 
                 });
             }
 
             @Override public void onCleared() {}
 
-            @Override public void onRemoved(ThreadsInProcessViewModel t) {}
+            @Override public void onRemoved(ThreadsInProcessViewModel t, int index) {}
         });
 
     }

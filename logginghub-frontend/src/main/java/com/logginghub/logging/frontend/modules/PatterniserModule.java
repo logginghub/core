@@ -1,7 +1,6 @@
 package com.logginghub.logging.frontend.modules;
 
-import java.util.List;
-
+import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.api.patterns.Pattern;
 import com.logginghub.logging.frontend.services.PatternManagementService;
 import com.logginghub.logging.frontend.services.PatternisedEventService;
@@ -9,9 +8,12 @@ import com.logginghub.logging.messaging.PatternModel;
 import com.logginghub.logging.messaging.PatternisedLogEvent;
 import com.logginghub.logging.modules.PatternCollection;
 import com.logginghub.utils.Destination;
+import com.logginghub.utils.Source;
 import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.module.Inject;
 import com.logginghub.utils.observable.ObservableList;
+
+import java.util.List;
 
 public class PatterniserModule implements PatternManagementService, PatternisedEventService {
 
@@ -27,9 +29,13 @@ public class PatterniserModule implements PatternManagementService, PatternisedE
 
     }
 
+    public PatterniserModule(Source<LogEvent> source) {
+        source.addDestination(patternCollection);
+    }
+
     // TODO : we've really got two models here - the configuration details provided in patternModel,
     // and the actual model inside the patternCollection?
-//    private List<PatternModel> patterns = new ArrayList<PatternModel>();
+    //    private List<PatternModel> patterns = new ArrayList<PatternModel>();
 
     @Inject public void setEnvironmentMessagingService(EnvironmentMessagingService environmentMessagingService) {
         this.environmentMessagingService = environmentMessagingService;
@@ -37,7 +43,7 @@ public class PatterniserModule implements PatternManagementService, PatternisedE
 
     public void initialise() {
         environmentMessagingService.addLogEventListener(patternCollection);
-//        patternCollection.configureFromModels(patterns);
+        //        patternCollection.configureFromModels(patterns);
         logger.info("Patterniser module running");
     }
 
@@ -64,7 +70,7 @@ public class PatterniserModule implements PatternManagementService, PatternisedE
     }
 
     @Override public Pattern getPatternByID(int patternID) {
-        Pattern foundPattern = null;        
+        Pattern foundPattern = null;
         for (Pattern pattern : patternCollection.getPatternList()) {
             if (pattern.getPatternID() == patternID) {
                 foundPattern = pattern;
@@ -76,12 +82,15 @@ public class PatterniserModule implements PatternManagementService, PatternisedE
 
     @Override public String getLabelName(int patternID, int labelIndex) {
         return null;
-         
+
     }
 
     @Override public String getPatternName(int patternID) {
         return null;
-         
+
     }
 
+    public void addPattern(Pattern pattern) {
+        patternCollection.add(pattern);
+    }
 }
