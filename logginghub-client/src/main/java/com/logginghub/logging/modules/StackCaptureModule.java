@@ -56,7 +56,7 @@ public class StackCaptureModule implements Module<StackCaptureConfiguration> {
     public void start() {
         stop();
 
-        channelSubscriptions.subscribe(Channels.strobeRequests, new Destination<ChannelMessage>() {
+        channelSubscriptions.subscribe(Channels.stackStrobeRequests, new Destination<ChannelMessage>() {
             public void send(ChannelMessage t) {
                 StackStrobeRequest request = (StackStrobeRequest) t.getPayload();
                 controller.executeStrobe(request);

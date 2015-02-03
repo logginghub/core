@@ -1,13 +1,5 @@
 package com.logginghub.logging.transaction.configuration;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-
 import com.logginghub.logging.hub.configuration.RollingFileLoggerConfiguration;
 import com.logginghub.logging.hub.configuration.SocketHubConfiguration;
 import com.logginghub.logging.hub.configuration.TimestampFixedRollingFileLoggerConfiguration;
@@ -38,12 +30,20 @@ import com.logginghub.logging.modules.configuration.SigarMachineTelemetryConfigu
 import com.logginghub.logging.modules.configuration.SigarProcessTelemetryConfiguration;
 import com.logginghub.logging.modules.configuration.SimulatorConfiguration;
 import com.logginghub.logging.modules.configuration.SocketTextReaderConfiguration;
+import com.logginghub.logging.modules.configuration.StackHistoryConfiguration;
 import com.logginghub.logging.modules.configuration.TelemetryConfiguration;
 import com.logginghub.logging.modules.configuration.TelemetryOutputConfiguration;
 import com.logginghub.logging.modules.configuration.VMStatMonitorConfiguration;
 import com.logginghub.logging.modules.configuration.WebFrontendConfiguration;
 import com.logginghub.logging.modules.configuration.ZeroCopyHubConfiguration;
 import com.logginghub.utils.JAXBConfiguration;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import java.util.ArrayList;
+import java.util.List;
 
 @XmlRootElement(name = "container") @XmlAccessorType(XmlAccessType.FIELD) public class LoggingContainerConfiguration {
 
@@ -62,6 +62,8 @@ import com.logginghub.utils.JAXBConfiguration;
     @XmlElement private List<TelemetryOutputConfiguration> telemetryOutput = new ArrayList<TelemetryOutputConfiguration>();
     
     @XmlElement private List<InternalLoggingConfiguration> internalLogging = new ArrayList<InternalLoggingConfiguration>();
+
+    @XmlElement private List<StackHistoryConfiguration> stackHistory = new ArrayList<StackHistoryConfiguration>();
     
     @XmlElement private List<TransactionMonitorConfiguration> transactionMonitor = new ArrayList<TransactionMonitorConfiguration>();
     @XmlElement private List<HubConnectorConfiguration> hubConnector = new ArrayList<HubConnectorConfiguration>();
@@ -278,5 +280,9 @@ import com.logginghub.utils.JAXBConfiguration;
     
     public List<SigarProcessTelemetryConfiguration> getSigarProcessTelemetryModule() {
         return sigarProcessTelemetryModule;
+    }
+
+    public List<StackHistoryConfiguration> getStackHistory() {
+        return stackHistory;
     }
 }

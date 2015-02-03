@@ -1,13 +1,5 @@
 package com.logginghub.logging.modules;
 
-import java.io.EOFException;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 import com.logginghub.logging.exceptions.LoggingMessageSenderException;
 import com.logginghub.logging.interfaces.ChannelMessagingService;
 import com.logginghub.logging.interfaces.QueueAwareLoggingMessageSender;
@@ -42,7 +34,15 @@ import com.logginghub.utils.sof.SerialisableObject;
 import com.logginghub.utils.sof.SofConfiguration;
 import com.logginghub.utils.sof.SofException;
 
-public class AggregatedDiskHistoryModule implements Module<AggregatedDiskHistoryConfiguration>, HistoryService {
+import java.io.EOFException;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+public class AggregatedDiskHistoryModule implements Module<AggregatedDiskHistoryConfiguration> {
 
     private static final Logger logger = Logger.getLoggerFor(AggregatedDiskHistoryConfiguration.class);
 

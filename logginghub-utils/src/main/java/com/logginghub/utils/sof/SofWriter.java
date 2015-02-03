@@ -55,4 +55,5 @@ public interface SofWriter {
 
     void write(int field, SerialisableObject[] subObjectArray) throws SofException;
 
+    SofConfiguration getConfiguration();
 }

@@ -53,5 +53,7 @@ public interface SofReader {
     SerialisableObject[] readObjectArray(int i) throws SofException;
 
     boolean hasMore();
+
+    SofConfiguration getConfiguration();
     
 }

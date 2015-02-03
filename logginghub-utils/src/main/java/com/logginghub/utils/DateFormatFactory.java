@@ -105,6 +105,12 @@ public class DateFormatFactory {
         return simpleDateFormat;
     }
 
+    public static DateFormat getTimeWithoutMillis(TimeZone timezone) {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
+        simpleDateFormat.setTimeZone(timezone);
+        return simpleDateFormat;
+    }
+
     public static DateFormat getDailyFolderSplit(TimeZone timezone) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd/");
         simpleDateFormat.setTimeZone(timezone);

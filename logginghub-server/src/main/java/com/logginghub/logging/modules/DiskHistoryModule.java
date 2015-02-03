@@ -46,7 +46,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class DiskHistoryModule implements Module<DiskHistoryConfiguration>, HistoryService {
+public class DiskHistoryModule implements Module<DiskHistoryConfiguration> {
 
     private static final Logger logger = Logger.getLoggerFor(DiskHistoryModule.class);
 

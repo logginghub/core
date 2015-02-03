@@ -1,8 +1,5 @@
 package com.logginghub.logging.messages;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 import com.logginghub.logging.DefaultLogEvent;
 import com.logginghub.utils.Factory;
 import com.logginghub.utils.sof.ByteBufferReaderAbstraction;
@@ -14,6 +11,9 @@ import com.logginghub.utils.sof.SerialisableObject;
 import com.logginghub.utils.sof.SofConfiguration;
 import com.logginghub.utils.sof.SofException;
 import com.logginghub.utils.sof.SofRuntimeException;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 public class SofSerialisationStrategy<T extends SerialisableObject> implements SerialisationStrategy {
 
@@ -44,6 +44,10 @@ public class SofSerialisationStrategy<T extends SerialisableObject> implements S
         });
     }
 
+    public void setConfiguration(SofConfiguration configuration) {
+        this.configuration = configuration;
+    }
+
     public void setFactory(Factory<T> factory) {
         this.factory = factory;
     }
@@ -63,7 +67,11 @@ public class SofSerialisationStrategy<T extends SerialisableObject> implements S
 
         try {
             if (encodeHeader) {
-                serialiser2.write(0, event);
+                Integer typeID = configuration.resolve(event.getClass());
+                if(typeID == null) {
+                    throw new SofException("Type not registered '{}'", event.getClass().getName());
+                }
+                serialiser2.write(typeID, event);
             }
             else {
                 event.write(currentWriter);

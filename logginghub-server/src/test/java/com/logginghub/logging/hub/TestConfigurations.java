@@ -87,7 +87,7 @@ public class TestConfigurations {
             }
         });
 
-        validators.put("hub.with.periodic.stack.capture.xml", new Validator() {
+        validators.put("hub.with.periodic.stack.capture.and.history.xml", new Validator() {
             @Override public void validate(RunHub hub) {
 
             }

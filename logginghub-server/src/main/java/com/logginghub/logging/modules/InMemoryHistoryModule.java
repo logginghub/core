@@ -1,11 +1,5 @@
 package com.logginghub.logging.modules;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
 import com.logginghub.logging.DefaultLogEvent;
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.exceptions.LoggingMessageSenderException;
@@ -40,7 +34,13 @@ import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.module.Module;
 import com.logginghub.utils.module.ServiceDiscovery;
 
-public class InMemoryHistoryModule implements Module<InMemoryHistoryConfiguration>, HistoryService {
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+public class InMemoryHistoryModule implements Module<InMemoryHistoryConfiguration> {
 
     private EventBuffer events;
 

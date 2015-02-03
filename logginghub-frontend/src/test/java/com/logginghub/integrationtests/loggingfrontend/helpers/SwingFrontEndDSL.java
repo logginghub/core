@@ -1,21 +1,26 @@
 package com.logginghub.integrationtests.loggingfrontend.helpers;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-
-import java.awt.Point;
-import java.awt.event.KeyEvent;
-import java.lang.reflect.InvocationTargetException;
-import java.net.InetSocketAddress;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-
-import javax.swing.Icon;
-import javax.swing.JOptionPane;
-import javax.swing.JTabbedPane;
-import javax.swing.SwingUtilities;
-
+import com.logginghub.logging.DefaultLogEvent;
+import com.logginghub.logging.LogEvent;
+import com.logginghub.logging.LogEventBuilder;
+import com.logginghub.logging.LogEventFactory;
+import com.logginghub.logging.exceptions.ConnectorException;
+import com.logginghub.logging.exceptions.LoggingMessageSenderException;
+import com.logginghub.logging.frontend.ConfigurationProxy;
+import com.logginghub.logging.frontend.ConnectionPanel;
+import com.logginghub.logging.frontend.LoggingMainPanel;
+import com.logginghub.logging.frontend.SwingFrontEnd;
+import com.logginghub.logging.frontend.components.LevelsCheckboxListView;
+import com.logginghub.logging.frontend.configuration.LoggingFrontendConfiguration;
+import com.logginghub.logging.frontend.views.logeventdetail.DetailedLogEventTablePanel;
+import com.logginghub.logging.messages.LogEventMessage;
+import com.logginghub.logging.messaging.SocketClient;
+import com.logginghub.logging.servers.SocketHub;
+import com.logginghub.logging.utils.LogEventBucket;
+import com.logginghub.utils.FileUtils;
+import com.logginghub.utils.Metadata;
+import com.logginghub.utils.ThreadUtils;
+import com.logginghub.utils.Tracer;
 import org.fest.swing.core.KeyPressInfo;
 import org.fest.swing.core.MouseButton;
 import org.fest.swing.core.MouseClickInfo;
@@ -37,27 +42,20 @@ import org.fest.swing.fixture.JTabbedPaneFixture;
 import org.fest.swing.fixture.JTableFixture;
 import org.fest.swing.fixture.JTextComponentFixture;
 
-import com.logginghub.logging.DefaultLogEvent;
-import com.logginghub.logging.LogEvent;
-import com.logginghub.logging.LogEventBuilder;
-import com.logginghub.logging.LogEventFactory;
-import com.logginghub.logging.exceptions.ConnectorException;
-import com.logginghub.logging.exceptions.LoggingMessageSenderException;
-import com.logginghub.logging.frontend.ConfigurationProxy;
-import com.logginghub.logging.frontend.ConnectionPanel;
-import com.logginghub.logging.frontend.LoggingMainPanel;
-import com.logginghub.logging.frontend.SwingFrontEnd;
-import com.logginghub.logging.frontend.components.LevelsCheckboxListView;
-import com.logginghub.logging.frontend.configuration.LoggingFrontendConfiguration;
-import com.logginghub.logging.frontend.views.detail.DetailedLogEventTablePanel;
-import com.logginghub.logging.messages.LogEventMessage;
-import com.logginghub.logging.messaging.SocketClient;
-import com.logginghub.logging.servers.SocketHub;
-import com.logginghub.logging.utils.LogEventBucket;
-import com.logginghub.utils.FileUtils;
-import com.logginghub.utils.Metadata;
-import com.logginghub.utils.ThreadUtils;
-import com.logginghub.utils.Tracer;
+import javax.swing.Icon;
+import javax.swing.JOptionPane;
+import javax.swing.JTabbedPane;
+import javax.swing.SwingUtilities;
+import java.awt.Point;
+import java.awt.event.KeyEvent;
+import java.lang.reflect.InvocationTargetException;
+import java.net.InetSocketAddress;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 public class SwingFrontEndDSL {
 

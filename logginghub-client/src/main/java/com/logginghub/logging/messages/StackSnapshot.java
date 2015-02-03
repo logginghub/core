@@ -1,14 +1,15 @@
 package com.logginghub.logging.messages;
 
-import java.util.Arrays;
-
 import com.logginghub.utils.StringUtils;
+import com.logginghub.utils.TimeProvider;
 import com.logginghub.utils.sof.SerialisableObject;
 import com.logginghub.utils.sof.SofException;
 import com.logginghub.utils.sof.SofReader;
 import com.logginghub.utils.sof.SofWriter;
 
-public class StackSnapshot implements SerialisableObject {
+import java.util.Arrays;
+
+public class StackSnapshot implements SerialisableObject, TimeProvider {
 
     private String environment;
     private String host;
@@ -125,5 +126,9 @@ public class StackSnapshot implements SerialisableObject {
 
     public void setPid(int pid) {
         this.pid = pid;
+    }
+
+    @Override public long getTime() {
+        return timestamp;
     }
 }

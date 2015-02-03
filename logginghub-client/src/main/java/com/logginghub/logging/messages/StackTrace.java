@@ -9,7 +9,7 @@ import com.logginghub.utils.sof.SofWriter;
 public class StackTrace implements SerialisableObject {
 
     private StackTraceItem[] items;
-    
+
     private String threadName;
     private long threadID;
     private String threadState;
@@ -76,5 +76,5 @@ public class StackTrace implements SerialisableObject {
         return builder.toString();
     }
 
-    
+
 }

@@ -1,11 +1,11 @@
 package com.logginghub.utils.sof;
 
+import com.logginghub.utils.logging.Logger;
+
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.util.Date;
-
-import com.logginghub.utils.logging.Logger;
 
 public class DefaultSofWriter implements SofWriter {
 
@@ -683,4 +683,7 @@ public class DefaultSofWriter implements SofWriter {
 
     }
 
+    @Override public SofConfiguration getConfiguration() {
+        return configuration;
+    }
 }

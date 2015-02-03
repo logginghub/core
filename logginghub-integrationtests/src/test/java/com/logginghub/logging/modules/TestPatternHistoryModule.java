@@ -1,15 +1,5 @@
 package com.logginghub.logging.modules;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-
-import java.util.EnumSet;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import org.junit.Before;
-import org.junit.Test;
-
 import com.logginghub.integrationtests.logging.HubTestFixture;
 import com.logginghub.integrationtests.logging.HubTestFixture.HubFixture;
 import com.logginghub.logging.LogEvent;
@@ -28,6 +18,15 @@ import com.logginghub.utils.Bucket;
 import com.logginghub.utils.Destination;
 import com.logginghub.utils.StreamingDestination;
 import com.logginghub.utils.logging.Logger;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.EnumSet;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 public class TestPatternHistoryModule extends BaseHub {
 
@@ -88,7 +87,7 @@ public class TestPatternHistoryModule extends BaseHub {
 
         final CountDownLatch latch = new CountDownLatch(1);
 
-        // Need to sleep here to detail with the various thread pools that will take the event to the disk
+        // Need to sleep here to deal with the various thread pools that will take the event to the disk
         Thread.sleep(500);
         
         clientA.getHistoricalDataAPI().streamHistoricalPatternisedEvents(0L, 10L, new StreamingDestination<PatternisedLogEvent>() {

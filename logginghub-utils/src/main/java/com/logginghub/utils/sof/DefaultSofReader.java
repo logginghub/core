@@ -1,10 +1,10 @@
 package com.logginghub.utils.sof;
 
+import com.logginghub.utils.data.SerialisedObject;
+
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Date;
-
-import com.logginghub.utils.data.SerialisedObject;
 
 public class DefaultSofReader implements SofReader {
 
@@ -28,6 +28,10 @@ public class DefaultSofReader implements SofReader {
 
     public boolean hasMore() {
         return reader.hasMore();
+    }
+
+    @Override public SofConfiguration getConfiguration() {
+        return configuration;
     }
 
     public BigDecimal readBigDecimal(int field) throws SofException {

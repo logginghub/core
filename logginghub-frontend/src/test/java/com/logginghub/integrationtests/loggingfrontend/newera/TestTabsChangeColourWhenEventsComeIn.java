@@ -29,7 +29,7 @@ import com.logginghub.logging.frontend.model.HubConnectionModel;
 import com.logginghub.logging.frontend.model.LoggingFrontendModel;
 import com.logginghub.logging.frontend.model.ObservableList;
 import com.logginghub.logging.frontend.model.HubConnectionModel.ConnectionState;
-import com.logginghub.logging.frontend.views.detail.DetailedLogEventTablePanel;
+import com.logginghub.logging.frontend.views.logeventdetail.DetailedLogEventTablePanel;
 import com.logginghub.logging.messages.LogEventMessage;
 import com.logginghub.logging.servers.SocketHub;
 import com.logginghub.logging.utils.LogEventBucket;

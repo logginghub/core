@@ -32,7 +32,7 @@ import com.logginghub.logging.frontend.LoggingMainPanel;
 import com.logginghub.logging.frontend.SwingFrontEnd;
 import com.logginghub.logging.frontend.configuration.LoggingFrontendConfiguration;
 import com.logginghub.logging.frontend.configuration.LoggingFrontendConfigurationBuilder;
-import com.logginghub.logging.frontend.views.detail.DetailedLogEventTable;
+import com.logginghub.logging.frontend.views.logeventdetail.DetailedLogEventTable;
 import com.logginghub.utils.Metadata;
 import com.logginghub.utils.ThreadUtils;
 import com.logginghub.integrationtests.loggingfrontend.helpers.SwingFrontEndDSL;

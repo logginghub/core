@@ -7,7 +7,7 @@ import com.logginghub.logging.frontend.model.EnvironmentModel;
 import com.logginghub.logging.frontend.model.LogEventContainerController;
 import com.logginghub.logging.frontend.modules.configuration.RealtimeViewConfiguration;
 import com.logginghub.logging.frontend.services.LayoutService;
-import com.logginghub.logging.frontend.views.detail.DetailedLogEventTablePanel;
+import com.logginghub.logging.frontend.views.logeventdetail.DetailedLogEventTablePanel;
 import com.logginghub.logging.listeners.LogEventListener;
 import com.logginghub.utils.SystemTimeProvider;
 import com.logginghub.utils.TimeProvider;

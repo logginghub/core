@@ -108,7 +108,7 @@ public class StackCaptureController {
         request.setInstanceSelector("*");
         request.setSnapshotCount(1);
 
-        ChannelMessage channelMessage = new ChannelMessage(Channels.strobeRequests, request);
+        ChannelMessage channelMessage = new ChannelMessage(Channels.stackStrobeRequests, request);
 
         logger.debug("Sending snapshot request...");
 

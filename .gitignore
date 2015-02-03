@@ -29,3 +29,4 @@ logginghub-frontend/logs*
 target/
 logginghub-integrationtests/results/
 logginghub-server/binarylogs/
+logginghub-server/stackTraceHistory/

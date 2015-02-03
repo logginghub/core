@@ -12,15 +12,27 @@ import com.logginghub.logging.frontend.configuration.RemoteChartConfiguration;
 import com.logginghub.logging.frontend.connectionmanager.ConnectionManagerListener;
 import com.logginghub.logging.frontend.connectionmanager.ConnectionManagerPanel;
 import com.logginghub.logging.frontend.images.Icons;
-import com.logginghub.logging.frontend.model.*;
-import com.logginghub.logging.frontend.modules.*;
+import com.logginghub.logging.frontend.model.ConnectionStateChangedEvent;
+import com.logginghub.logging.frontend.model.EnvironmentLevelStatsModel;
+import com.logginghub.logging.frontend.model.EnvironmentModel;
+import com.logginghub.logging.frontend.model.HubConnectionModel;
+import com.logginghub.logging.frontend.model.LoggingFrontendModel;
+import com.logginghub.logging.frontend.model.ObservableList;
+import com.logginghub.logging.frontend.modules.MainFrameModule;
+import com.logginghub.logging.frontend.modules.MenuBarModule;
+import com.logginghub.logging.frontend.modules.PatterniserModule;
+import com.logginghub.logging.frontend.modules.SocketClientDirectAccessService;
+import com.logginghub.logging.frontend.modules.StackTraceViewModule;
+import com.logginghub.logging.frontend.modules.TelemetryViewModule;
+import com.logginghub.logging.frontend.modules.VisualisationViewModule;
 import com.logginghub.logging.frontend.services.LayoutService;
 import com.logginghub.logging.frontend.services.MenuService;
-import com.logginghub.logging.frontend.views.detail.DetailedLogEventTablePanel;
-import com.logginghub.logging.frontend.views.detail.time.TimeController;
 import com.logginghub.logging.frontend.views.environmentsummary.DashboardPanel;
 import com.logginghub.logging.frontend.views.environmentsummary.DashboardSelectionListener;
-import com.logginghub.logging.frontend.views.historical.HistoryViewModule;
+import com.logginghub.logging.frontend.views.historicalevents.HistoryViewModule;
+import com.logginghub.logging.frontend.views.historicalstack.historicalevents.HistoricalStackViewModule;
+import com.logginghub.logging.frontend.views.logeventdetail.DetailedLogEventTablePanel;
+import com.logginghub.logging.frontend.views.logeventdetail.time.TimeController;
 import com.logginghub.logging.messaging.PatternModel;
 import com.logginghub.logging.messaging.SocketClient;
 import com.logginghub.logging.messaging.SocketClientManager;
@@ -32,22 +44,59 @@ import com.logginghub.logging.repository.BinaryLogFileReader;
 import com.logginghub.logging.utils.KryoVersion1Decoder;
 import com.logginghub.logging.utils.LogEventBlockElement;
 import com.logginghub.swingutils.ButtonTabComponent;
-import com.logginghub.utils.*;
+import com.logginghub.utils.BrowserUtils;
+import com.logginghub.utils.FileUtils;
+import com.logginghub.utils.Metadata;
+import com.logginghub.utils.OffsetableSystemTimeProvider;
+import com.logginghub.utils.ProcessUtils;
+import com.logginghub.utils.ResourceUtils;
+import com.logginghub.utils.StreamListener;
+import com.logginghub.utils.WorkerThread;
+import com.logginghub.utils.Xml;
 import com.logginghub.utils.logging.Logger;
 import net.miginfocom.swing.MigLayout;
 
-import javax.swing.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.ImageIcon;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JTabbedPane;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.TabbedPaneUI;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Point;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
@@ -815,6 +864,14 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
         }
 
         if (proxy.getLoggingFrontendConfiguration().isShowExperimental()) {
+            addMenuItem(experimentalMenu, "Stack History viewer...", new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    showStackHistoryViewer();
+                }
+            });
+        }
+
+        if (proxy.getLoggingFrontendConfiguration().isShowExperimental()) {
             addMenuItem(experimentalMenu, "Stack viewer...", new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     showStackViewer();
@@ -1247,33 +1304,41 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
             MainFrameModule frame = new MainFrameModule();
             frame.setName("History Viewer");
 
-//            MenuBarModule menuBar = new MenuBarModule();
-//            menuBar.setFrameService(frame);
-//            menuBar.setLayoutService(frame);
-
-//            TabbedPaneModule tab = new TabbedPaneModule();
-//            tab.setLayoutService(frame);
-
             EnvironmentAdaptor adaptor = new EnvironmentAdaptor(currentSelectedTabx.getEnvironmentModel());
 
             HistoryViewModule history = new HistoryViewModule(adaptor);
             history.setName("History View");
             history.setLayoutService(frame);
-//            history.setEnvironmentNotificationService(adaptor);
-//            history.setMessagingService(adaptor);
 
             frame.initialise();
-//            menuBar.initialise();
-//            tab.initialise();
             history.initialise();
 
             frame.start();
-//            menuBar.start();
-//            tab.start();
             history.start();
-
         }
     }
+
+    protected void showStackHistoryViewer() {
+        DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
+        if (currentSelectedTabx != null) {
+
+            MainFrameModule frame = new MainFrameModule();
+            frame.setName("History Viewer");
+
+            EnvironmentAdaptor adaptor = new EnvironmentAdaptor(currentSelectedTabx.getEnvironmentModel());
+
+            HistoricalStackViewModule history = new HistoricalStackViewModule(adaptor);
+            history.setName("History View");
+            history.setLayoutService(frame);
+
+            frame.initialise();
+            history.initialise();
+
+            frame.start();
+            history.start();
+        }
+    }
+
 
     protected void showChartingEditor() {
 

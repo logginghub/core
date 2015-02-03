@@ -1,7 +1,7 @@
 package com.logginghub.logging.frontend.binary;
 
 import com.logginghub.logging.LogEvent;
-import com.logginghub.logging.frontend.views.detail.time.TimeController;
+import com.logginghub.logging.frontend.views.logeventdetail.time.TimeController;
 import com.logginghub.logging.listeners.LogEventListener;
 import com.logginghub.logging.utils.BlockIndex;
 import com.logginghub.logging.utils.LogEventBlockElement;

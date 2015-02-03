@@ -41,7 +41,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class DiskHistoryIndexModule implements Module<DiskHistoryIndexConfiguration>, HistoryService {
+public class DiskHistoryIndexModule implements Module<DiskHistoryIndexConfiguration> {
 
     private static final Logger logger = Logger.getLoggerFor(DiskHistoryIndexModule.class);
 

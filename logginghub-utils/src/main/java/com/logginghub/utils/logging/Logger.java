@@ -292,6 +292,24 @@ public class Logger {
 
     }
 
+    public static Object toTimeString(final long date) {
+        return new Object() {
+            @Override public String toString() {
+                DateFormat dateThenTimeWithMillis = DateFormatFactory.getTimeWithMillis(DateFormatFactory.utc);
+                return dateThenTimeWithMillis.format(new Date(date));
+            }
+        };
+    }
+
+    public static Object toLocalTimeString(final long date) {
+        return new Object() {
+            @Override public String toString() {
+                DateFormat dateThenTimeWithMillis = DateFormatFactory.getTimeWithMillis(DateFormatFactory.local);
+                return dateThenTimeWithMillis.format(new Date(date));
+            }
+        };
+    }
+
     public static Object toDateString(final long date) {
         return new Object() {
             @Override public String toString() {
@@ -519,8 +537,6 @@ public class Logger {
     public void trace(Throwable t) {
         LogEvent event = new LogEvent();
         event.setMessage(t.getMessage());
-        // Brought these guys down to 2 levels as we've not go the log call to
-        // detail with
         event.setSourceClassName(StacktraceUtils.getCallingClassName(2));
         event.setSourceMethodName(StacktraceUtils.getCallingMethodName(2));
         event.setLocalCreationTimeMillis(timeProvider.getTime());
@@ -534,8 +550,7 @@ public class Logger {
     public void info(Throwable t) {
         LogEvent event = new LogEvent();
         event.setMessage(t.getMessage());
-        // Brought these guys down to 2 levels as we've not go the log call to
-        // detail with
+        // Brought these guys down to 2 levels as we've not go the log call
         event.setSourceClassName(StacktraceUtils.getCallingClassName(2));
         event.setSourceMethodName(StacktraceUtils.getCallingMethodName(2));
         event.setLocalCreationTimeMillis(timeProvider.getTime());
@@ -872,5 +887,6 @@ public class Logger {
 
         return name;
     }
+
 
 }

@@ -35,7 +35,7 @@ public class BrainScanController {
 
     public void sendStrobeRequest(StackStrobeRequest t) {
 
-        ChannelMessage message = new ChannelMessage(Channels.strobeRequests, t);
+        ChannelMessage message = new ChannelMessage(Channels.stackStrobeRequests, t);
         try {
             messagingService.send(message);
         }

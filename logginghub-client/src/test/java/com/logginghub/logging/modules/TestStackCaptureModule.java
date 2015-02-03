@@ -1,16 +1,5 @@
 package com.logginghub.logging.modules;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.is;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-
 import com.logginghub.logging.exceptions.LoggingMessageSenderException;
 import com.logginghub.logging.listeners.LoggingMessageListener;
 import com.logginghub.logging.messages.ChannelMessage;
@@ -20,11 +9,19 @@ import com.logginghub.logging.messages.StackSnapshot;
 import com.logginghub.logging.messages.StackStrobeRequest;
 import com.logginghub.logging.messaging.SocketClient;
 import com.logginghub.logging.messaging.SocketConnector;
-import com.logginghub.logging.modules.StackCaptureConfiguration;
-import com.logginghub.logging.modules.StackCaptureModule;
 import com.logginghub.utils.Bucket;
 import com.logginghub.utils.Destination;
 import com.logginghub.utils.Multiplexer;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
 
 public class TestStackCaptureModule {
 
@@ -102,7 +99,7 @@ public class TestStackCaptureModule {
         // Clear the subscription request message
         outgoingMessages.clear();
 
-        incommingMessages.send(new ChannelMessage(Channels.strobeRequests, new StackStrobeRequest("*", 10, 100)));
+        incommingMessages.send(new ChannelMessage(Channels.stackStrobeRequests, new StackStrobeRequest("*", 10, 100)));
 
         outgoingMessages.waitForMessages(10, "2 seconds");
 

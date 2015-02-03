@@ -12,7 +12,7 @@ import org.junit.BeforeClass;
 
 import com.logginghub.logging.frontend.SwingFrontEnd;
 import com.logginghub.logging.frontend.configuration.LoggingFrontendConfiguration;
-import com.logginghub.logging.frontend.views.detail.DetailedLogEventTable;
+import com.logginghub.logging.frontend.views.logeventdetail.DetailedLogEventTable;
 
 public abstract class BaseSwing {
     @BeforeClass public static void setup() {

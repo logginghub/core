@@ -18,7 +18,6 @@ import com.logginghub.logging.servers.SocketHubMessageHandler;
 import com.logginghub.logging.transaction.configuration.HubStackCaptureConfiguration;
 import com.logginghub.logging.utils.LogEventBucket;
 import com.logginghub.logging.utils.LoggingMessageBucket;
-import com.logginghub.utils.Bucket;
 import com.logginghub.utils.Destination;
 import com.logginghub.utils.Multiplexer;
 import com.logginghub.utils.module.ConfigurableServiceDiscovery;
@@ -124,7 +123,7 @@ public class TestHubStackCaptureModule {
         module.configure(configuration, discovery);
         module.start();
 
-        channelMessages.send(new ChannelMessage(Channels.strobeRequests, new StackStrobeRequest("*", 10, 100)));
+        channelMessages.send(new ChannelMessage(Channels.stackStrobeRequests, new StackStrobeRequest("*", 10, 100)));
 
         LoggingMessageBucket outgoingMessages = hackClass.outgoingMessages;
 

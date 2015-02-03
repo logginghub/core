@@ -13,7 +13,7 @@ import com.logginghub.logging.frontend.model.ObservableList;
 import com.logginghub.logging.frontend.model.ObservableModelListener;
 import com.logginghub.logging.frontend.model.HubConnectionModel.ConnectionState;
 import com.logginghub.logging.frontend.model.ObservableModel.FieldEnumeration;
-import com.logginghub.logging.frontend.views.detail.DetailedLogEventTablePanel;
+import com.logginghub.logging.frontend.views.logeventdetail.DetailedLogEventTablePanel;
 
 public class TabColourManager {
 
@@ -115,7 +115,7 @@ public class TabColourManager {
         }
 
         if (backgroundColor == null) {
-            // Need to decide based on the highest coloured event in the detail
+            // Need to decide based on the highest coloured event in the logeventdetail
             // display
             int highestStateSinceLastSelected = tablePanel.getHighestStateSinceLastSelected().get().intValue();
 

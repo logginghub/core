@@ -104,14 +104,14 @@ public class HubStackCaptureModule implements Module<HubStackCaptureConfiguratio
             }
         };
 
-        channelSubscriptions.subscribe(Channels.strobeRequests, strobeRequestHandler);
+        channelSubscriptions.subscribe(Channels.stackStrobeRequests, strobeRequestHandler);
 
         controller.start();
 
     }
 
     public void stop() {
-        channelSubscriptions.unsubscribe(Channels.strobeRequests, strobeRequestHandler);
+        channelSubscriptions.unsubscribe(Channels.stackStrobeRequests, strobeRequestHandler);
 
         if (snapshotsHandler != null) {
             channelSubscriptions.unsubscribe(Channels.stackSnapshots, snapshotsHandler);

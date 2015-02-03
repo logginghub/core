@@ -1,11 +1,5 @@
 package com.logginghub.logging.messaging;
 
-import java.io.EOFException;
-import java.io.Serializable;
-import java.nio.BufferUnderflowException;
-import java.nio.ByteBuffer;
-import java.util.EnumSet;
-
 import com.logginghub.logging.DefaultLogEvent;
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.LogEventCollection;
@@ -23,7 +17,45 @@ import com.logginghub.logging.api.patterns.PatternListRequest;
 import com.logginghub.logging.api.patterns.PatternListResponse;
 import com.logginghub.logging.api.patterns.PingRequest;
 import com.logginghub.logging.api.patterns.PingResponse;
-import com.logginghub.logging.messages.*;
+import com.logginghub.logging.messages.BaseRequestResponseMessage;
+import com.logginghub.logging.messages.ChannelMessage;
+import com.logginghub.logging.messages.ChannelSubscriptionRequestMessage;
+import com.logginghub.logging.messages.ChannelSubscriptionResponseMessage;
+import com.logginghub.logging.messages.CompressedBlock;
+import com.logginghub.logging.messages.ConnectedMessage;
+import com.logginghub.logging.messages.ConnectionTypeMessage;
+import com.logginghub.logging.messages.EventSubscriptionRequestMessage;
+import com.logginghub.logging.messages.EventSubscriptionResponseMessage;
+import com.logginghub.logging.messages.FilterRequestMessage;
+import com.logginghub.logging.messages.HealthCheckRequest;
+import com.logginghub.logging.messages.HealthCheckResponse;
+import com.logginghub.logging.messages.HistoricalAggregatedDataRequest;
+import com.logginghub.logging.messages.HistoricalAggregatedDataResponse;
+import com.logginghub.logging.messages.HistoricalDataJobKillRequest;
+import com.logginghub.logging.messages.HistoricalDataRequest;
+import com.logginghub.logging.messages.HistoricalDataResponse;
+import com.logginghub.logging.messages.HistoricalIndexElement;
+import com.logginghub.logging.messages.HistoricalIndexRequest;
+import com.logginghub.logging.messages.HistoricalIndexResponse;
+import com.logginghub.logging.messages.HistoricalPatternisedDataRequest;
+import com.logginghub.logging.messages.HistoricalPatternisedDataResponse;
+import com.logginghub.logging.messages.HistoricalStackDataJobKillRequest;
+import com.logginghub.logging.messages.HistoricalStackDataRequest;
+import com.logginghub.logging.messages.HistoricalStackDataResponse;
+import com.logginghub.logging.messages.LogEventCollectionMessage;
+import com.logginghub.logging.messages.LogEventMessage;
+import com.logginghub.logging.messages.LoggingMessage;
+import com.logginghub.logging.messages.MapMessage;
+import com.logginghub.logging.messages.PartialMessageException;
+import com.logginghub.logging.messages.ResponseMessage;
+import com.logginghub.logging.messages.StackSnapshot;
+import com.logginghub.logging.messages.StackStrobeRequest;
+import com.logginghub.logging.messages.StackTrace;
+import com.logginghub.logging.messages.StackTraceItem;
+import com.logginghub.logging.messages.SubscriptionRequestMessage;
+import com.logginghub.logging.messages.SubscriptionResponseMessage;
+import com.logginghub.logging.messages.UnsubscriptionRequestMessage;
+import com.logginghub.logging.messages.UnsubscriptionResponseMessage;
 import com.logginghub.utils.ByteUtils;
 import com.logginghub.utils.ExpandingByteBuffer;
 import com.logginghub.utils.FormattedRuntimeException;
@@ -39,6 +71,12 @@ import com.logginghub.utils.sof.SofException;
 import com.logginghub.utils.sof.SofExpandingBufferSerialiser;
 import com.logginghub.utils.sof.SofPartialDecodeException;
 import com.logginghub.utils.sof.SofUnknownTypeException;
+
+import java.io.EOFException;
+import java.io.Serializable;
+import java.nio.BufferUnderflowException;
+import java.nio.ByteBuffer;
+import java.util.EnumSet;
 
 public class LoggingMessageCodex {
 
@@ -65,7 +103,9 @@ public class LoggingMessageCodex {
     public enum Flags {
         Encrypted,
         Compressed
-    };
+    }
+
+    ;
 
     private CompressingCodex compressingCodex = new CompressingCodex();
     private LazyReference<EncryptingCodex> encryptingCodex = new LazyReference<EncryptingCodex>() {
@@ -154,7 +194,7 @@ public class LoggingMessageCodex {
 
             registerType(HistoricalAggregatedDataRequest.class, 53);
             registerType(HistoricalAggregatedDataResponse.class, 54);
-            
+
             registerType(HealthCheckRequest.class, 55);
             registerType(HealthCheckResponse.class, 56);
 
@@ -162,6 +202,10 @@ public class LoggingMessageCodex {
 
             registerType(HistoricalDataJobKillRequest.class, 58);
             registerType(BaseRequestResponseMessage.class, 59);
+
+            registerType(HistoricalStackDataRequest.class, 60);
+            registerType(HistoricalStackDataResponse.class, 61);
+            registerType(HistoricalStackDataJobKillRequest.class, 62);
 
         }
     };
@@ -179,15 +223,13 @@ public class LoggingMessageCodex {
                         LogEvent logEvent = LogEventCodex.decode(buffer);
                         LogEventMessage message = new LogEventMessage(logEvent);
                         return message;
-                    }
-                    catch (RuntimeException t) {
+                    } catch (RuntimeException t) {
                         int position = buffer.position();
                         buffer.reset();
                         logger.severe(t, "Log event decode failed at position '{}' : {}", position, t.getMessage());
                         if (buffer.remaining() < ByteUtils.kilobytes(100)) {
                             logger.severe("Log event buffer was : {}", HexDump.format(buffer));
-                        }
-                        else {
+                        } else {
                             logger.fine("Log event buffer was : {}", HexDump.format(buffer));
                         }
                         throw t;
@@ -243,8 +285,7 @@ public class LoggingMessageCodex {
                     try {
                         LoggingMessage decode = JavaSerialisationCodex.decode(buffer);
                         return decode;
-                    }
-                    catch (Exception e) {
+                    } catch (Exception e) {
                         // Someone has sent us something we can't interpret,
                         // ignore it
                         return null;
@@ -258,8 +299,7 @@ public class LoggingMessageCodex {
                     throw new RuntimeException("Message type " + type + " isn't recognised");
                 }
             }
-        }
-        catch (BufferUnderflowException bue) {
+        } catch (BufferUnderflowException bue) {
             // This is ok, it just means the entire event isn't in the buffer
             // yet.
             buffer.reset();
@@ -283,14 +323,11 @@ public class LoggingMessageCodex {
             if (logUnknownSofTypes) {
                 logger.warning("Recieved unknown sof message type - header details {}", e.getHeaderSummary());
             }
-        }
-        catch (SofPartialDecodeException e) {
+        } catch (SofPartialDecodeException e) {
             throw new PartialMessageException();
-        }
-        catch (SofException e) {
+        } catch (SofException e) {
             throw new FormattedRuntimeException(e, "Failed to decode SOF serialisable object");
-        }
-        catch (EOFException e) {
+        } catch (EOFException e) {
             throw new FormattedRuntimeException(e, "End of file reported from sof serialiser");
         }
         return message;
@@ -300,8 +337,7 @@ public class LoggingMessageCodex {
         if (message instanceof LogEventMessage) {
             LogEventMessage logEventMessage = (LogEventMessage) message;
             encode(expandingByteBuffer, logEventMessage.getLogEvent());
-        }
-        else if (message instanceof LogEventCollectionMessage) {
+        } else if (message instanceof LogEventCollectionMessage) {
             LogEventCollectionMessage logEventCollectionMessage = (LogEventCollectionMessage) message;
             encode(expandingByteBuffer, logEventCollectionMessage.getLogEventCollection());
         }
@@ -334,13 +370,16 @@ public class LoggingMessageCodex {
         // }
         else if (message instanceof SerialisableObject) {
             SerialisableObject serialisableObject = (SerialisableObject) message;
-            encode(expandingByteBuffer, serialisableObject);
-        }
-        else if (message instanceof Serializable) {
+            try {
+                encode(expandingByteBuffer, serialisableObject);
+            } catch (RuntimeException t) {
+                logger.warn(t, "Potential sof encoding issue for message '{}'", message);
+                throw t;
+            }
+        } else if (message instanceof Serializable) {
             expandingByteBuffer.put(LoggingMessageCodex.JavaSerialised);
             JavaSerialisationCodex.encode(expandingByteBuffer, message);
-        }
-        else {
+        } else {
             throw new IllegalArgumentException("Dont know how to encode " + message);
         }
     }
@@ -350,8 +389,7 @@ public class LoggingMessageCodex {
 
         try {
             SofExpandingBufferSerialiser.write(expandingByteBuffer, object, sofConfiguration);
-        }
-        catch (SofException e) {
+        } catch (SofException e) {
             throw new FormattedRuntimeException("Failed to encode SOF serialisable object", e);
         }
     }
