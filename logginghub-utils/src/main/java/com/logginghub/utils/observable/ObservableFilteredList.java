@@ -9,7 +9,7 @@ import java.util.List;
     public ObservableFilteredList(ObservableList<T> source, List<T> decoratee, final Filter<T> filter) {
         super(decoratee);
 
-        source.addListenerAndNotifyExisting(new ObservableListListener<T>() {
+        source.addListenerAndNotifyCurrent(new ObservableListListener<T>() {
             public void onAdded(T t) {
                 if (filter.passes(t)) {
                     add(t);

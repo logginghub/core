@@ -4,7 +4,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 
-import com.logginghub.logging.frontend.modules.StackTraceViewModule;
+import com.logginghub.logging.frontend.views.stack.StackTraceViewModule;
 import com.logginghub.utils.module.Configures;
 
 @Configures(StackTraceViewModule.class)

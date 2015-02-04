@@ -43,7 +43,7 @@ public class QuickFilterController {
         });
         
         quickFilterModels = environmentModel.getQuickFilterModels();
-        quickFilterModels.addListenerAndNotifyExisting(new ObservableListListener<QuickFilterModel>() {
+        quickFilterModels.addListenerAndNotifyCurrent(new ObservableListListener<QuickFilterModel>() {
 
             @Override public void onRemoved(QuickFilterModel t, int index) {
                 FilterWrapper filterWrapper = filterWrappersByQuickFilterModel.remove(t);
@@ -63,7 +63,7 @@ public class QuickFilterController {
 
                 LevelsCheckboxModel levelsCheckboxModel = t.getLevelFilter().get();
                 bind(levelsCheckboxModel, wrapper.specificLevelFilter);
-                
+
                 t.getFilterText().addListenerAndNotifyCurrent(new ObservablePropertyListener<String>() {
                     @Override public void onPropertyChanged(String oldValue, String newValue) {
                         wrapper.messageFilter.setEventContainsString(newValue);
@@ -78,7 +78,7 @@ public class QuickFilterController {
                     }
                 });
 
-                levelsCheckboxModel.getSelectedLevel().addListenerAndNotifyCurrent(new ObservablePropertyListener<Level>() {                   
+                levelsCheckboxModel.getSelectedLevel().addListenerAndNotifyCurrent(new ObservablePropertyListener<Level>() {
                     @Override public void onPropertyChanged(Level oldValue, Level newValue) {
                         wrapper.severityFilter.setLevel(newValue.intValue());
                         environmentModel.getFilterUpdateCount().increment(1);
@@ -90,8 +90,7 @@ public class QuickFilterController {
                         if (newValue) {
                             filter.addFilter(wrapper.compositeFilter);
 
-                        }
-                        else {
+                        } else {
                             filter.removeFilter(wrapper.compositeFilter);
                         }
 

@@ -126,7 +126,7 @@ public class NewChartingController {
     }
 
     private void bindCharts(NewChartingModel model) {
-        model.getPages().addListenerAndNotifyExisting(new ObservableListListener<PageModel>() {
+        model.getPages().addListenerAndNotifyCurrent(new ObservableListListener<PageModel>() {
             @Override public void onAdded(PageModel pageModel) {
                 bindPageModel(pageModel);
             }
@@ -139,7 +139,7 @@ public class NewChartingController {
 
     private void bindPageModel(PageModel pageModel) {
 
-        pageModel.getChartingModels().addListenerAndNotifyExisting(new ObservableListListener<LineChartModel>() {
+        pageModel.getChartingModels().addListenerAndNotifyCurrent(new ObservableListListener<LineChartModel>() {
             @Override public void onAdded(final LineChartModel lineChartModel) {
                 bindGenericChartModel(lineChartModel);
                 bindLineChartModel(lineChartModel);
@@ -150,7 +150,7 @@ public class NewChartingController {
             @Override public void onCleared() {}
         });
 
-        pageModel.getPieChartModels().addListenerAndNotifyExisting(new ObservableListListener<PieChartModel>() {
+        pageModel.getPieChartModels().addListenerAndNotifyCurrent(new ObservableListListener<PieChartModel>() {
             @Override public void onAdded(final PieChartModel pieChartModel) {
                 bindGenericChartModel(pieChartModel);
                 bindPieChartModel(pieChartModel);
@@ -172,7 +172,7 @@ public class NewChartingController {
     }
 
     private void bindAggregators(NewChartingModel model) {
-        model.getAggregationModels().addListenerAndNotifyExisting(new ObservableListListener<AggregationConfiguration>() {
+        model.getAggregationModels().addListenerAndNotifyCurrent(new ObservableListListener<AggregationConfiguration>() {
 
             @Override public void onRemoved(AggregationConfiguration t, int index) {
                 // Decouple the aggregator from the stream
@@ -211,7 +211,7 @@ public class NewChartingController {
 
     private void bindValueStrippers(final NewChartingModel model) {
         // Wire up value strippers to pattern models
-        model.getPatternModels().addListenerAndNotifyExisting(new ObservableListListener<PatternModel>() {
+        model.getPatternModels().addListenerAndNotifyCurrent(new ObservableListListener<PatternModel>() {
             @Override public void onRemoved(PatternModel t, int index) {
                 ValueStripper2 removed = valueStrippersByPattern.remove(t);
                 logEventMultiplexer.removeLogEventListener(removed);
@@ -255,7 +255,7 @@ public class NewChartingController {
     }
 
     private void bindLineChartModel(final LineChartModel lineChartModel) {
-        lineChartModel.getMatcherModels().addListenerAndNotifyExisting(new ObservableListListener<ChartSeriesModel>() {
+        lineChartModel.getMatcherModels().addListenerAndNotifyCurrent(new ObservableListListener<ChartSeriesModel>() {
 
             @Override public void onAdded(final ChartSeriesModel chartSeriesModel) {
                 // Local scope variables
@@ -312,8 +312,7 @@ public class NewChartingController {
                         ValueStripper2 valueStripper = getValueStripper(newValue);
                         if (valueStripper != null) {
                             valueStripper.addResultListener(builder);
-                        }
-                        else {
+                        } else {
                             logger.warn("Coun't find value stripper called '{}', failed to bind chart series", newValue);
                         }
                     }
@@ -333,8 +332,7 @@ public class NewChartingController {
                             String capitals = StringUtils.capitalise(newValue);
                             try {
                                 splitter.setPublishingModes(AggregationType.valueOf(capitals));
-                            }
-                            catch (IllegalArgumentException e) {
+                            } catch (IllegalArgumentException e) {
                                 logger.warn("Type '{}' isn't a recognised type ({})", capitals, Arrays.toString(AggregationType.values()));
                             }
                         }
@@ -382,7 +380,7 @@ public class NewChartingController {
     private void bindPieChartModel(final PieChartModel chartModel) {
 
         // TODO : where does this vary from the line chart model?
-        chartModel.getMatcherModels().addListenerAndNotifyExisting(new ObservableListListener<ChartSeriesModel>() {
+        chartModel.getMatcherModels().addListenerAndNotifyCurrent(new ObservableListListener<ChartSeriesModel>() {
 
             @Override public void onAdded(ChartSeriesModel chartSeriesModel) {
                 // Local scope variables
@@ -438,8 +436,7 @@ public class NewChartingController {
                         ValueStripper2 valueStripper = getValueStripper(newValue);
                         if (valueStripper != null) {
                             valueStripper.addResultListener(builder);
-                        }
-                        else {
+                        } else {
                             logger.warn("Coun't find value stripper called '{}', failed to bind chart series", newValue);
                         }
                     }
@@ -459,8 +456,7 @@ public class NewChartingController {
                             String capitals = StringUtils.capitalise(newValue);
                             try {
                                 splitter.setPublishingModes(AggregationType.valueOf(capitals));
-                            }
-                            catch (IllegalArgumentException e) {
+                            } catch (IllegalArgumentException e) {
                                 logger.warn("Type '{}' isn't a recognised type ({})", capitals, Arrays.toString(AggregationType.values()));
                             }
                         }
@@ -507,7 +503,7 @@ public class NewChartingController {
 
     // private void bindStreamBuilders(final NewChartingModel model) {
     // // Wire up stream builders to the stream builder definitions
-    // model.getStreamModels().addListenerAndNotifyExisting(new
+    // model.getStreamModels().addListenerAndNotifyCurrent(new
     // ObservableListListener<StreamConfiguration>() {
     //
     // @Override public void onRemoved(StreamConfiguration t) {
@@ -839,7 +835,7 @@ public class NewChartingController {
         // }
         // });
 
-        chartSeriesModel.getFilters().addListenerAndNotifyExisting(new ObservableListListener<ChartSeriesFilterModel>() {
+        chartSeriesModel.getFilters().addListenerAndNotifyCurrent(new ObservableListListener<ChartSeriesFilterModel>() {
             @Override public void onRemoved(ChartSeriesFilterModel t, int index) {
                 builder.removeFilter(t);
             }

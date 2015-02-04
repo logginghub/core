@@ -285,7 +285,7 @@ public class QuickFilterHistoryTextField extends JTextField {
     public void bind(QuickFilterHistoryController controller) {
         this.controller = controller;
         this.model = controller.getModel();
-        model.getEntries().addListenerAndNotifyExisting(new ObservableListListener<QuickFilterHistoryEntryModel>() {
+        model.getEntries().addListenerAndNotifyCurrent(new ObservableListListener<QuickFilterHistoryEntryModel>() {
             @Override public void onRemoved(QuickFilterHistoryEntryModel t, int index) {
                 popupPanel.removeEntry(t);
             }

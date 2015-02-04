@@ -135,7 +135,7 @@ public abstract class BindableChartBase extends JPanel {
 
         final Map<XYSeriesModel, ObservableListListener<XYValue>> listenerLookup = new HashMap<XYSeriesModel, ObservableListListener<XYValue>>();
 
-        dataModel.getSeries().addListenerAndNotifyExisting(new ObservableListListener<XYSeriesModel>() {
+        dataModel.getSeries().addListenerAndNotifyCurrent(new ObservableListListener<XYSeriesModel>() {
             @Override public void onAdded(XYSeriesModel XYSeriesModel) {
                 final XYSeries xySeries = seriesLookup.get(XYSeriesModel);
                 xyseriescollection.addSeries(xySeries);
@@ -154,7 +154,7 @@ public abstract class BindableChartBase extends JPanel {
                     }
                 };
 
-                XYSeriesModel.getValues().addListenerAndNotifyExisting(listener);
+                XYSeriesModel.getValues().addListenerAndNotifyCurrent(listener);
                 listenerLookup.put(XYSeriesModel, listener);
 
             }

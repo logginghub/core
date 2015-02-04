@@ -136,7 +136,7 @@ public class DynamicEditor {
 
         final DefaultListModel listModel = new DefaultListModel();
 
-        list.addListenerAndNotifyExisting(new ObservableListListener<Object>() {
+        list.addListenerAndNotifyCurrent(new ObservableListListener<Object>() {
 
             @Override public void onAdded(Object t) {
                 listModel.addElement(t);

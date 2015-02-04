@@ -109,7 +109,7 @@ public class PatternModelListView extends JPanel {
 
         final Counterparts<PatternModel, ObservableListener> listeners = new Counterparts<PatternModel, ObservableListener>();
 
-        patterns.addListenerAndNotifyExisting(new ObservableListListener<PatternModel>() {
+        patterns.addListenerAndNotifyCurrent(new ObservableListListener<PatternModel>() {
             @Override public void onAdded(final PatternModel t) {
                 tableModel.addToBatch(t);
 

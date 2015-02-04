@@ -328,7 +328,7 @@ public abstract class ExtensibleTableModel<T> extends AbstractTableModel impleme
     }
 
     public void bindTo(ObservableList<T> list) {
-        list.addListenerAndNotifyExisting(new ObservableListListener<T>() {
+        list.addListenerAndNotifyCurrent(new ObservableListListener<T>() {
 
             @Override public void onRemoved(T t, int index) {
                 remove(t);

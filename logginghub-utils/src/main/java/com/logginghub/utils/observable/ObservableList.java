@@ -136,7 +136,7 @@ public class ObservableList<T> implements List<T>, ObservableItem, ObservableIte
         listListeners.add(listener);
     }
 
-    public void addListenerAndNotifyExisting(ObservableListListener<T> listener) {
+    public void addListenerAndNotifyCurrent(ObservableListListener<T> listener) {
         addListener(listener);
         synchronized (decoratee) {
             for (T item : decoratee) {

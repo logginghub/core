@@ -75,7 +75,7 @@ public class PatternExtractTable extends JPanel {
 
     public void bind(PatternisedDataSeriesModel patternisedModel) {
 
-        patternisedModel.getPatternised().addListenerAndNotifyExisting(new ObservableListListener<PatternisedDataModel>() {
+        patternisedModel.getPatternised().addListenerAndNotifyCurrent(new ObservableListListener<PatternisedDataModel>() {
 
             @Override public void onAdded(PatternisedDataModel t) {
                 tableModel.addToBatch(t);

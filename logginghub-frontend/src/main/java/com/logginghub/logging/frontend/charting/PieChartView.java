@@ -163,15 +163,13 @@ public class PieChartView extends MigPanel {
         });
 
         ObservableList<ChartSeriesModel> matcherModels = chartModel.getMatcherModels();
-        matcherModels.addListenerAndNotifyExisting(new ObservableListListener<ChartSeriesModel>() {
+        matcherModels.addListenerAndNotifyCurrent(new ObservableListListener<ChartSeriesModel>() {
 
             StreamListener<ChunkedResult> listener = new StreamListener<ChunkedResult>() {
-                @Override
-                public void onNewItem(final ChunkedResult t) {
+                @Override public void onNewItem(final ChunkedResult t) {
                     // TODO: consider batching
                     SwingUtilities.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
+                        @Override public void run() {
                             chart.onNewChunkedResult(t);
                         }
                     });
@@ -179,35 +177,34 @@ public class PieChartView extends MigPanel {
                 }
             };
 
-            @Override
-            public void onAdded(ChartSeriesModel matcherModel) {
+            @Override public void onAdded(ChartSeriesModel matcherModel) {
                 Stream<ChunkedResult> stream = controller.getResultStreamFor(matcherModel);
                 stream.addListener(listener);
-                
+
                 matcherModel.getFilters().addListener(new ObservableListListener<ChartSeriesFilterModel>() {
                     @Override public void onRemoved(ChartSeriesFilterModel t, int index) {
                         clearChartData();
                     }
+
                     @Override public void onCleared() {
                         clearChartData();
                     }
+
                     @Override public void onAdded(ChartSeriesFilterModel t) {
                         clearChartData();
                     }
                 });
-                
+
             }
 
-            @Override
-            public void onRemoved(ChartSeriesModel t, int index) {
+            @Override public void onRemoved(ChartSeriesModel t, int index) {
                 logger.info("Unbinding chart series model '{}' from chart", t);
                 Stream<ChunkedResult> stream = controller.getResultStreamFor(t);
                 stream.removeListener(listener);
                 clearChartData();
             }
 
-            @Override
-            public void onCleared() {
+            @Override public void onCleared() {
             }
 
         });

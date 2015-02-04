@@ -1,15 +1,9 @@
 package com.logginghub.utils.observable;
 
-import java.awt.Component;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.AdjustmentListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.util.ArrayList;
-import java.util.List;
+import com.logginghub.utils.Convertor;
+import com.logginghub.utils.MutableBoolean;
+import com.logginghub.utils.logging.Logger;
+import com.logginghub.utils.swing.DoubleSpinner;
 
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -23,11 +17,16 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-
-import com.logginghub.utils.Convertor;
-import com.logginghub.utils.MutableBoolean;
-import com.logginghub.utils.logging.Logger;
-import com.logginghub.utils.swing.DoubleSpinner;
+import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.AdjustmentListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Binder2 {
 
@@ -130,8 +129,7 @@ public class Binder2 {
                 if (spinnerValue instanceof Long) {
                     Long long1 = (Long) spinnerValue;
                     value.set(long1);
-                }
-                else if (spinnerValue instanceof Integer) {
+                } else if (spinnerValue instanceof Integer) {
                     Integer integer = (Integer) spinnerValue;
                     value.set(integer);
                 }
@@ -351,8 +349,7 @@ public class Binder2 {
 
         if (Double.isNaN(property.doubleValue())) {
             // Show nothing
-        }
-        else {
+        } else {
             textField.setText(property.asString());
         }
 
@@ -380,8 +377,7 @@ public class Binder2 {
                     internalUpdate.value = true;
                     try {
                         property.set(Double.parseDouble(textField.getText()));
-                    }
-                    catch (NumberFormatException e2) {
+                    } catch (NumberFormatException e2) {
                         // Ignore badly parsed
                     }
                     internalUpdate.value = false;
@@ -518,8 +514,7 @@ public class Binder2 {
         });
     }
 
-    public <T> void attachPropertyListenerAndNotifyCurrent(final AbstractObservableProperty<T> t,
-                                                           final ObservablePropertyListener<T> observableListener) {
+    public <T> void attachPropertyListenerAndNotifyCurrent(final AbstractObservableProperty<T> t, final ObservablePropertyListener<T> observableListener) {
         t.addListenerAndNotifyCurrent(observableListener);
         unbinders.add(new Runnable() {
             public void run() {
@@ -546,4 +541,21 @@ public class Binder2 {
         observableLong.addListenerAndNotifyCurrent(observablePropertyListener);
     }
 
+    public <T> void bind(final ObservableList<T> list, final ObservableListListener<T> observableListListener) {
+        unbinders.add(new Runnable() {
+            public void run() {
+                list.removeListener(observableListListener);
+            }
+        });
+        list.addListenerAndNotifyCurrent(observableListListener);
+    }
+
+    public <T> void bind(final ObservableProperty<T> property, final ObservablePropertyListener<T> listener) {
+        unbinders.add(new Runnable() {
+            public void run() {
+                property.removeListener(listener);
+            }
+        });
+        property.addListenerAndNotifyCurrent(listener);
+    }
 }

@@ -36,7 +36,7 @@ public class PageView extends JPanel {
         this.controller = controller;
         this.model = pageModel;
 
-        pageModel.getChartingModels().addListenerAndNotifyExisting(new ObservableListListener<LineChartModel>() {
+        pageModel.getChartingModels().addListenerAndNotifyCurrent(new ObservableListListener<LineChartModel>() {
 
             @Override public void onAdded(LineChartModel t) {
                 final LineChartView chart = buildChart(t);
@@ -50,8 +50,7 @@ public class PageView extends JPanel {
                             layout.setComponentConstraints(chart, newValue);
                             revalidate();
                             doLayout();
-                        }
-                        catch (IllegalArgumentException e) {
+                        } catch (IllegalArgumentException e) {
                             // Might be malformed as its being typed
                         }
 
@@ -75,7 +74,7 @@ public class PageView extends JPanel {
 
         });
 
-        pageModel.getPieChartModels().addListenerAndNotifyExisting(new ObservableListListener<PieChartModel>() {
+        pageModel.getPieChartModels().addListenerAndNotifyCurrent(new ObservableListListener<PieChartModel>() {
 
             @Override public void onAdded(PieChartModel t) {
                 final PieChartView chart = buildChart(t);
@@ -89,8 +88,7 @@ public class PageView extends JPanel {
                             layout.setComponentConstraints(chart, newValue);
                             revalidate();
                             doLayout();
-                        }
-                        catch (IllegalArgumentException e) {
+                        } catch (IllegalArgumentException e) {
                             // Might be malformed as its being typed
                         }
 

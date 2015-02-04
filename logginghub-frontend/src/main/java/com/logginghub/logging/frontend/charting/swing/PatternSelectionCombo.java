@@ -138,7 +138,7 @@ public class PatternSelectionCombo extends JComboBox {
     public void bind(ObservableList<PatternModel> patternModels) {
         model = new Model();
 
-        patternModels.addListenerAndNotifyExisting(new ObservableListListener<PatternModel>() {
+        patternModels.addListenerAndNotifyCurrent(new ObservableListListener<PatternModel>() {
 
             @Override public void onRemoved(final PatternModel t, int index) {
                 SwingUtilities.invokeLater(new Runnable() {

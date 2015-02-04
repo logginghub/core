@@ -558,7 +558,7 @@ public class ChartingTreeEditorView extends JPanel {
 
         chartingPanel.bind(controller);
 
-        model.getPages().addListenerAndNotifyExisting(new ObservableListListener<PageModel>() {
+        model.getPages().addListenerAndNotifyCurrent(new ObservableListListener<PageModel>() {
             @Override public void onAdded(final PageModel t) {
 
                 SwingHelper.dispatch(new Runnable() {
@@ -596,7 +596,7 @@ public class ChartingTreeEditorView extends JPanel {
             @Override public void onCleared() {}
         });
 
-        model.getPatternModels().addListenerAndNotifyExisting(new ObservableListListener<PatternModel>() {
+        model.getPatternModels().addListenerAndNotifyCurrent(new ObservableListListener<PatternModel>() {
             @Override public void onAdded(final PatternModel t) {
                 SwingHelper.invoke(new Runnable() {
                     @Override public void run() {
@@ -646,7 +646,7 @@ public class ChartingTreeEditorView extends JPanel {
 
     private void bindPage(final DefaultMutableTreeNode node, final PageModel t) {
 
-        t.getChartingModels().addListenerAndNotifyExisting(new ObservableListListener<LineChartModel>() {
+        t.getChartingModels().addListenerAndNotifyCurrent(new ObservableListListener<LineChartModel>() {
             @Override public void onAdded(final LineChartModel lineChartModel) {
                 bindLineChart(node, t, lineChartModel);
             }
@@ -660,7 +660,7 @@ public class ChartingTreeEditorView extends JPanel {
 
         });
 
-        t.getPieChartModels().addListenerAndNotifyExisting(new ObservableListListener<PieChartModel>() {
+        t.getPieChartModels().addListenerAndNotifyCurrent(new ObservableListListener<PieChartModel>() {
             @Override public void onAdded(final PieChartModel pieChartModel) {
                 bindPieChart(node, t, pieChartModel);
             }
@@ -689,7 +689,7 @@ public class ChartingTreeEditorView extends JPanel {
         lineChartCounterparts.put(lineChartModel, chartNode);
 
         ObservableList<ChartSeriesModel> matcherModels = lineChartModel.getMatcherModels();
-        matcherModels.addListenerAndNotifyExisting(new ObservableListListener<ChartSeriesModel>() {
+        matcherModels.addListenerAndNotifyCurrent(new ObservableListListener<ChartSeriesModel>() {
             @Override public void onAdded(final ChartSeriesModel t) {
                 logger.debug("Chart series model '{}' has been added to chart '{}'", t, lineChartModel);
                 t.setParentChart(lineChartModel);
@@ -698,12 +698,12 @@ public class ChartingTreeEditorView extends JPanel {
 
                     @Override public String toString() {
                         String name = model.getPatternNameForID(t.getPatternID().get()) +
-                               "/" +
-                               model.getPatternLabelForID(t.getPatternID().get(), t.getLabelIndex().get()) +
-                               "/" +
-                               t.getType().get();
+                                "/" +
+                                model.getPatternLabelForID(t.getPatternID().get(), t.getLabelIndex().get()) +
+                                "/" +
+                                t.getType().get();
                         return name;
-                    }                   
+                    }
                 };
                 treeModel.insertNodeInto(seriesNode, chartNode, chartNode.getChildCount());
                 seriesCounterparts.put(t, seriesNode);
@@ -733,7 +733,7 @@ public class ChartingTreeEditorView extends JPanel {
         pieChartCounterparts.put(pieChartModel, chartNode);
 
         ObservableList<ChartSeriesModel> matcherModels = pieChartModel.getMatcherModels();
-        matcherModels.addListenerAndNotifyExisting(new ObservableListListener<ChartSeriesModel>() {
+        matcherModels.addListenerAndNotifyCurrent(new ObservableListListener<ChartSeriesModel>() {
             @Override public void onAdded(final ChartSeriesModel chartSeriesModel) {
                 logger.debug("Chart series model '{}' has been added to chart '{}'", chartSeriesModel, pieChartModel);
 
@@ -745,10 +745,10 @@ public class ChartingTreeEditorView extends JPanel {
 
                     @Override public String toString() {
                         String name = model.getPatternNameForID(chartSeriesModel.getPatternID().get()) +
-                               "/" +
-                               model.getPatternLabelForID(chartSeriesModel.getPatternID().get(), chartSeriesModel.getLabelIndex().get()) +
-                               "/" +
-                               chartSeriesModel.getType().get();
+                                "/" +
+                                model.getPatternLabelForID(chartSeriesModel.getPatternID().get(), chartSeriesModel.getLabelIndex().get()) +
+                                "/" +
+                                chartSeriesModel.getType().get();
                         return name;
                     }
                 };

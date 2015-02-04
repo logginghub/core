@@ -117,18 +117,15 @@ public class SimpleEventMessageTable extends JTable implements LogEventListener 
     }
 
     public void bind(ObservableList<LogEvent> notPatternised) {
-        notPatternised.addListenerAndNotifyExisting(new ObservableListListener<LogEvent>() {
-            @Override
-            public void onRemoved(LogEvent t, int index) {
+        notPatternised.addListenerAndNotifyCurrent(new ObservableListListener<LogEvent>() {
+            @Override public void onRemoved(LogEvent t, int index) {
                 model.remove(t);
             }
 
-            @Override
-            public void onCleared() {
+            @Override public void onCleared() {
             }
 
-            @Override
-            public void onAdded(LogEvent t) {
+            @Override public void onAdded(LogEvent t) {
                 model.addToBatch(t);
             }
         });

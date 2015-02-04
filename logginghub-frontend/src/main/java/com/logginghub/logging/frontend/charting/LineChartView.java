@@ -178,7 +178,7 @@ public class LineChartView extends MigPanel {
         });
 
         ObservableList<ChartSeriesModel> matcherModels = chartModel.getMatcherModels();
-        matcherModels.addListenerAndNotifyExisting(new ObservableListListener<ChartSeriesModel>() {
+        matcherModels.addListenerAndNotifyCurrent(new ObservableListListener<ChartSeriesModel>() {
 
             StreamListener<ChunkedResult> listener = new StreamListener<ChunkedResult>() {
                 @Override public void onNewItem(final ChunkedResult t) {

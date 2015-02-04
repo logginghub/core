@@ -59,7 +59,7 @@ public class ChartingController implements LogEventListener {
 
         // Build the time chunkers
         ObservableList<TimeChunkerModel> timeChunkers = model.getTimeChunkers();
-        timeChunkers.addListenerAndNotifyExisting(new ObservableListListener<TimeChunkerModel>() {
+        timeChunkers.addListenerAndNotifyCurrent(new ObservableListListener<TimeChunkerModel>() {
 
             @Override public void onAdded(TimeChunkerModel timeChunkerModel) {
                 TimeChunkingGenerator timeChunkingGenerator = createTimeChunkingGenerator(timeChunkerModel);
@@ -83,7 +83,7 @@ public class ChartingController implements LogEventListener {
 
         final TimeChunkingGenerator generator = new TimeChunkingGenerator(timeChunkerModel.getInterval().get());
 
-        timeChunkerModel.getParserModels().addListenerAndNotifyExisting(new ObservableListListener<ParserModel>() {
+        timeChunkerModel.getParserModels().addListenerAndNotifyCurrent(new ObservableListListener<ParserModel>() {
 
             @Override public void onRemoved(ParserModel parserModel, int index) {
                 ResultKeyBuilder resultKeyBuilder = parserModel.getCounterpart();
@@ -107,7 +107,7 @@ public class ChartingController implements LogEventListener {
         final ResultKeyBuilder resultKeyBuilder = new ResultKeyBuilder(format);
         parserModel.setCounterpart(resultKeyBuilder);
 
-        parserModel.getPatterns().addListenerAndNotifyExisting(new ObservableListListener<PatternModel>() {
+        parserModel.getPatterns().addListenerAndNotifyCurrent(new ObservableListListener<PatternModel>() {
 
             @Override public void onRemoved(PatternModel t, int index) {
                 ValueStripper2 valueStripper = t.getCounterpart();
