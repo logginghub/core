@@ -43,13 +43,7 @@ public class HubStackCaptureModule implements Module<HubStackCaptureConfiguratio
                 TimeUtils.parseInterval(configuration.getSnapshotBroadcastInterval()),
                 TimeUtils.parseInterval(configuration.getSnapshotRequestInterval()),
                 configuration.isRespondToRequests(),
-                configuration.getEnvironment(),
-                configuration.getHost(),
-                configuration.getInstanceType(),
-                configuration.getInstanceNumber(),
-                0
-                // TODO : get pid from somewhere, another service?
-                            );
+                configuration.getInstanceKey());
 
         channelSubscriptions = discovery.findService(ChannelMessagingService.class);
         socketHubInterface = discovery.findService(SocketHubInterface.class);
@@ -81,9 +75,8 @@ public class HubStackCaptureModule implements Module<HubStackCaptureConfiguratio
                     }
 
                     DefaultLogEvent event = LogEventBuilder.start()
-                                                           .setPid(snapshot.getPid())
+                                                           .setInstanceKey(snapshot.getInstanceKey())
                                                            .setMessage(message.toString())
-                                                           .setSourceApplication(snapshot.buildKey())
                                                            .setLevel(Logger.info)
                                                            .setChannel(configuration.getChannel())
                                                            .setLoggerName("StackCapture")

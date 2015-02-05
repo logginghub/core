@@ -6,6 +6,8 @@ dependencies {
     compile project(':logginghub-messaging2')
     compile project(':logginghub-messaging3')
 
+    compile("com.google.code.gson:gson:2.2.4")
+
     testCompile project(':logginghub-testutils')
 
     compile("com.logginghub.thirdparty:kryonet:2.12")

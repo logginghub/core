@@ -8,7 +8,7 @@ public class HistoricalStackTableRow {
     private String environment;
     private String host;
     private String type;
-    private int instance;
+    private String instanceIdentifier;
     private String key;
     private String threadName;
 
@@ -37,12 +37,12 @@ public class HistoricalStackTableRow {
         this.type = type;
     }
 
-    public int getInstance() {
-        return instance;
+    public String getInstanceIdentifier() {
+        return instanceIdentifier;
     }
 
-    public void setInstance(int instance) {
-        this.instance = instance;
+    public void setInstanceIdentifier(String instanceIdentifier) {
+        this.instanceIdentifier = instanceIdentifier;
     }
 
     public void setKey(String key) {

@@ -7,17 +7,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Classic worker thread wrapper to make extending Thread a little simpler. WorkerThreads work
- * iteratively, and can be stopped after each iteration.
- * 
- * If you want something like Runnable that can be plugged into multiple WorkerThreads, see
- * {@link IteratingRunnable} and {@link IteratingRunnableWorkerThread}.
- * 
- * Just instantiate anonymously and implement the onRun() method to provide a single iteration of
- * the thread.
- * 
+ * Classic worker thread wrapper to make extending Thread a little simpler. WorkerThreads work iteratively, and can be stopped after each iteration.
+ * <p/>
+ * If you want something like Runnable that can be plugged into multiple WorkerThreads, see {@link IteratingRunnable} and {@link IteratingRunnableWorkerThread}.
+ * <p/>
+ * Just instantiate anonymously and implement the onRun() method to provide a single iteration of the thread.
+ *
  * @author James
- * 
  */
 public abstract class WorkerThread {
     private Thread thread;
@@ -46,10 +42,9 @@ public abstract class WorkerThread {
     }
 
     /**
-     * Normally the WorkerThread will iterate as fast as possible, but if you set an iteration delay
-     * the thread will sleep for this long in between iterations. Setting this to zero will turn off
-     * the sleep again. Note this will only take affect during the next iteration.
-     * 
+     * Normally the WorkerThread will iterate as fast as possible, but if you set an iteration delay the thread will sleep for this long in between iterations. Setting this to zero will turn off the
+     * sleep again. Note this will only take affect during the next iteration.
+     *
      * @param iterationDelay
      */
     public void setIterationDelay(long iterationDelay) {
@@ -95,12 +90,8 @@ public abstract class WorkerThread {
     protected void handleException(Throwable t) {
         if (exceptionHandler != null) {
             exceptionHandler.handleException("Worker thread exception", t);
-        }
-        else {
-            logger.log(Level.WARNING,
-                       String.format("Exception caught from worker thread %s, and no exception handler was set, so we are logging a warning",
-                                     thread.getName()),
-                       t);
+        } else {
+            logger.log(Level.WARNING, String.format("Exception caught from worker thread %s, and no exception handler was set, so we are logging a warning", thread.getName()), t);
         }
     }
 
@@ -116,28 +107,16 @@ public abstract class WorkerThread {
     }
 
     /**
-     * Stop this thread and execute the stopTask provided. This avoids potential race conditions
-     * where you maybe while(...) on something else that needs to be controlled during the stop
-     * process. Here is an example:
-     * <ul>
-     * <li>In your worker thread run() method you open a server socket</li>
-     * <li>You have a while(socket!=null) accept() loop in there</li>
-     * <li>If for whatever reason the socket is closed would loop around and rebind</li>
-     * <li>In your stop/close method you call serverSocket.close, and then thread.stop</li>
-     * <li>Trouble is, the socket closes and throws an exception in the worker thread</li>
-     * <li>That thread then shoots back into worker thread and checks the kill value - which still
-     * hasn't been set to true</li>
-     * <li>The worker thread loop resumes, binding back to the socket and waiting for another
-     * connection</li>
-     * <li>The first thread gets another slice and calls workerThread.stop and then join</li>
-     * <li>This deadlocks as the worker thread is blocked indefinitely on the accept call again</li>
-     * </ul>
-     * 
-     * By providing a runnable instance the worker thread can set the kill flag, call the runnable
-     * and then join the thread - this ensures everything is cleared up in a nice atomic fashion.
-     * The other option to using this approach is to override beforeStop(), and put your close down
-     * calls in there.
-     * 
+     * Stop this thread and execute the stopTask provided. This avoids potential race conditions where you maybe while(...) on something else that needs to be controlled during the stop process. Here
+     * is an example: <ul> <li>In your worker thread run() method you open a server socket</li> <li>You have a while(socket!=null) accept() loop in there</li> <li>If for whatever reason the socket is
+     * closed would loop around and rebind</li> <li>In your stop/close method you call serverSocket.close, and then thread.stop</li> <li>Trouble is, the socket closes and throws an exception in the
+     * worker thread</li> <li>That thread then shoots back into worker thread and checks the kill value - which still hasn't been set to true</li> <li>The worker thread loop resumes, binding back to
+     * the socket and waiting for another connection</li> <li>The first thread gets another slice and calls workerThread.stop and then join</li> <li>This deadlocks as the worker thread is blocked
+     * indefinitely on the accept call again</li> </ul>
+     * <p/>
+     * By providing a runnable instance the worker thread can set the kill flag, call the runnable and then join the thread - this ensures everything is cleared up in a nice atomic fashion. The other
+     * option to using this approach is to override beforeStop(), and put your close down calls in there.
+     *
      * @param runnable
      */
     public void stop(Runnable stopTask) {
@@ -146,8 +125,7 @@ public abstract class WorkerThread {
         if (stopTask != null) {
             try {
                 stopTask.run();
-            }
-            catch (RuntimeException e) {
+            } catch (RuntimeException e) {
                 logger.log(Level.WARNING, String.format("Failed to execute stop task '%s' whilst shutting down thread '%s'", stopTask, this), e);
             }
         }
@@ -161,12 +139,9 @@ public abstract class WorkerThread {
                     for (StackTraceElement stackTraceElement : stackTrace) {
                         System.out.println(stackTraceElement);
                     }
-                    throw new FormattedRuntimeException("Thread failed to die within the join timeout ({} ms); thread {} is still running",
-                                                        joinTimeout.getMillis(),
-                                                        thread.getName());
+                    throw new FormattedRuntimeException("Thread failed to die within the join timeout ({} ms); thread {} is still running", joinTimeout.getMillis(), thread.getName());
                 }
-            }
-            catch (InterruptedException e) {
+            } catch (InterruptedException e) {
                 // Ignore this, it means the thread has died already.
             }
         }
@@ -204,31 +179,25 @@ public abstract class WorkerThread {
                 // iterationElapsedTimeOverrideNanos = 0;
                 try {
                     onRun();
-                }
-                catch (Throwable t) {
-                    if ((t instanceof InterruptedException || (t.getCause() != null && (t.getCause() instanceof InterruptedException))) &&
-                        !keepRunning()) {
+                } catch (Throwable t) {
+                    if ((t instanceof InterruptedException || (t.getCause() != null && (t.getCause() instanceof InterruptedException))) && !keepRunning()) {
                         // Blocking worker threads will quite often throw this when
                         // they are shutting down so if keepRunning is false ignore
                         // it
-                    }
-                    else {
+                    } else {
                         if (t instanceof StopRunningException) {
                             keepRunning = false;
-                        }
-                        else {
+                        } else {
                             // TODO : do we keep running on errors?
                             handleException(t);
                             if (keepRunningOnExceptions) {
 
-                            }
-                            else {
+                            } else {
                                 keepRunning = false;
                             }
                         }
                     }
-                }
-                finally {
+                } finally {
                     // if (iterationElapsedTimeOverrideNanos == 0) {
                     elapsed = System.nanoTime() - start;
                     // }
@@ -241,8 +210,7 @@ public abstract class WorkerThread {
                 if (iterationDelay > 0) {
                     delay(iterationDelay, elapsed - 1000);
                 }
-            }
-            else {
+            } else {
                 Thread.interrupted();
             }
         }
@@ -259,13 +227,11 @@ public abstract class WorkerThread {
 
             if (timeToDelay > 16000000) {
                 Thread.sleep(timeToDelay / 1000000);
-            }
-            else {
+            } else {
                 ThreadUtils.sleepNanos(timeToDelay);
             }
             //
-        }
-        catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             // Fine, we might need to be interrupted to kill the thread
             // so this isn't the end of the world.
             Thread.interrupted();
@@ -282,17 +248,14 @@ public abstract class WorkerThread {
         if (thread != null) {
             try {
                 thread.join();
-            }
-            catch (InterruptedException e) {
-                throw new RuntimeException("Thread " + Thread.currentThread().getName() + " was interupted whilst joined against the worker thread",
-                                           e);
+            } catch (InterruptedException e) {
+                throw new RuntimeException("Thread " + Thread.currentThread().getName() + " was interupted whilst joined against the worker thread", e);
             }
         }
     }
 
     /**
-     * Call this method only from the wrapped thread - it indicates a natural end of life for the
-     * thread, so no need to join or do any of the other bits.
+     * Call this method only from the wrapped thread - it indicates a natural end of life for the thread, so no need to join or do any of the other bits.
      */
     protected void finished() {
         keepRunning = false;
@@ -304,7 +267,9 @@ public abstract class WorkerThread {
 
     protected abstract void onRun() throws Throwable;
 
-    protected void beforeStop() {};
+    protected void beforeStop() {}
+
+    ;
 
     protected void beforeStart() {}
 
@@ -315,17 +280,17 @@ public abstract class WorkerThread {
     public void interupt() {
         if (thread.isAlive()) {
             thread.interrupt();
-        }
-        else {
+        } else {
             throw new RuntimeException("Can't interupt the thread, it isn't alive");
         }
-    };
+    }
+
+    ;
 
     public void sleep(long time, TimeUnit units) {
         try {
             units.sleep(time);
-        }
-        catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             if (isRunning()) {
                 throw new RuntimeException(String.format("Interupted whilst sleeping"), e);
             }
@@ -353,8 +318,11 @@ public abstract class WorkerThread {
     public static WorkerThread executeDaemon(String name, final Runnable runnable) {
         WorkerThread wt = new WorkerThread(name) {
             @Override protected void onRun() throws Throwable {
-                runnable.run();
-                finished();
+                try {
+                    runnable.run();
+                } finally {
+                    finished();
+                }
             }
         };
         wt.setDaemon(true);
@@ -365,10 +333,13 @@ public abstract class WorkerThread {
     public static WorkerThread executeIn(String name, int amount, TimeUnit units, final Runnable runnable) {
         WorkerThread wt = new WorkerThread(name) {
             @Override protected void onRun() throws Throwable {
-                if (isRunning()) {
-                    runnable.run();
+                try {
+                    if (isRunning()) {
+                        runnable.run();
+                    }
+                } finally {
+                    finished();
                 }
-                finished();
             }
         };
         wt.setPreIterationDelay(units.toMillis(amount));
@@ -379,8 +350,11 @@ public abstract class WorkerThread {
     public static WorkerThread execute(String name, final Runnable runnable) {
         WorkerThread wt = new WorkerThread(name) {
             @Override protected void onRun() throws Throwable {
-                runnable.run();
-                finished();
+                try {
+                    runnable.run();
+                } finally {
+                    finished();
+                }
             }
         };
         wt.start();

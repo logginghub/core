@@ -1,15 +1,7 @@
 package com.logginghub.logging.logback;
 
-import java.net.InetSocketAddress;
-import java.util.List;
-import java.util.concurrent.BlockingDeque;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
-
 import com.logginghub.logging.AppenderHelper;
 import com.logginghub.logging.AppenderHelperCustomisationInterface;
 import com.logginghub.logging.AppenderHelperEventConvertor;
@@ -27,6 +19,12 @@ import com.logginghub.logging.log4j.PublishingListener;
 import com.logginghub.logging.messaging.SocketClient;
 import com.logginghub.logging.messaging.SocketConnection.SlowSendingPolicy;
 import com.logginghub.utils.TimeProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.net.InetSocketAddress;
+import java.util.List;
+import java.util.concurrent.BlockingDeque;
 
 public class SocketAppender extends AppenderBase<ILoggingEvent> implements StandardAppenderFeatures {
 
@@ -35,7 +33,7 @@ public class SocketAppender extends AppenderBase<ILoggingEvent> implements Stand
     public SocketAppender() {
         this("VertexLabs-logbackSocketAppender");
     }
-    
+
     public SocketAppender(String name) {
         appenderHelper = new AppenderHelper("VertexLabs-logbackSocketAppender", new AppenderHelperCustomisationInterface() {
             public HeapLogger createHeapLogger() {
@@ -65,7 +63,7 @@ public class SocketAppender extends AppenderBase<ILoggingEvent> implements Stand
                 };
             }
         });
-        
+
         appenderHelper.setLevelSettingImplementation(new LevelSettingImplementation() {
             @Override public boolean process(LevelSettingsRequest request) {
                 return setLogLevels(request);
@@ -80,7 +78,7 @@ public class SocketAppender extends AppenderBase<ILoggingEvent> implements Stand
     public long getFailureDelay() {
         return appenderHelper.getFailureDelay();
     }
-    
+
     protected boolean setLogLevels(LevelSettingsRequest request) {
 
         LevelSettingsGroup levelSettingsGroup = request.getLevelSettings();
@@ -96,7 +94,7 @@ public class SocketAppender extends AppenderBase<ILoggingEvent> implements Stand
 
         return true;
     }
-    
+
     private ch.qos.logback.classic.Level parseLevel(String level) {
 
         ch.qos.logback.classic.Level levelValue;
@@ -123,17 +121,13 @@ public class SocketAppender extends AppenderBase<ILoggingEvent> implements Stand
             case 'f': {
                 if (lowerCase.equals("fatal")) {
                     levelValue = ch.qos.logback.classic.Level.ERROR;
-                }
-                else if (lowerCase.equals("finer")) {
+                } else if (lowerCase.equals("finer")) {
                     levelValue = ch.qos.logback.classic.Level.TRACE;
-                }
-                else if (lowerCase.equals("finest")) {
+                } else if (lowerCase.equals("finest")) {
                     levelValue = ch.qos.logback.classic.Level.TRACE;
-                }
-                else if (lowerCase.equals("fine")) {
+                } else if (lowerCase.equals("fine")) {
                     levelValue = ch.qos.logback.classic.Level.DEBUG;
-                }
-                else {
+                } else {
                     // TODO : how to indicate a problem!
                     levelValue = ch.qos.logback.classic.Level.INFO;
                 }
@@ -200,8 +194,12 @@ public class SocketAppender extends AppenderBase<ILoggingEvent> implements Stand
         appenderHelper.setEnvironment(environment);
     }
 
-    @Override public void setInstanceNumber(int instanceNumber) {
-        appenderHelper.setInstanceNumber(instanceNumber);
+    @Override public void setInstanceIdentifier(String instanceIdentifier) {
+        appenderHelper.setInstanceIdentifier(instanceIdentifier);
+    }
+
+    @Override public void setInstanceType(String instanceType) {
+        appenderHelper.setInstanceType(instanceType);
     }
 
     public String getSourceApplication() {
@@ -209,7 +207,7 @@ public class SocketAppender extends AppenderBase<ILoggingEvent> implements Stand
     }
 
     public void setHost(String host) {
-        appenderHelper.setHost(host);
+        appenderHelper.addConnectionPoint(host);
     }
 
     public synchronized void setPublishMachineTelemetry(boolean publishMachineTelemetry) {
@@ -283,11 +281,7 @@ public class SocketAppender extends AppenderBase<ILoggingEvent> implements Stand
 
             public LogEvent createLogEvent() {
                 ILoggingEvent record = details.getLoggingEvent();
-                LogbackLogEvent event = new LogbackLogEvent(record,
-                                                            appenderHelper.getSourceApplication(),
-                                                            appenderHelper.getHost(),
-                                                            record.getThreadName(),
-                                                            details);
+                LogbackLogEvent event = new LogbackLogEvent(record, appenderHelper.getSourceApplication(), appenderHelper.getHost(), record.getThreadName(), details);
                 event.setPid(appenderHelper.getPid());
                 event.setChannel(appenderHelper.getChannel());
                 return event;
@@ -323,7 +317,7 @@ public class SocketAppender extends AppenderBase<ILoggingEvent> implements Stand
 
     /**
      * For testing purposes only.
-     * 
+     *
      * @param socketClient
      */
     public void setSocketClient(SocketClient socketClient) {

@@ -1,18 +1,10 @@
 package com.logginghub.logging.modules;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-
-import java.io.File;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import com.logginghub.logging.api.patterns.Aggregation;
 import com.logginghub.logging.api.patterns.Pattern;
+import com.logginghub.logging.exceptions.LoggingMessageSenderException;
 import com.logginghub.logging.messages.AggregationType;
-import com.logginghub.logging.modules.PatternManagerModule;
+import com.logginghub.logging.messages.ChannelMessage;
 import com.logginghub.logging.modules.configuration.PatternManagerConfiguration;
 import com.logginghub.logging.servers.ServerMessageHandler;
 import com.logginghub.logging.servers.ServerSubscriptionsService;
@@ -21,6 +13,14 @@ import com.logginghub.utils.FileUtils;
 import com.logginghub.utils.Result;
 import com.logginghub.utils.TimeUtils;
 import com.logginghub.utils.module.ConfigurableServiceDiscovery;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.io.File;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 public class TestPatternManagerModule {
 
@@ -38,6 +38,10 @@ public class TestPatternManagerModule {
 
         disco.bind(ServerSubscriptionsService.class, new ServerSubscriptionsService() {
             @Override public void unsubscribe(String channel, ServerMessageHandler handler) {}
+
+            @Override public void send(ChannelMessage message) throws LoggingMessageSenderException {
+
+            }
 
             @Override public void subscribe(String channel, ServerMessageHandler handler) {}
         });

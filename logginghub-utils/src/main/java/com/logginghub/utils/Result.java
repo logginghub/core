@@ -22,6 +22,8 @@ public class Result<T> implements SerialisableObject {
 
     public Result(T instance) {
         value = instance;
+        state = State.Successful;
+
     }
 
     public Result() {}
@@ -31,6 +33,26 @@ public class Result<T> implements SerialisableObject {
         this.value = null;
         this.externalReason = e.getMessage();
         this.internalReason = StacktraceUtils.getStackTraceAsString(e);
+    }
+
+    public static <T> Result<T> unsuccessful(String message, Object... params) {
+        Result<T> result = new Result<T>();
+        String formatted = StringUtils.format(message, params);
+        result.setInternalReason(formatted);
+        result.setExternalReason(formatted);
+        result.setState(State.Unsuccessful);
+        result.setValue(null);
+        return result;
+    }
+
+    public static <T> Result<T> failed(Throwable t, String message, Object... params) {
+        Result<T> result = new Result<T>();
+        String formatted = StringUtils.format(message, params);
+        result.internalReason = StacktraceUtils.getStackTraceAsString(t);
+        result.setExternalReason(formatted);
+        result.setState(State.Failed);
+        result.setValue(null);
+        return result;
     }
 
     public void setValue(T value) {
@@ -79,7 +101,7 @@ public class Result<T> implements SerialisableObject {
         this.internalReason = internalReason;
     }
 
-    public void unsuccessful(String externalReason, String internalReason) {
+    public void setUnsuccessfulReasons(String externalReason, String internalReason) {
         this.state = State.Unsuccessful;
         this.externalReason = externalReason;
         this.internalReason = internalReason;
@@ -120,7 +142,7 @@ public class Result<T> implements SerialisableObject {
     public boolean isUnsuccessful() {
         return state == State.Unsuccessful;
     }
-    
+
     public boolean isTimeout() {
         return state == State.Timedout;
     }
@@ -138,10 +160,7 @@ public class Result<T> implements SerialisableObject {
 
     @Override public void write(SofWriter writer) throws SofException {
         if (value != null) {
-            Is.instanceOf(value,
-                          SerialisableObject.class,
-                          "Unable to encode a Result object if the payload does not implement SerialisableObject. Value class is '{}'",
-                          value.getClass().getName());
+            Is.instanceOf(value, SerialisableObject.class, "Unable to encode a Result object if the payload does not implement SerialisableObject. Value class is '{}'", value.getClass().getName());
         }
 
         writer.write(0, externalReason);
@@ -149,5 +168,10 @@ public class Result<T> implements SerialisableObject {
         writer.write(2, state.toString());
         writer.write(3, (SerialisableObject) value);
     }
+
+    public static <T> Result<T> successful(T t) {
+        return new Result<T>(t);
+    }
+
 
 }

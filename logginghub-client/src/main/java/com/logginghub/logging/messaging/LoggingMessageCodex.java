@@ -42,11 +42,20 @@ import com.logginghub.logging.messages.HistoricalPatternisedDataResponse;
 import com.logginghub.logging.messages.HistoricalStackDataJobKillRequest;
 import com.logginghub.logging.messages.HistoricalStackDataRequest;
 import com.logginghub.logging.messages.HistoricalStackDataResponse;
+import com.logginghub.logging.messages.InstanceKey;
 import com.logginghub.logging.messages.LogEventCollectionMessage;
 import com.logginghub.logging.messages.LogEventMessage;
 import com.logginghub.logging.messages.LoggingMessage;
 import com.logginghub.logging.messages.MapMessage;
 import com.logginghub.logging.messages.PartialMessageException;
+import com.logginghub.logging.messages.ReportDetails;
+import com.logginghub.logging.messages.ReportExecuteRequest;
+import com.logginghub.logging.messages.ReportExecuteResponse;
+import com.logginghub.logging.messages.ReportExecuteResult;
+import com.logginghub.logging.messages.ReportListRequest;
+import com.logginghub.logging.messages.ReportListResponse;
+import com.logginghub.logging.messages.ReportRunRequest;
+import com.logginghub.logging.messages.ReportRunResponse;
 import com.logginghub.logging.messages.ResponseMessage;
 import com.logginghub.logging.messages.StackSnapshot;
 import com.logginghub.logging.messages.StackStrobeRequest;
@@ -207,6 +216,19 @@ public class LoggingMessageCodex {
             registerType(HistoricalStackDataResponse.class, 61);
             registerType(HistoricalStackDataJobKillRequest.class, 62);
 
+            registerType(ReportListResponse.class, 63);
+            registerType(ReportListRequest.class, 64);
+            registerType(ReportDetails.class, 65);
+
+            registerType(ReportRunRequest.class, 66);
+            registerType(ReportRunResponse.class, 67);
+
+            registerType(ReportExecuteRequest.class, 68);
+            registerType(ReportExecuteResponse.class, 69);
+
+            registerType(InstanceKey.class, 70);
+
+            registerType(ReportExecuteResult.class, 71);
         }
     };
 

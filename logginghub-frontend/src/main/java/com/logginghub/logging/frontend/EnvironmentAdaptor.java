@@ -1,18 +1,13 @@
 package com.logginghub.logging.frontend;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Future;
-
 import com.logginghub.logging.exceptions.LoggingMessageSenderException;
 import com.logginghub.logging.frontend.model.EnvironmentModel;
 import com.logginghub.logging.frontend.model.HubConnectionModel;
+import com.logginghub.logging.frontend.model.HubConnectionModel.ConnectionState;
 import com.logginghub.logging.frontend.model.ObservableList;
 import com.logginghub.logging.frontend.model.ObservableListListener;
-import com.logginghub.logging.frontend.model.ObservableModelListener;
-import com.logginghub.logging.frontend.model.HubConnectionModel.ConnectionState;
 import com.logginghub.logging.frontend.model.ObservableModel.FieldEnumeration;
+import com.logginghub.logging.frontend.model.ObservableModelListener;
 import com.logginghub.logging.frontend.modules.EnvironmentMessagingService;
 import com.logginghub.logging.frontend.modules.EnvironmentNotificationListener;
 import com.logginghub.logging.frontend.modules.SocketClientDirectAccessService;
@@ -20,11 +15,17 @@ import com.logginghub.logging.frontend.services.EnvironmentNotificationService;
 import com.logginghub.logging.listeners.LogEventListener;
 import com.logginghub.logging.listeners.LoggingMessageListener;
 import com.logginghub.logging.messages.ChannelMessage;
+import com.logginghub.logging.messages.Channels;
 import com.logginghub.logging.messages.LoggingMessage;
 import com.logginghub.logging.messages.RequestResponseMessage;
 import com.logginghub.logging.messaging.SocketClient;
 import com.logginghub.utils.Destination;
 import com.logginghub.utils.FormattedRuntimeException;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Future;
 
 public class EnvironmentAdaptor implements EnvironmentNotificationService, EnvironmentMessagingService, SocketClientDirectAccessService {
 
@@ -166,6 +167,20 @@ public class EnvironmentAdaptor implements EnvironmentNotificationService, Envir
 
     public void removeLogEventListener(LogEventListener logEventListener) {
         getClient().removeLogEventListener(logEventListener);
+    }
+
+    @Override public void subscribeToPrivateChannel(Destination<ChannelMessage> destination) {
+        final SocketClient client = getClient();
+        client.subscribe(Channels.getPrivateConnectionChannel(client.getConnectionID()), destination);
+    }
+
+    @Override public void unsubscribeFromPrivateChannel(Destination<ChannelMessage> destination) {
+        final SocketClient client = getClient();
+        client.unsubscribe(Channels.getPrivateConnectionChannel(client.getConnectionID()), destination);
+    }
+
+    @Override public int getConnectionID() {
+        return getClient().getConnectionID();
     }
 
     @Override public List<SocketClient> getDirectAccess() {

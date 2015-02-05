@@ -1,6 +1,16 @@
 package com.logginghub.logging.log4j;
 
-import com.logginghub.logging.*;
+import com.logginghub.logging.AppenderHelper;
+import com.logginghub.logging.AppenderHelperCustomisationInterface;
+import com.logginghub.logging.AppenderHelperEventConvertor;
+import com.logginghub.logging.CpuLogger;
+import com.logginghub.logging.EventSnapshot;
+import com.logginghub.logging.GCFileWatcher;
+import com.logginghub.logging.HeapLogger;
+import com.logginghub.logging.LevelSettingImplementation;
+import com.logginghub.logging.Log4jLogEvent;
+import com.logginghub.logging.LogEvent;
+import com.logginghub.logging.StandardAppenderFeatures;
 import com.logginghub.logging.api.levelsetting.LevelSetting;
 import com.logginghub.logging.api.levelsetting.LevelSettingsGroup;
 import com.logginghub.logging.api.levelsetting.LevelSettingsRequest;
@@ -125,12 +135,16 @@ public class SocketAppender extends AppenderSkeleton implements StandardAppender
         appenderHelper.setEnvironment(environment);
     }
 
-    @Override public void setInstanceNumber(int instanceNumber) {
-        appenderHelper.setInstanceNumber(instanceNumber);
+    @Override public void setInstanceIdentifier(String instanceIdentifier) {
+        appenderHelper.setInstanceIdentifier(instanceIdentifier);
+    }
+
+    @Override public void setInstanceType(String instanceType) {
+        appenderHelper.setInstanceType(instanceType);
     }
 
     public void setHost(String host) {
-        appenderHelper.setHost(host);
+        appenderHelper.addConnectionPoint(host);
     }
 
     public String getTelemetry() {
@@ -276,17 +290,11 @@ public class SocketAppender extends AppenderSkeleton implements StandardAppender
 
     @Override public void append(final LoggingEvent record) {
         appendCounter++;
-        final Log4jDetailsSnapshot details = Log4jDetailsSnapshot.fromLoggingEvent(record,
-                                                                                   appenderHelper.getTimeProvider(),
-                                                                                   captureLocationInformation);
+        final Log4jDetailsSnapshot details = Log4jDetailsSnapshot.fromLoggingEvent(record, appenderHelper.getTimeProvider(), captureLocationInformation);
 
         appenderHelper.append(new AppenderHelperEventConvertor() {
             public LogEvent createLogEvent() {
-                Log4jLogEvent event = new Log4jLogEvent(record,
-                                                        appenderHelper.getSourceApplication(),
-                                                        appenderHelper.getHost(),
-                                                        Thread.currentThread().getName(),
-                                                        details);
+                Log4jLogEvent event = new Log4jLogEvent(record, appenderHelper.getSourceApplication(), appenderHelper.getHost(), Thread.currentThread().getName(), details);
                 event.setPid(appenderHelper.getPid());
                 event.setChannel(appenderHelper.getChannel());
                 return event;

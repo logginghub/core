@@ -19,10 +19,10 @@ public class ThreadsInProcessViewModel extends Observable {
             threadViewModel = new SingleThreadViewModel();
 
             // These need to be set on the model before it goes into the observable list!
-            threadViewModel.getEnvironment().set(snapshot.getEnvironment());
-            threadViewModel.getHost().set(snapshot.getHost());
-            threadViewModel.getInstanceType().set(snapshot.getInstanceType());
-            threadViewModel.getInstanceNumber().set(snapshot.getInstanceNumber());
+            threadViewModel.getEnvironment().set(snapshot.getInstanceKey().getEnvironment());
+            threadViewModel.getHost().set(snapshot.getInstanceKey().getHost());
+            threadViewModel.getInstanceType().set(snapshot.getInstanceKey().getInstanceType());
+            threadViewModel.getInstanceIdentifier().set(snapshot.getInstanceKey().getInstanceIdentifier());
             
             modelsByThreadID.put(id, threadViewModel);
             threads.add(threadViewModel);

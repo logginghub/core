@@ -1,5 +1,13 @@
 package com.logginghub.logging.utils;
 
+import com.logginghub.logging.messages.InstanceKey;
+import com.logginghub.logging.messages.StackSnapshot;
+import com.logginghub.logging.messages.StackTrace;
+import com.logginghub.logging.messages.StackTraceItem;
+import com.logginghub.utils.SystemTimeProvider;
+import com.logginghub.utils.TimeProvider;
+import com.logginghub.utils.WorkerThread;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -7,13 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
-import com.logginghub.logging.messages.StackSnapshot;
-import com.logginghub.logging.messages.StackTrace;
-import com.logginghub.logging.messages.StackTraceItem;
-import com.logginghub.utils.SystemTimeProvider;
-import com.logginghub.utils.TimeProvider;
-import com.logginghub.utils.WorkerThread;
 
 public class StackCapture {
 
@@ -23,7 +24,7 @@ public class StackCapture {
         this.timeProvider = timeProvider;
     }
 
-    public StackSnapshot capture(String environment, String host, String instanceType, int instanceNumber, int pid) {
+    public StackSnapshot capture(InstanceKey instanceKey) {
 
         long time = timeProvider.getTime();
         Map<Thread, StackTraceElement[]> allStackTraces = Thread.getAllStackTraces();
@@ -66,7 +67,7 @@ public class StackCapture {
             }
         });
 
-        StackSnapshot snapshot = new StackSnapshot(environment, host, instanceType, instanceNumber, pid, time, traces.toArray(new StackTrace[traces.size()]));
+        StackSnapshot snapshot = new StackSnapshot(instanceKey, time, traces.toArray(new StackTrace[traces.size()]));
         return snapshot;
     }
 

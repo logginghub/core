@@ -43,10 +43,12 @@ public class VirtualSystemCacheserver {
         stream.setHostOverride(args[1]);
         stream.setHostAddressOverride(args[2]);
         stream.setEnvironment(args[3]);
-        stream.setInstanceNumber(Integer.parseInt(args[4]));
+        stream.setInstanceIdentifier(args[4]);
         stream.getAppenderHelper().setStackTraceModuleEnabled(true);
         stream.setHost("localhost:15000");
         stream.setJava7GCLogging(true);
+        stream.setReportsModuleEnabled(true);
+        stream.setReportsModuleConfiguration("src/main/resources/reports-cacheserver.json");
         stream.start();
 
         Logger.root().addStream(stream);

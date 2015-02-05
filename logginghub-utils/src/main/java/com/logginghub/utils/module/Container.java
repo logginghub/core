@@ -1,11 +1,5 @@
 package com.logginghub.utils.module;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
 import com.logginghub.utils.FormattedRuntimeException;
 import com.logginghub.utils.Pair;
 import com.logginghub.utils.ReflectionUtils;
@@ -13,6 +7,13 @@ import com.logginghub.utils.StacktraceUtils;
 import com.logginghub.utils.StringUtils;
 import com.logginghub.utils.StringUtils.StringUtilsBuilder;
 import com.logginghub.utils.logging.Logger;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 public class Container<T> implements Module<T> {
 
@@ -57,32 +58,28 @@ public class Container<T> implements Module<T> {
                                 Class<?> value = annotation.value();
 
                                 logger.fine("Found configuration object '{}' which instantiates '{}'", objectClass.getName(), value.getName());
-                                Object moduleInstance = ReflectionUtils.instantiate(value);
+                                Object moduleInstance = attemptInstantiation(value, serviceDiscovery);
 
                                 if (moduleInstance instanceof Module<?>) {
                                     Module<?> module = (Module<?>) moduleInstance;
                                     this.modules.add(module);
                                     modules.add(new Pair(object, module));
-                                }
-                                else {
+                                } else {
                                     warnings.add(StringUtils.format("Instance of '{}' - doesn't implement Module<?>", value.getSimpleName()));
                                 }
-                            }
-                            else {
-                                warnings.add(StringUtils.format("Found configuration object '{}' but it didn't have the @Configures annotation",
-                                                                objectClass.getName()));
+                            } else {
+                                warnings.add(StringUtils.format("Found configuration object '{}' but it didn't have the @Configures annotation", objectClass.getName()));
                             }
 
                         }
 
-                    }
-                    catch (IllegalArgumentException e) {
+                    } catch (IllegalArgumentException e) {
                         e.printStackTrace();
-                    }
-                    catch (IllegalAccessException e) {
+                    } catch (IllegalAccessException e) {
                         e.printStackTrace();
-                    }
-                    catch (InvocationTargetException e) {
+                    } catch (InvocationTargetException e) {
+                        e.printStackTrace();
+                    } catch (InstantiationException e) {
                         e.printStackTrace();
                     }
                 }
@@ -128,8 +125,7 @@ public class Container<T> implements Module<T> {
                     progressedAtLeastOne |= true;
                     logger.info("Successfully configured module '{}'", moduleInstance.getClass().getSimpleName());
                     successfullyConfiguredModules.add((Module<?>) moduleInstance);
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
 
                     logger.fine(e, "Failed in this attempt to configure '{}' : {}", moduleInstance.getClass().getSimpleName());
 
@@ -181,6 +177,36 @@ public class Container<T> implements Module<T> {
         logger.info("Successfully configured all modules");
     }
 
+    private Object attemptInstantiation(Class<?> clazz, ServiceDiscovery serviceDiscovery) throws IllegalAccessException, InvocationTargetException, InstantiationException {
+
+        Object instance = null;
+
+        // Have a look for a constructor we can use
+        final Constructor<?>[] constructors = clazz.getConstructors();
+        for (Constructor<?> constructor : constructors) {
+            final Class<?>[] parameterTypes = constructor.getParameterTypes();
+
+            boolean canBuild = true;
+
+            List<Object> parameters = new ArrayList<Object>();
+
+            for (Class<?> parameterType : parameterTypes) {
+                final Object service = serviceDiscovery.findService(parameterType);
+                if (service != null) {
+                    parameters.add(service);
+                }
+            }
+
+            if (parameters.size() == parameterTypes.length) {
+                instance = constructor.newInstance(parameters.toArray());
+                break;
+            }
+
+        }
+
+        return instance;
+    }
+
     public boolean isConfigured(Module<?> module) {
         return successfullyConfiguredModules.contains(module);
     }
@@ -214,12 +240,10 @@ public class Container<T> implements Module<T> {
                 module = (Module<Y>) moduleInstance;
                 Y config = (Y) configuration;
                 module.configure(config, new ProxyServiceDiscovery());
-            }
-            else {
+            } else {
                 throw new FormattedRuntimeException("Instance of '{}' - doesn't implement Module<?>", value.getSimpleName());
             }
-        }
-        else {
+        } else {
             throw new FormattedRuntimeException("Configuration object '{}' doesn't have the @Configures annotation", objectClass.getName());
         }
 
@@ -227,11 +251,10 @@ public class Container<T> implements Module<T> {
     }
 
     /**
-     * @deprecated This isn't a good idea, as you can't control the return values from dependent
-     *             services via the proxy.
      * @param configuration
      * @param clazz
      * @return
+     * @deprecated This isn't a good idea, as you can't control the return values from dependent services via the proxy.
      */
     @Deprecated @SuppressWarnings("unchecked") public static <T extends Module<Y>, Y> T fromConfiguration(Object configuration, Class<T> clazz) {
 
@@ -249,12 +272,10 @@ public class Container<T> implements Module<T> {
                 module = (Module<Y>) moduleInstance;
                 Y config = (Y) configuration;
                 module.configure(config, new ProxyServiceDiscovery());
-            }
-            else {
+            } else {
                 throw new FormattedRuntimeException("Instance of '{}' - doesn't implement Module<?>", value.getSimpleName());
             }
-        }
-        else {
+        } else {
             throw new FormattedRuntimeException("Configuration object '{}' doesn't have the @Configures annotation", objectClass.getName());
         }
 

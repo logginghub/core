@@ -123,7 +123,7 @@ public class HistoricalStackTableModel extends AbstractTableModel {
                 value = row.getType();
                 break;
             case 3:
-                value = row.getInstance();
+                value = row.getInstanceIdentifier();
                 break;
             case 4:
                 value = row.getThreadName();
@@ -156,17 +156,17 @@ public class HistoricalStackTableModel extends AbstractTableModel {
 
     public void add(StackSnapshot snapshot, StackTrace trace) {
         if (!threadsToHide.contains(trace.getThreadName())) {
-            String key = StringUtils.format("{}.{}.{}.{}.{}", snapshot.getEnvironment(), snapshot.getHost(), snapshot.getInstanceType(), snapshot.getInstanceNumber(), trace.getThreadName());
+            String key = StringUtils.format("{}.{}", snapshot.getInstanceKey().buildKey(), trace.getThreadName());
 
             HistoricalStackTableRow historicalStackTableRow = rowMapping.get(key);
             if (historicalStackTableRow == null) {
                 Out.out("Creating new row for '{}'", key);
                 historicalStackTableRow = new HistoricalStackTableRow();
                 historicalStackTableRow.setKey(key);
-                historicalStackTableRow.setEnvironment(snapshot.getEnvironment());
-                historicalStackTableRow.setHost(snapshot.getHost());
-                historicalStackTableRow.setInstance(snapshot.getInstanceNumber());
-                historicalStackTableRow.setType(snapshot.getInstanceType());
+                historicalStackTableRow.setEnvironment(snapshot.getInstanceKey().getEnvironment());
+                historicalStackTableRow.setHost(snapshot.getInstanceKey().getHost());
+                historicalStackTableRow.setInstanceIdentifier(snapshot.getInstanceKey().getInstanceIdentifier());
+                historicalStackTableRow.setType(snapshot.getInstanceKey().getInstanceType());
                 historicalStackTableRow.setThreadName(trace.getThreadName());
 
                 rowMapping.put(key, historicalStackTableRow);
@@ -174,8 +174,8 @@ public class HistoricalStackTableModel extends AbstractTableModel {
 
                 Collections.sort(rows, new Comparator<HistoricalStackTableRow>() {
                     @Override public int compare(HistoricalStackTableRow o1, HistoricalStackTableRow o2) {
-                        return CompareUtils.start().add(o1.getEnvironment(), o2.getEnvironment()).add(o1.getHost(), o2.getHost()).add(o1.getType(), o2.getType()).add(o1.getInstance(),
-                                o2.getInstance()).add(o1.getThreadName(), o2.getThreadName()).compare();
+                        return CompareUtils.start().add(o1.getEnvironment(), o2.getEnvironment()).add(o1.getHost(), o2.getHost()).add(o1.getType(), o2.getType()).add(o1.getInstanceIdentifier(),
+                                o2.getInstanceIdentifier()).add(o1.getThreadName(), o2.getThreadName()).compare();
                     }
                 });
             }

@@ -20,10 +20,10 @@ public class BaseRequestResponseMessage implements RequestResponseMessage, Seria
     }
 
     @Override public void read(SofReader reader) throws SofException {
-        this.setCorrelationID(reader.readInt(1));
+        this.setCorrelationID(reader.readInt(0));
     }
 
     @Override public void write(SofWriter writer) throws SofException {
-        writer.write(1, getCorrelationID());
+        writer.write(0, getCorrelationID());
     }
 }

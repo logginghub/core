@@ -1,5 +1,6 @@
 package com.logginghub.logging;
 
+import com.google.gson.JsonSyntaxException;
 import com.logginghub.logging.api.levelsetting.InstanceFilter;
 import com.logginghub.logging.api.levelsetting.LevelSettingsConfirmation;
 import com.logginghub.logging.api.levelsetting.LevelSettingsRequest;
@@ -9,8 +10,14 @@ import com.logginghub.logging.exceptions.LoggingMessageSenderException;
 import com.logginghub.logging.log4j.PublishingListener;
 import com.logginghub.logging.messages.ChannelMessage;
 import com.logginghub.logging.messages.Channels;
+import com.logginghub.logging.messages.InstanceKey;
 import com.logginghub.logging.messages.LogEventMessage;
 import com.logginghub.logging.messages.LoggingMessage;
+import com.logginghub.logging.messages.ReportExecuteRequest;
+import com.logginghub.logging.messages.ReportExecuteResponse;
+import com.logginghub.logging.messages.ReportExecuteResult;
+import com.logginghub.logging.messages.ReportListRequest;
+import com.logginghub.logging.messages.ReportListResponse;
 import com.logginghub.logging.messaging.SocketClient;
 import com.logginghub.logging.messaging.SocketClientManager;
 import com.logginghub.logging.messaging.SocketConnection.SlowSendingPolicy;
@@ -24,6 +31,7 @@ import com.logginghub.logging.utils.InstanceDetailsContainsFilter;
 import com.logginghub.logging.utils.Java7GCMonitor;
 import com.logginghub.utils.Destination;
 import com.logginghub.utils.NetUtils;
+import com.logginghub.utils.Out;
 import com.logginghub.utils.Result;
 import com.logginghub.utils.RunnableWorkerThread;
 import com.logginghub.utils.StringUtils;
@@ -34,7 +42,9 @@ import com.logginghub.utils.VLPorts;
 import com.logginghub.utils.data.DataStructure;
 import com.logginghub.utils.logging.GlobalLoggingParameters;
 import com.logginghub.utils.logging.Logger;
+import com.logginghub.utils.sof.SerialisableObject;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -58,7 +68,7 @@ public class AppenderHelper {
     // private SocketPublisher m_publisher = new SocketPublisher();
     private SocketClientManager socketClientManager;
     private SocketClient socketClient;
-    private String sourceApplication = "<unknown source application>";
+    //    private String sourceApplication = "<unknown source application>";
     // private LinkedList<DetailsSnapshot> eventsToBeDispatched = new
     // LinkedList<DetailsSnapshot>();
 
@@ -76,9 +86,10 @@ public class AppenderHelper {
     private boolean publishProcessTelemetry = false;
     private boolean publishMachineTelemetry = false;
     private int maxDispatchQueueSize = 1000;
-    private int pid = -1;
+    //    private int pid = -1;
 
-    private boolean stackTraceModuleEnabled = true;
+    private boolean reportsModuleEnabled = false;
+    private boolean stackTraceModuleEnabled = false;
     private String stackTraceModuleBroadcastInterval = "0";
 
     private boolean publishHumanReadableTelemetry = false;
@@ -90,15 +101,8 @@ public class AppenderHelper {
                     socketClient.send(new ChannelMessage(Channels.telemetryUpdates, t));
 
                     if (publishHumanReadableTelemetry) {
-                        socketClient.send(new LogEventMessage(LogEventBuilder.start()
-                                                                             .setSourceApplication(sourceApplication)
-                                                                             .setSourceHost(getSourceHost())
-                                                                             .setSourceAddress(getSourceAddress())
-                                                                             .setChannel("telemetry")
-                                                                             .setLevel(Logger.fine)
-                                                                             .setMessage(t.toString())
-                                                                             .setPid(pid)
-                                                                             .toLogEvent()));
+                        socketClient.send(new LogEventMessage(LogEventBuilder.start().setSourceApplication(instanceKey.getSourceApplication()).setSourceHost(getSourceHost()).setSourceAddress(
+                                getSourceAddress()).setChannel("telemetry").setLevel(Logger.fine).setMessage(t.toString()).setPid(instanceKey.getPid()).toLogEvent()));
                     }
                 }
             } catch (LoggingMessageSenderException e) {
@@ -125,17 +129,14 @@ public class AppenderHelper {
     private StackCaptureModule stackTraceModule;
     private int appended;
     private LevelSettingImplementation levelSettingImplementation;
-    private String environment;
-    private int instanceNumber = 1;
-    private String hostOverride = null;
-    private String hostAddressOverride;
-    private String sourceHost;
-    private String sourceAddress;
-
-    // public void setCustomisationInterface(AppenderHelperCustomisationInterface
-    // customisationInterface) {
-    // this.customisationInterface = customisationInterface;
-    // }
+    //    private String environment;
+    //    private int instanceNumber = 1;
+    //    private String hostOverride = null;
+    //    private String sourceHost;
+    //    private String sourceAddress;
+    private ReportsHelper reportsHelper;
+    private String reportsConfigurationPath = "reports.txt";
+    private InstanceKey instanceKey;
 
     public AppenderHelper(String name, AppenderHelperCustomisationInterface ahci) {
         customisationInterface = ahci;
@@ -170,6 +171,8 @@ public class AppenderHelper {
             dispatcherThread.start();
         }
 
+        instanceKey = new InstanceKey();
+
         try {
             host = InetAddress.getLocalHost();
         } catch (UnknownHostException e1) {
@@ -179,13 +182,14 @@ public class AppenderHelper {
         // Make a cautious attempt at getting the pid - we dont want things to
         // blow up if this doesn't work though
         try {
-            pid = SigarHelper.getPid();
-            GlobalLoggingParameters.pid = pid;
+            instanceKey.setPid(SigarHelper.getPid());
+            GlobalLoggingParameters.pid = instanceKey.getPid();
         } catch (Throwable t) {
             t.printStackTrace();
         }
 
         stackTraceModule = new StackCaptureModule(null, null);
+
     }
 
     private void runDispatchLoop() throws InterruptedException {
@@ -238,7 +242,7 @@ public class AppenderHelper {
         return host;
     }
 
-    public void setHost(String host) {
+    public void addConnectionPoint(String host) {
 
         host = StringUtils.environmentReplacement(host);
 
@@ -259,7 +263,7 @@ public class AppenderHelper {
     }
 
     public int getPid() {
-        return pid;
+        return instanceKey.getPid();
     }
 
     /**
@@ -334,14 +338,32 @@ public class AppenderHelper {
     }
 
     public String getSourceApplication() {
-        return sourceApplication;
+        return instanceKey.getSourceApplication();
     }
 
     public void setSourceApplication(String sourceApplication) {
 
+        Out.err("[logginghub] setSourceApplication has been deprecated - you should use setInstanceType and setInstanceIdentifier instead to provide richer metadata. We'll try and parse it as " + "best we can.");
+
         String actualValue = StringUtils.environmentReplacement(sourceApplication);
 
-        this.sourceApplication = actualValue;
+        try {
+            String trailingNumber = StringUtils.trailingInteger(sourceApplication);
+            if (StringUtils.isNotNullOrEmpty(trailingNumber)) {
+                String remained = StringUtils.before(sourceApplication, trailingNumber);
+                if (remained.endsWith(".") || remained.endsWith("-")) {
+                    remained = remained.substring(0, remained.length() - 1);
+                }
+
+                this.instanceKey.setInstanceType(remained);
+                this.instanceKey.setInstanceIdentifier(trailingNumber);
+            } else {
+                this.instanceKey.setInstanceType(actualValue);
+                this.instanceKey.setInstanceIdentifier(null);
+            }
+        } catch (RuntimeException e) {
+            Out.err("Failed to parse application name - will use default values : {}", e.getMessage());
+        }
 
         telemetryClient.setSourceApplication(actualValue);
         GlobalLoggingParameters.applicationName = actualValue;
@@ -394,7 +416,7 @@ public class AppenderHelper {
         this.publishProcessTelemetry = publishProcessTelemetry;
 
         if (publishProcessTelemetry) {
-            ProcessTelemetryGenerator processTelemetryGenerator = telemetryClient.startProcessTelemetryGenerator(sourceApplication);
+            ProcessTelemetryGenerator processTelemetryGenerator = telemetryClient.startProcessTelemetryGenerator(instanceKey.getSourceApplication());
             processTelemetryGenerator.getDataStructureMultiplexer().addDestination(telemetryListener);
         }
     }
@@ -455,7 +477,7 @@ public class AppenderHelper {
                 @Override public void send(Java7GCMonitor.GCEvent gcEvent) {
                     try {
                         socketClient.send(new LogEventMessage(LogEventBuilder.start().setChannel("gcmonitor").setSourceHost(getSourceHost()).setSourceAddress(getSourceAddress()).setSourceApplication(
-                                sourceApplication).setPid(pid).setMessage("GC pause {} ms collected {} kb - {}/{}/{}",
+                                instanceKey.getSourceApplication()).setPid(instanceKey.getPid()).setMessage("GC pause {} ms collected {} kb - {}/{}/{}",
                                 gcEvent.duration,
                                 NumberFormat.getInstance().format(gcEvent.bytes / 1024f),
                                 gcEvent.type,
@@ -544,14 +566,7 @@ public class AppenderHelper {
 
             StackCaptureConfiguration configuration = new StackCaptureConfiguration();
             configuration.setSnapshotInterval(stackTraceModuleBroadcastInterval);
-            if (hostOverride != null) {
-                configuration.setHost(hostOverride);
-            } else {
-                configuration.setHost(NetUtils.getLocalHostname());
-            }
-            configuration.setEnvironment(environment);
-            configuration.parseApplicationName(sourceApplication);
-            configuration.setInstanceNumber(instanceNumber);
+            configuration.setInstanceKey(instanceKey);
 
             // TODO : fill in other bits
             stackTraceModule.setChannelSubscriptions(socketClient);
@@ -560,8 +575,71 @@ public class AppenderHelper {
             stackTraceModule.start();
         }
 
+        if (reportsModuleEnabled) {
+            try {
+                reportsHelper = new ReportsHelper(reportsConfigurationPath);
+                initialiseReportsModule();
+            }catch (JsonSyntaxException e){
+                Out.err("[logginghub] Reports module was enabled, but the reports configuration file '{}' or '{}' failed to parse - please check your configuration", reportsConfigurationPath, new
+                        File(
+                        reportsConfigurationPath).getAbsolutePath());
+                e.printStackTrace(System.err);
+            }
+            catch (RuntimeException e) {
+                Out.err("[logginghub] Reports module was enabled, but the reports configuration file wasn't found '{}' or '{}' - please check your configuration", reportsConfigurationPath, new File(
+                        reportsConfigurationPath).getAbsolutePath());
+            }
+        }
+
         socketClientManager = new SocketClientManager(socketClient);
         socketClientManager.start();
+    }
+
+    private void initialiseReportsModule() {
+
+        socketClient.subscribe(Channels.reportExecuteRequests, new Destination<ChannelMessage>() {
+            @Override public void send(ChannelMessage channelMessage) {
+                final SerialisableObject payload = channelMessage.getPayload();
+                ReportExecuteRequest request = (ReportExecuteRequest) payload;
+
+                logger.info("Received request to execute report '{}'", request.getReportName());
+                Result<ReportExecuteResult> result = reportsHelper.execute(request.getReportName());
+
+                ReportExecuteResponse response = new ReportExecuteResponse();
+                response.setInstanceKey(instanceKey);
+                response.setResult(result);
+
+                ChannelMessage replyWrapper = new ChannelMessage();
+                replyWrapper.setChannel(Channels.getPrivateConnectionChannel(request.getRespondToChannel()));
+                replyWrapper.setPayload(response);
+
+                try {
+                    socketClient.send(replyWrapper);
+                } catch (LoggingMessageSenderException e) {
+                    logger.info(e, "Failed to send report reply");
+                }
+            }
+        });
+
+        socketClient.subscribe(Channels.reportListRequests, new Destination<ChannelMessage>() {
+            @Override public void send(ChannelMessage channelMessage) {
+                final SerialisableObject payload = channelMessage.getPayload();
+                ReportListRequest request = (ReportListRequest) payload;
+
+                ReportListResponse response = reportsHelper.getReportList();
+                response.setInstanceKey(instanceKey);
+
+                // Need to send them back to the hub, but need to make sure they went back to the person that asked for them?
+                ChannelMessage reply = new ChannelMessage(Channels.getPrivateConnectionChannel(request.getRespondToChannel()), response);
+
+                try {
+                    socketClient.send(reply);
+                } catch (LoggingMessageSenderException e) {
+                    logger.info(e, "Failed to send report reply");
+                }
+            }
+        });
+
     }
 
     public synchronized void stop() {
@@ -755,55 +833,58 @@ public class AppenderHelper {
     }
 
     public void setEnvironment(String environment) {
-        this.environment = environment;
+        this.instanceKey.setEnvironment(StringUtils.environmentReplacement(environment));
     }
 
     public String getEnvironment() {
-        return environment;
+        return instanceKey.getEnvironment();
     }
 
-    public void setInstanceNumber(int instanceNumber) {
-        this.instanceNumber = instanceNumber;
+    public void setInstanceIdentifier(String instanceIdentifier) {
+        this.instanceKey.setInstanceIdentifier(StringUtils.environmentReplacement(instanceIdentifier));
     }
 
-    public int getInstanceNumber() {
-        return instanceNumber;
+    public String getInstanceIdentifier() {
+        return instanceKey.getInstanceIdentifier();
     }
 
-    public void setHostOverride(String hostOverride) {
-        this.hostOverride = hostOverride;
-    }
-
-    public String getHostOverride() {
-        return hostOverride;
-    }
-
-    public void setHostAddressOverride(String hostAddressOverride) {
-        this.hostAddressOverride = hostAddressOverride;
-    }
-
-    public String getHostAddressOverride() {
-        return hostAddressOverride;
+    public void setSourceHostX(String hostAddressOverride) {
+        instanceKey.setHost(StringUtils.environmentReplacement(hostAddressOverride));
     }
 
     public String getSourceHost() {
-        if (hostOverride == null) {
-            return host.getHostName();
-        } else {
-            return hostOverride;
-        }
+        return instanceKey.getHost();
     }
 
-    public void setSourceHost(String sourceHost) {
-        this.sourceHost = sourceHost;
+    public void setSourceAddressOverride(String address) {
+        instanceKey.setAddress(StringUtils.environmentReplacement(address));
     }
-
 
     public String getSourceAddress() {
-        if (hostAddressOverride == null) {
-            return host.getHostAddress();
-        } else {
-            return hostAddressOverride;
-        }
+        return instanceKey.getAddress();
+    }
+
+    public void setReportsModuleEnabled(boolean reportsModuleEnabled) {
+        this.reportsModuleEnabled = reportsModuleEnabled;
+    }
+
+    public boolean isReportsModuleEnabled() {
+        return reportsModuleEnabled;
+    }
+
+    public void setReportsConfigurationPath(String reportsConfigurationPath) {
+        this.reportsConfigurationPath = StringUtils.environmentReplacement(reportsConfigurationPath);
+    }
+
+    public String getReportsConfigurationPath() {
+        return reportsConfigurationPath;
+    }
+
+    public InstanceKey getInstanceKey() {
+        return instanceKey;
+    }
+
+    public void setInstanceType(String instanceType) {
+        instanceKey.setInstanceType(StringUtils.environmentReplacement(instanceType));
     }
 }

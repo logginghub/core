@@ -63,7 +63,7 @@ public class TestHubStackCaptureModule {
 
         configuration.setEnvironment("env1");
         configuration.setHost("host1");
-        configuration.setInstanceNumber(666);
+        configuration.setInstanceIdentifier("666");
         configuration.setInstanceType("instanceType");
         configuration.setSnapshotBroadcastInterval("100 ms");
 
@@ -75,17 +75,12 @@ public class TestHubStackCaptureModule {
 
         assertThat(outgoingMessages.get(0), is(instanceOf(ChannelMessage.class)));
         assertThat(((ChannelMessage) outgoingMessages.get(0)).getPayload(), is(instanceOf(StackSnapshot.class)));
-        assertThat(((StackSnapshot) ((ChannelMessage) outgoingMessages.get(0)).getPayload()).getEnvironment(),
-                is("env1"));
-        assertThat(((StackSnapshot) ((ChannelMessage) outgoingMessages.get(0)).getPayload()).getHost(), is("host1"));
-        assertThat(((StackSnapshot) ((ChannelMessage) outgoingMessages.get(0)).getPayload()).getInstanceNumber(),
-                is(666));
-        assertThat(((StackSnapshot) ((ChannelMessage) outgoingMessages.get(0)).getPayload()).getInstanceType(), is(
-                "instanceType"));
-        assertThat(((StackSnapshot) ((ChannelMessage) outgoingMessages.get(0)).getPayload()).getTimestamp(), is(
-                greaterThan(0L)));
-        assertThat(((StackSnapshot) ((ChannelMessage) outgoingMessages.get(0)).getPayload()).getTraces().length, is(
-                greaterThan(0)));
+        assertThat(((StackSnapshot) ((ChannelMessage) outgoingMessages.get(0)).getPayload()).getInstanceKey().getEnvironment(), is("env1"));
+        assertThat(((StackSnapshot) ((ChannelMessage) outgoingMessages.get(0)).getPayload()).getInstanceKey().getHost(), is("host1"));
+        assertThat(((StackSnapshot) ((ChannelMessage) outgoingMessages.get(0)).getPayload()).getInstanceKey().getInstanceIdentifier(), is("666"));
+        assertThat(((StackSnapshot) ((ChannelMessage) outgoingMessages.get(0)).getPayload()).getInstanceKey().getInstanceType(), is("instanceType"));
+        assertThat(((StackSnapshot) ((ChannelMessage) outgoingMessages.get(0)).getPayload()).getTimestamp(), is(greaterThan(0L)));
+        assertThat(((StackSnapshot) ((ChannelMessage) outgoingMessages.get(0)).getPayload()).getTraces().length, is(greaterThan(0)));
     }
 
     @Test public void test_respond_to_strobe() throws Exception {
@@ -115,7 +110,7 @@ public class TestHubStackCaptureModule {
 
         configuration.setEnvironment("env1");
         configuration.setHost("host1");
-        configuration.setInstanceNumber(666);
+        configuration.setInstanceIdentifier("666");
         configuration.setInstanceType("instanceType");
         configuration.setSnapshotBroadcastInterval("100 seconds");
         configuration.setRespondToRequests(true);
@@ -131,17 +126,12 @@ public class TestHubStackCaptureModule {
 
         assertThat(outgoingMessages.get(0), is(instanceOf(ChannelMessage.class)));
         assertThat(((ChannelMessage) outgoingMessages.get(0)).getPayload(), is(instanceOf(StackSnapshot.class)));
-        assertThat(((StackSnapshot) ((ChannelMessage) outgoingMessages.get(0)).getPayload()).getEnvironment(),
-                is("env1"));
-        assertThat(((StackSnapshot) ((ChannelMessage) outgoingMessages.get(0)).getPayload()).getHost(), is("host1"));
-        assertThat(((StackSnapshot) ((ChannelMessage) outgoingMessages.get(0)).getPayload()).getInstanceNumber(),
-                is(666));
-        assertThat(((StackSnapshot) ((ChannelMessage) outgoingMessages.get(0)).getPayload()).getInstanceType(), is(
-                "instanceType"));
-        assertThat(((StackSnapshot) ((ChannelMessage) outgoingMessages.get(0)).getPayload()).getTimestamp(), is(
-                greaterThan(0L)));
-        assertThat(((StackSnapshot) ((ChannelMessage) outgoingMessages.get(0)).getPayload()).getTraces().length, is(
-                greaterThan(0)));
+        assertThat(((StackSnapshot) ((ChannelMessage) outgoingMessages.get(0)).getPayload()).getInstanceKey().getEnvironment(), is("env1"));
+        assertThat(((StackSnapshot) ((ChannelMessage) outgoingMessages.get(0)).getPayload()).getInstanceKey().getHost(), is("host1"));
+        assertThat(((StackSnapshot) ((ChannelMessage) outgoingMessages.get(0)).getPayload()).getInstanceKey().getInstanceIdentifier(), is("666"));
+        assertThat(((StackSnapshot) ((ChannelMessage) outgoingMessages.get(0)).getPayload()).getInstanceKey().getInstanceType(), is("instanceType"));
+        assertThat(((StackSnapshot) ((ChannelMessage) outgoingMessages.get(0)).getPayload()).getTimestamp(), is(greaterThan(0L)));
+        assertThat(((StackSnapshot) ((ChannelMessage) outgoingMessages.get(0)).getPayload()).getTraces().length, is(greaterThan(0)));
 
     }
 
@@ -153,13 +143,11 @@ public class TestHubStackCaptureModule {
             outgoingMessages.add(message);
         }
 
-        @Override
-        public void addMessageListener(Class<? extends LoggingMessage> messageType, SocketHubMessageHandler handler) {
+        @Override public void addMessageListener(Class<? extends LoggingMessage> messageType, SocketHubMessageHandler handler) {
 
         }
 
-        @Override public void removeMessageListener(Class<? extends LoggingMessage> messageType,
-                                                    SocketHubMessageHandler handler) {
+        @Override public void removeMessageListener(Class<? extends LoggingMessage> messageType, SocketHubMessageHandler handler) {
 
         }
 

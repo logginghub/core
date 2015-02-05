@@ -1,5 +1,6 @@
 package com.logginghub.logging;
 
+import com.logginghub.logging.messages.InstanceKey;
 import com.logginghub.utils.StringUtils;
 import com.logginghub.utils.logging.Logger;
 
@@ -113,4 +114,11 @@ public class LogEventBuilder {
         return LogEventBuilder.start().setLocalCreationTimeMillis(time).setLevel(level).setMessage(message).toLogEvent();
     }
 
+    public LogEventBuilder setInstanceKey(InstanceKey instanceKey) {
+        event.setSourceHost(instanceKey.getHost());
+        event.setSourceAddress(instanceKey.getAddress());
+        event.setSourceApplication(instanceKey.getSourceApplication());
+        event.setPid(instanceKey.getPid());
+        return this;
+    }
 }

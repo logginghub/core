@@ -1,0 +1,14 @@
+{
+  "reports": [
+    {
+      "name": "uname",
+      "command": "/bin/uname",
+      "arguments": ["-a"]
+    },
+    {
+      "name": "netstat stats",
+      "command": "netstat",
+      "arguments": ["--statistics"]
+    }
+  ]
+}

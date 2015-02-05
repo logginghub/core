@@ -1,7 +1,6 @@
 package com.logginghub.logging.frontend.views.stack;
 
 import com.logginghub.utils.observable.Observable;
-import com.logginghub.utils.observable.ObservableInteger;
 import com.logginghub.utils.observable.ObservableProperty;
 
 public class SingleThreadViewModel extends Observable {
@@ -13,7 +12,7 @@ public class SingleThreadViewModel extends Observable {
     private ObservableProperty<String> environment = createStringProperty("environment", "");
     private ObservableProperty<String> host = createStringProperty("environment", "");
     private ObservableProperty<String> instanceType = createStringProperty("environment", "");
-    private ObservableInteger instanceNumber = createIntProperty("instanceNumber", 0);
+    private ObservableProperty<String> instanceIdentifier = createStringProperty("instanceIdentifier", null);
 
     public SingleThreadViewModel() {}
     
@@ -28,11 +27,11 @@ public class SingleThreadViewModel extends Observable {
     public ObservableProperty<String> getHost() {
         return host;
     }
-    
-    public ObservableInteger getInstanceNumber() {
-        return instanceNumber;
+
+    public ObservableProperty<String> getInstanceIdentifier() {
+        return instanceIdentifier;
     }
-    
+
     public ObservableProperty<String> getInstanceType() {
         return instanceType;
     }

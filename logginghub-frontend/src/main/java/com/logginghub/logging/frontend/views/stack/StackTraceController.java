@@ -68,7 +68,7 @@ public class StackTraceController {
     public synchronized void processStackTrace(StackSnapshot snapshot, StackTrace stackTrace) {
         long threadID = stackTrace.getThreadID();
 
-        String instanceKey = snapshot.buildKey();
+        String instanceKey = snapshot.getInstanceKey().buildKey();
         ThreadsInProcessViewModel threadViewModel = threadViewModels.get(instanceKey);
         if (threadViewModel == null) {
             threadViewModel = new ThreadsInProcessViewModel();

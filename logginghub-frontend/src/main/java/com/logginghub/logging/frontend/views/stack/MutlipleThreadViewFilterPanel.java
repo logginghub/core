@@ -186,7 +186,7 @@ public class MutlipleThreadViewFilterPanel extends JPanel {
     public boolean passesFilter(StackTrace trace, StackSnapshot stackSnapshot) {
 
         boolean include = false;
-        if (instanceMatcher.matches(stackSnapshot.buildKey())) {
+        if (instanceMatcher.matches(stackSnapshot.getInstanceKey().buildKey())) {
             if (threadMatcher.matches(trace.getThreadName())) {
                 if (stackMatcher.matches(trace.getThreadState()) || stackMatcher.matches(trace.getItems().toString())) {
                     include = true;

@@ -1,5 +1,25 @@
 package com.logginghub.logging.frontend.modules;
 
+import com.logginghub.logging.exceptions.LoggingMessageSenderException;
+import com.logginghub.logging.frontend.modules.configuration.EnvironmentConfiguration;
+import com.logginghub.logging.frontend.services.EnvironmentNotificationService;
+import com.logginghub.logging.listeners.LogEventListener;
+import com.logginghub.logging.listeners.LoggingMessageListener;
+import com.logginghub.logging.messages.ChannelMessage;
+import com.logginghub.logging.messages.Channels;
+import com.logginghub.logging.messages.LoggingMessage;
+import com.logginghub.logging.messages.RequestResponseMessage;
+import com.logginghub.logging.messaging.SocketClient;
+import com.logginghub.logging.messaging.SocketClientManager;
+import com.logginghub.logging.messaging.SocketClientManager.State;
+import com.logginghub.logging.messaging.SocketClientManagerListener;
+import com.logginghub.logging.telemetry.configuration.HubConfiguration;
+import com.logginghub.utils.Destination;
+import com.logginghub.utils.FormattedRuntimeException;
+import com.logginghub.utils.NamedModule;
+import com.logginghub.utils.logging.Logger;
+import com.logginghub.utils.module.ServiceDiscovery;
+
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -8,27 +28,7 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
 
-import com.logginghub.logging.exceptions.LoggingMessageSenderException;
-import com.logginghub.logging.frontend.modules.configuration.EnvironmentConfiguration;
-import com.logginghub.logging.frontend.services.EnvironmentNotificationService;
-import com.logginghub.logging.listeners.LogEventListener;
-import com.logginghub.logging.listeners.LoggingMessageListener;
-import com.logginghub.logging.messages.ChannelMessage;
-import com.logginghub.logging.messages.LoggingMessage;
-import com.logginghub.logging.messages.RequestResponseMessage;
-import com.logginghub.logging.messaging.SocketClient;
-import com.logginghub.logging.messaging.SocketClientManager;
-import com.logginghub.logging.messaging.SocketClientManagerListener;
-import com.logginghub.logging.messaging.SocketClientManager.State;
-import com.logginghub.logging.telemetry.configuration.HubConfiguration;
-import com.logginghub.utils.Destination;
-import com.logginghub.utils.FormattedRuntimeException;
-import com.logginghub.utils.NamedModule;
-import com.logginghub.utils.logging.Logger;
-import com.logginghub.utils.module.ServiceDiscovery;
-
-public class EnvironmentModule implements NamedModule<EnvironmentConfiguration>, EnvironmentNotificationService, EnvironmentMessagingService,
-                SocketClientDirectAccessService {
+public class EnvironmentModule implements NamedModule<EnvironmentConfiguration>, EnvironmentNotificationService, EnvironmentMessagingService, SocketClientDirectAccessService {
 
     private static final Logger logger = Logger.getLoggerFor(EnvironmentModule.class);
     private List<EnvironmentNotificationListener> listeners = new CopyOnWriteArrayList<EnvironmentNotificationListener>();
@@ -112,8 +112,7 @@ public class EnvironmentModule implements NamedModule<EnvironmentConfiguration>,
                     listener.onTotalEnvironmentConnectionEstablished();
                 }
             }
-        }
-        else if (toState == State.NotConnected) {
+        } else if (toState == State.NotConnected) {
 
             connectedHubs.remove(hubConfiguration);
             notConnectedHubs.add(hubConfiguration);
@@ -181,8 +180,7 @@ public class EnvironmentModule implements NamedModule<EnvironmentConfiguration>,
                 client.addLoggingMessageListener(listener);
                 client.send(request);
 
-            }
-            catch (LoggingMessageSenderException e) {
+            } catch (LoggingMessageSenderException e) {
                 throw new FormattedRuntimeException(e, "Failed to send message");
             }
         }
@@ -213,8 +211,7 @@ public class EnvironmentModule implements NamedModule<EnvironmentConfiguration>,
                 request.setCorrelationID(client.getNextCorrelationID());
                 client.addLoggingMessageListener(listener);
                 client.send(request);
-            }
-            catch (LoggingMessageSenderException e) {
+            } catch (LoggingMessageSenderException e) {
                 throw new FormattedRuntimeException(e, "Failed to send message");
             }
         }
@@ -268,6 +265,25 @@ public class EnvironmentModule implements NamedModule<EnvironmentConfiguration>,
             final SocketClient client = socketClientManager.getClient();
             client.removeLogEventListener(logEventListener);
         }
+    }
+
+    @Override public void subscribeToPrivateChannel(Destination<ChannelMessage> destination) {
+        for (SocketClientManager socketClientManager : socketClientManagers) {
+            final SocketClient client = socketClientManager.getClient();
+            client.subscribe(Channels.getPrivateConnectionChannel(client.getConnectionID()), destination);
+        }
+    }
+
+    @Override public void unsubscribeFromPrivateChannel(Destination<ChannelMessage> destination) {
+        for (SocketClientManager socketClientManager : socketClientManagers) {
+            final SocketClient client = socketClientManager.getClient();
+            client.unsubscribe(Channels.getPrivateConnectionChannel(client.getConnectionID()), destination);
+        }
+    }
+
+    @Override public int getConnectionID() {
+        // TODO : this is going to backfire at some point
+        return socketClientManagers.get(0).getClient().getConnectionID();
     }
 
     @Override public List<SocketClient> getDirectAccess() {

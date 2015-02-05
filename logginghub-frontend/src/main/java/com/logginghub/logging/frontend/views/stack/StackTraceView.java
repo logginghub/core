@@ -457,7 +457,7 @@ public class StackTraceView extends JPanel {
 
     protected void updateModel(SingleThreadViewModel t) {
 
-        String columnKey = StringUtils.format("{}.{}.{}.{}", t.getEnvironment(), t.getHost(), t.getInstanceType(), t.getInstanceNumber());
+        String columnKey = StringUtils.format("{}.{}.{}.{}", t.getEnvironment(), t.getHost(), t.getInstanceType(), t.getInstanceIdentifier());
 
         Column column = allColumnMap.get(columnKey);
         if (column == null) {

@@ -23,6 +23,10 @@ public class Channels {
     public static String aggregatedHistoryRequests = "requests/aggregatedhistory";
     public static String eventHistoryRequests = "requests/eventhistory";
 
+    public static String reportListRequests = "requests/reports/list";
+    public static String reportRunRequests = "requests/reports/run";
+    public static String reportExecuteRequests = "requests/reports/execute";
+
     public static final String getPatternisedStream(int patternID) {
         return StringUtils.format("{}/{}", patternisedEventUpdates, patternID);
     }

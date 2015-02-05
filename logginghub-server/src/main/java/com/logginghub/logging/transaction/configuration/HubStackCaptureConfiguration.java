@@ -1,22 +1,25 @@
 package com.logginghub.logging.transaction.configuration;
 
+import com.logginghub.logging.messages.InstanceKey;
+import com.logginghub.logging.modules.HubStackCaptureModule;
+import com.logginghub.logging.telemetry.SigarHelper;
+import com.logginghub.utils.NetUtils;
+import com.logginghub.utils.module.Configures;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 
-import com.logginghub.logging.modules.HubStackCaptureModule;
-import com.logginghub.utils.NetUtils;
-import com.logginghub.utils.module.Configures;
-
 @Configures(HubStackCaptureModule.class) @XmlAccessorType(XmlAccessType.FIELD) public class HubStackCaptureConfiguration {
     // TODO : lower the default when we are done
-    @XmlAttribute private String snapshotBroadcastInterval = "2000";
-    @XmlAttribute private String snapshotRequestInterval = "2000";
+    @XmlAttribute private String snapshotBroadcastInterval = "1 minute";
+    @XmlAttribute private String snapshotRequestInterval = "1 minute";
 
     // TODO : have a go at guessing a lot of this stuff
-    @XmlAttribute private int instanceNumber = 1;
+    @XmlAttribute private String instanceIdentifier = null;
     @XmlAttribute private String instanceType = "logginghub";
     @XmlAttribute private String host = NetUtils.getLocalHostname();
+    @XmlAttribute private String address = NetUtils.getLocalIP();
     @XmlAttribute private String environment = "environment?";
 
     @XmlAttribute private String destinationRef;
@@ -57,9 +60,6 @@ import com.logginghub.utils.module.Configures;
         this.host = host;
     }
 
-    public void setInstanceNumber(int instanceNumber) {
-        this.instanceNumber = instanceNumber;
-    }
 
     public void setInstanceType(String instanceType) {
         this.instanceType = instanceType;
@@ -77,8 +77,12 @@ import com.logginghub.utils.module.Configures;
         return instanceType;
     }
 
-    public int getInstanceNumber() {
-        return instanceNumber;
+    public void setInstanceIdentifier(String instanceIdentifier) {
+        this.instanceIdentifier = instanceIdentifier;
+    }
+
+    public String getInstanceIdentifier() {
+        return instanceIdentifier;
     }
 
     public String getDestinationRef() {
@@ -105,4 +109,23 @@ import com.logginghub.utils.module.Configures;
     public void setChannel(String channel) {
         this.channel = channel;
     }
+
+    public InstanceKey getInstanceKey() {
+        InstanceKey instanceKey = new InstanceKey();
+
+        try {
+            instanceKey.setPid(SigarHelper.getPid());
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+
+        instanceKey.setInstanceIdentifier(instanceIdentifier);
+        instanceKey.setInstanceType(instanceType);
+        instanceKey.setHost(host);
+        instanceKey.setAddress(address);
+        instanceKey.setEnvironment(environment);
+
+        return instanceKey;
+    }
+
 }

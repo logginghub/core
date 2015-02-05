@@ -101,8 +101,12 @@ public class LoggingHubStream implements LoggerStream, StandardAppenderFeatures 
         appenderHelper.setEnvironment(environment);
     }
 
-    @Override public void setInstanceNumber(int instanceNumber) {
-        appenderHelper.setInstanceNumber(instanceNumber);
+    @Override public void setInstanceIdentifier(String instanceIdentifier) {
+        appenderHelper.setInstanceIdentifier(instanceIdentifier);
+    }
+
+    @Override public void setInstanceType(String instanceType) {
+        appenderHelper.setInstanceType(instanceType);
     }
 
     public String getSourceApplication() {
@@ -164,8 +168,7 @@ public class LoggingHubStream implements LoggerStream, StandardAppenderFeatures 
 
         String property = metadata.getString("connectionPoints");
         if (property != null) {
-            List<InetSocketAddress> parseAddressAndPortList = NetUtils.toInetSocketAddressList(property,
-                    LoggingPorts.getSocketHubDefaultPort());
+            List<InetSocketAddress> parseAddressAndPortList = NetUtils.toInetSocketAddressList(property, LoggingPorts.getSocketHubDefaultPort());
             appenderHelper.replaceConnectionList(parseAddressAndPortList);
         }
 
@@ -341,7 +344,7 @@ public class LoggingHubStream implements LoggerStream, StandardAppenderFeatures 
     }
 
     public void setHost(String host) {
-        appenderHelper.setHost(host);
+        appenderHelper.addConnectionPoint(host);
     }
 
     public void setCpuLogging(boolean value) {
@@ -409,11 +412,7 @@ public class LoggingHubStream implements LoggerStream, StandardAppenderFeatures 
             }
 
             public LogEvent createLogEvent() {
-                VLLogEvent event = new VLLogEvent(vlevent,
-                        appenderHelper.getPid(),
-                        appenderHelper.getSourceApplication(),
-                        appenderHelper.getSourceAddress(),
-                        appenderHelper.getSourceHost());
+                VLLogEvent event = new VLLogEvent(vlevent, appenderHelper.getPid(), appenderHelper.getSourceApplication(), appenderHelper.getSourceAddress(), appenderHelper.getSourceHost());
                 event.setChannel(appenderHelper.getChannel());
                 return event;
             }
@@ -421,10 +420,18 @@ public class LoggingHubStream implements LoggerStream, StandardAppenderFeatures 
     }
 
     public void setHostOverride(String hostOverride) {
-        appenderHelper.setHostOverride(hostOverride);
+        appenderHelper.setSourceHostX(hostOverride);
     }
 
     public void setHostAddressOverride(String hostAddressOverride) {
-        appenderHelper.setHostAddressOverride(hostAddressOverride);
+        appenderHelper.setSourceAddressOverride(hostAddressOverride);
+    }
+
+    public void setReportsModuleEnabled(boolean value) {
+        this.appenderHelper.setReportsModuleEnabled(value);
+    }
+
+    public void setReportsModuleConfiguration(String path) {
+        this.appenderHelper.setReportsConfigurationPath(path);
     }
 }

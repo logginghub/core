@@ -5,6 +5,7 @@ import com.logginghub.logging.interfaces.ChannelMessagingService;
 import com.logginghub.logging.interfaces.LoggingMessageSender;
 import com.logginghub.logging.messages.ChannelMessage;
 import com.logginghub.logging.messages.Channels;
+import com.logginghub.logging.messages.InstanceKey;
 import com.logginghub.logging.messages.StackStrobeRequest;
 import com.logginghub.logging.messaging.SocketClient;
 import com.logginghub.logging.messaging.SocketClientManager;
@@ -44,13 +45,7 @@ public class StackCaptureModule implements Module<StackCaptureConfiguration> {
                 TimeUtils.parseInterval(configuration.getSnapshotInterval()),
                 TimeUtils.parseInterval(configuration.getRequestInterval()),
                 configuration.isRespondToRequests(),
-                configuration.getEnvironment(),
-                configuration.getHost(),
-                configuration.getInstanceType(),
-                configuration.getInstanceNumber(),
-                0
-                // TODO : get the pid from somewhere, maybe another service?
-                                 );
+                configuration.getInstanceKey());
     }
 
     public void start() {
@@ -85,10 +80,8 @@ public class StackCaptureModule implements Module<StackCaptureConfiguration> {
 
         StackCaptureModule capture = new StackCaptureModule(client, client);
         StackCaptureConfiguration config = new StackCaptureConfiguration();
+        config.setInstanceKey(new InstanceKey("local", "localhost", "123.123.123.123", 1, "StackCapturedModule", null));
         config.setSnapshotInterval("0");
-        config.setEnvironment("local");
-        config.setInstanceType("StackCaptureModule");
-        config.setInstanceNumber(1);
         capture.configure(config, null);
         capture.start();
 

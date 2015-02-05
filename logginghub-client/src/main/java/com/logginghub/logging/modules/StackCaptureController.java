@@ -4,6 +4,7 @@ import com.logginghub.logging.exceptions.LoggingMessageSenderException;
 import com.logginghub.logging.interfaces.LoggingMessageSender;
 import com.logginghub.logging.messages.ChannelMessage;
 import com.logginghub.logging.messages.Channels;
+import com.logginghub.logging.messages.InstanceKey;
 import com.logginghub.logging.messages.StackSnapshot;
 import com.logginghub.logging.messages.StackStrobeRequest;
 import com.logginghub.logging.utils.StackCapture;
@@ -19,15 +20,11 @@ public class StackCaptureController {
     private WorkerThread timer;
     private StackCapture capture = new StackCapture();
     private LoggingMessageSender loggingMessageSender;
-    private int instanceNumber;
-    private int pid;
-    private String instanceType;
-    private String host;
     private boolean respondToRequests;
-    private String environment;
 
     private long snapshotBroadcastInterval;
     private long snapshotRequestInterval;
+    private InstanceKey instanceKey;
 
     public StackCaptureController() {
     }
@@ -36,20 +33,12 @@ public class StackCaptureController {
                           long snapshotBroadcastInterval,
                           long snapshotRequestInterval,
                           boolean respondToRequests,
-                          String environment,
-                          String host,
-                          String instanceType,
-                          int instanceNumber,
-                          int pid) {
+                          InstanceKey instanceKey) {
         this.loggingMessageSender = loggingMessageSender;
         this.snapshotBroadcastInterval = snapshotBroadcastInterval;
         this.snapshotRequestInterval = snapshotRequestInterval;
         this.respondToRequests = respondToRequests;
-        this.environment = environment;
-        this.host = host;
-        this.instanceType = instanceType;
-        this.instanceNumber = instanceNumber;
-        this.pid = pid;
+        this.instanceKey = instanceKey;
     }
 
     public synchronized void start() {
@@ -89,7 +78,7 @@ public class StackCaptureController {
 
     protected void takeSnapshot() {
 
-        StackSnapshot snapshot = capture.capture(environment, host, instanceType, instanceNumber, pid);
+        StackSnapshot snapshot = capture.capture(instanceKey);
         ChannelMessage channelMessage = new ChannelMessage(Channels.stackSnapshots, snapshot);
 
         logger.debug("Sending snapshot response...");

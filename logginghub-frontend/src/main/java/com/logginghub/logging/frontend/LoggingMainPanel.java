@@ -22,7 +22,6 @@ import com.logginghub.logging.frontend.modules.MainFrameModule;
 import com.logginghub.logging.frontend.modules.MenuBarModule;
 import com.logginghub.logging.frontend.modules.PatterniserModule;
 import com.logginghub.logging.frontend.modules.SocketClientDirectAccessService;
-import com.logginghub.logging.frontend.views.stack.StackTraceViewModule;
 import com.logginghub.logging.frontend.modules.TelemetryViewModule;
 import com.logginghub.logging.frontend.modules.VisualisationViewModule;
 import com.logginghub.logging.frontend.services.LayoutService;
@@ -33,6 +32,8 @@ import com.logginghub.logging.frontend.views.historicalevents.HistoryViewModule;
 import com.logginghub.logging.frontend.views.historicalstack.HistoricalStackViewModule;
 import com.logginghub.logging.frontend.views.logeventdetail.DetailedLogEventTablePanel;
 import com.logginghub.logging.frontend.views.logeventdetail.time.TimeController;
+import com.logginghub.logging.frontend.views.reports.ReportsViewModule;
+import com.logginghub.logging.frontend.views.stack.StackTraceViewModule;
 import com.logginghub.logging.messaging.PatternModel;
 import com.logginghub.logging.messaging.SocketClient;
 import com.logginghub.logging.messaging.SocketClientManager;
@@ -88,6 +89,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -880,6 +883,14 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
         }
 
         if (proxy.getLoggingFrontendConfiguration().isShowExperimental()) {
+            addMenuItem(experimentalMenu, "Reports viewer...", new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    showReportsViewer();
+                }
+            });
+        }
+
+        if (proxy.getLoggingFrontendConfiguration().isShowExperimental()) {
             addMenuItem(experimentalMenu, "Telemetry viewer...", new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     showTelemetryViewer();
@@ -1192,6 +1203,39 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
         }
     }
 
+    protected void showReportsViewer() {
+
+        DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
+        if (currentSelectedTabx != null) {
+
+            MainFrameModule frame = new MainFrameModule();
+            frame.setName("Reports Viewer");
+
+            EnvironmentAdaptor adaptor = new EnvironmentAdaptor(currentSelectedTabx.getEnvironmentModel());
+
+            final ReportsViewModule reports = new ReportsViewModule();
+            reports.setEnvironmentNotificationService(adaptor);
+            reports.setMessagingService(adaptor);
+            reports.setLayoutService(frame);
+
+            frame.initialise();
+            reports.initialise();
+
+            frame.getFrame().setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            frame.getFrame().addWindowListener(new WindowAdapter() {
+                @Override public void windowClosed(WindowEvent e) {
+                    reports.stop();
+                }
+            });
+
+            frame.start();
+            reports.start();
+
+
+        }
+    }
+
+
     protected void showStackViewer() {
 
         DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
@@ -1199,13 +1243,6 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
 
             MainFrameModule frame = new MainFrameModule();
             frame.setName("Stack Viewer");
-
-//            MenuBarModule menuBar = new MenuBarModule();
-//            menuBar.setFrameService(frame);
-//            menuBar.setLayoutService(frame);
-//
-//            TabbedPaneModule tab = new TabbedPaneModule();
-//            tab.setLayoutService(frame);
 
             EnvironmentAdaptor adaptor = new EnvironmentAdaptor(currentSelectedTabx.getEnvironmentModel());
 
@@ -1215,13 +1252,9 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
             stack.setMessagingService(adaptor);
 
             frame.initialise();
-//            menuBar.initialise();
-//            tab.initialise();
             stack.initialise();
 
             frame.start();
-//            menuBar.start();
-//            tab.start();
             stack.start();
 
         }

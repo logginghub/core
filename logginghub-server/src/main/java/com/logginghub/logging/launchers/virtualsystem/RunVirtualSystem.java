@@ -42,7 +42,7 @@ public class RunVirtualSystem {
 
     }
 
-    private static int startHeartbeatServer() throws IOException {
+    public static int startHeartbeatServer() throws IOException {
         final ServerSocket socket = new ServerSocket();
         socket.bind(null);
         int port = socket.getLocalPort();

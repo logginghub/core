@@ -1,15 +1,5 @@
 package com.logginghub.logging.handlers;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.net.InetSocketAddress;
-import java.util.List;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.LogManager;
-import java.util.logging.LogRecord;
-import java.util.logging.Logger;
-
 import com.logginghub.logging.AppenderHelper;
 import com.logginghub.logging.AppenderHelperCustomisationInterface;
 import com.logginghub.logging.AppenderHelperEventConvertor;
@@ -29,11 +19,20 @@ import com.logginghub.logging.juli.JULDetailsSnapshot;
 import com.logginghub.logging.utils.LoggingUtils;
 import com.logginghub.utils.NetUtils;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.net.InetSocketAddress;
+import java.util.List;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
+
 /**
  * Java.util.logger implementation of the Logging Hub Connector.
- * 
+ *
  * @author admin
- * 
  */
 public class SocketHandler extends Handler implements PropertyChangeListener, StandardAppenderFeatures {
 
@@ -104,8 +103,12 @@ public class SocketHandler extends Handler implements PropertyChangeListener, St
         appenderHelper.setEnvironment(environment);
     }
 
-    @Override public void setInstanceNumber(int instanceNumber) {
-        appenderHelper.setInstanceNumber(instanceNumber);
+    @Override public void setInstanceIdentifier(String instanceIdentifier) {
+        appenderHelper.setInstanceIdentifier(instanceIdentifier);
+    }
+
+    @Override public void setInstanceType(String instanceType) {
+        appenderHelper.setInstanceType(instanceType);
     }
 
     public String getSourceApplication() {
@@ -146,11 +149,7 @@ public class SocketHandler extends Handler implements PropertyChangeListener, St
             }
 
             public LogEvent createLogEvent() {
-                JuliLogEvent event = new JuliLogEvent(record,
-                                                      appenderHelper.getSourceApplication(),
-                                                      appenderHelper.getHost(),
-                                                      snapshot.getThreadName(),
-                                                      appenderHelper.isGatheringCallerDetails());
+                JuliLogEvent event = new JuliLogEvent(record, appenderHelper.getSourceApplication(), appenderHelper.getHost(), snapshot.getThreadName(), appenderHelper.isGatheringCallerDetails());
                 event.setPid(appenderHelper.getPid());
                 event.setChannel(appenderHelper.getChannel());
                 return event;
@@ -260,6 +259,16 @@ public class SocketHandler extends Handler implements PropertyChangeListener, St
             setJava7GCLogging(Boolean.parseBoolean(java7GC));
         }
 
+        String instanceIdentifier = manager.getProperty(cname + ".instanceIdentifier");
+        if (instanceIdentifier != null) {
+            setInstanceIdentifier(instanceIdentifier);
+        }
+
+        String instanceType = manager.getProperty(cname + ".instanceType");
+        if (instanceType != null) {
+            setInstanceType(instanceType);
+        }
+
         String failureDelay = manager.getProperty(cname + ".failureDelayMaximum");
         String failureDelayMaximum = manager.getProperty(cname + ".failureDelayMaximum");
         String failureDelayMultiplier = manager.getProperty(cname + ".failureDelayMultiplier");
@@ -320,9 +329,10 @@ public class SocketHandler extends Handler implements PropertyChangeListener, St
     // {
     // return m_publisher;
     // }
+
     /**
      * Convert a LogRecord into a LogEvent, uses a thread local so its nice and fast
-     * 
+     *
      * @param record
      * @return
      */
@@ -331,7 +341,6 @@ public class SocketHandler extends Handler implements PropertyChangeListener, St
      * eventForThread.populateFromLogRecord(record, m_sourceApplication);
      * eventForThread.setThreadName(m_threadNames.remove(record)); return eventForThread; }
      */
-
     public void waitUntilAllRecordsHaveBeenPublished() {
         appenderHelper.waitUntilAllRecordsHaveBeenPublished();
     }
@@ -398,7 +407,7 @@ public class SocketHandler extends Handler implements PropertyChangeListener, St
     }
 
     public void setHost(String host) {
-        appenderHelper.setHost(host);
+        appenderHelper.addConnectionPoint(host);
     }
 
     public void setCpuLogging(boolean value) {
@@ -438,7 +447,7 @@ public class SocketHandler extends Handler implements PropertyChangeListener, St
     }
 
     protected boolean setLogLevels(LevelSettingsRequest request) {
-        
+
         LevelSettingsGroup levelSettingsGroup = request.getLevelSettings();
         List<LevelSetting> settings = levelSettingsGroup.getSettings();
         for (LevelSetting levelSetting : settings) {
@@ -448,7 +457,7 @@ public class SocketHandler extends Handler implements PropertyChangeListener, St
             java.util.logging.Level level = parseLevel(levelText);
             java.util.logging.Logger.getLogger(loggerName).setLevel(level);
         }
-        
+
         return true;
     }
 
@@ -478,17 +487,13 @@ public class SocketHandler extends Handler implements PropertyChangeListener, St
             case 'f': {
                 if (lowerCase.equals("fatal")) {
                     levelValue = Level.SEVERE;
-                }
-                else if (lowerCase.equals("finer")) {
+                } else if (lowerCase.equals("finer")) {
                     levelValue = Level.FINER;
-                }
-                else if (lowerCase.equals("finest")) {
+                } else if (lowerCase.equals("finest")) {
                     levelValue = Level.FINEST;
-                }
-                else if (lowerCase.equals("fine")) {
+                } else if (lowerCase.equals("fine")) {
                     levelValue = Level.FINE;
-                }
-                else {
+                } else {
                     // TODO : how to indicate a problem!
                     levelValue = Level.INFO;
                 }

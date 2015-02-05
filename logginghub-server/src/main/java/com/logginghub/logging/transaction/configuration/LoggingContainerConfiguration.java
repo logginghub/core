@@ -24,6 +24,7 @@ import com.logginghub.logging.modules.configuration.MemoryMonitorConfiguration;
 import com.logginghub.logging.modules.configuration.PatternManagerConfiguration;
 import com.logginghub.logging.modules.configuration.PatternisedDiskHistoryConfiguration;
 import com.logginghub.logging.modules.configuration.PatterniserConfiguration;
+import com.logginghub.logging.modules.configuration.ReportsConfiguration;
 import com.logginghub.logging.modules.configuration.RestfulListenerConfiguration;
 import com.logginghub.logging.modules.configuration.SQLExtractConfiguration;
 import com.logginghub.logging.modules.configuration.SigarMachineTelemetryConfiguration;
@@ -110,9 +111,10 @@ import java.util.List;
     
     @XmlElement private List<SigarProcessTelemetryConfiguration> sigarProcessTelemetryModule= new ArrayList<SigarProcessTelemetryConfiguration>();
     @XmlElement private List<SigarMachineTelemetryConfiguration> sigarMachineTelemetryModule= new ArrayList<SigarMachineTelemetryConfiguration>();
+
+    @XmlElement private List<ReportsConfiguration> reports = new ArrayList<ReportsConfiguration>();
     
-    
-    @XmlElement List<GeneratorConfiguration> generator = new ArrayList<GeneratorConfiguration>();
+    @XmlElement private List<GeneratorConfiguration> generator = new ArrayList<GeneratorConfiguration>();
     
     public List<BinaryProcessorConfiguration> getBinaryProcessors() {
         return binaryProcessor;
@@ -284,5 +286,9 @@ import java.util.List;
 
     public List<StackHistoryConfiguration> getStackHistory() {
         return stackHistory;
+    }
+
+    public List<ReportsConfiguration> getReports() {
+        return reports;
     }
 }

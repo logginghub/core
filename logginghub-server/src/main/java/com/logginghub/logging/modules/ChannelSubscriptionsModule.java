@@ -1,11 +1,5 @@
 package com.logginghub.logging.modules;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Future;
-
 import com.logginghub.logging.exceptions.LoggingMessageSenderException;
 import com.logginghub.logging.interfaces.ChannelMessagingService;
 import com.logginghub.logging.messages.ChannelMessage;
@@ -29,10 +23,14 @@ import com.logginghub.utils.module.Module;
 import com.logginghub.utils.module.Provides;
 import com.logginghub.utils.module.ServiceDiscovery;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Future;
+
 @Provides(ChannelMessage.class) public class ChannelSubscriptionsModule implements Module<ChannelSubscriptionsConfiguration>,
                 Destination<ChannelMessage>, ChannelMessagingService, ServerSubscriptionsService {
-
-    
 
     private static final Logger logger = Logger.getLoggerFor(ChannelSubscriptionsModule.class);
     // private ExceptionPolicy exceptionPolicy = new ExceptionPolicy(Policy.Log, logger);

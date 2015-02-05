@@ -1,16 +1,5 @@
 package com.logginghub.logging.frontend.modules;
 
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Toolkit;
-import java.io.File;
-
-import javax.swing.ImageIcon;
-import javax.swing.JFrame;
-import javax.swing.JMenuBar;
-
-import net.miginfocom.swing.MigLayout;
-
 import com.logginghub.logging.frontend.PathHelper;
 import com.logginghub.logging.frontend.SmartJFrame;
 import com.logginghub.logging.frontend.modules.configuration.MainFrameConfiguration;
@@ -25,6 +14,15 @@ import com.logginghub.utils.module.Container;
 import com.logginghub.utils.module.Module;
 import com.logginghub.utils.module.PeerServiceDiscovery;
 import com.logginghub.utils.module.ServiceDiscovery;
+import net.miginfocom.swing.MigLayout;
+
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JMenuBar;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Toolkit;
+import java.io.File;
 
 public class MainFrameModule extends Container<MainFrameConfiguration> implements Module<MainFrameConfiguration>, LayoutService, FrameService {
 
@@ -54,6 +52,10 @@ public class MainFrameModule extends Container<MainFrameConfiguration> implement
         data.set("frame.height", (int) (screenSize.height * 0.8));
 
         return data;
+    }
+
+    public SmartJFrame getFrame() {
+        return frame;
     }
 
     public void initialise() {

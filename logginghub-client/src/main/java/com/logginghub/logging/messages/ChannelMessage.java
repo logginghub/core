@@ -1,16 +1,16 @@
 package com.logginghub.logging.messages;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import com.logginghub.utils.Is;
 import com.logginghub.utils.sof.SerialisableObject;
 import com.logginghub.utils.sof.SofException;
 import com.logginghub.utils.sof.SofReader;
 import com.logginghub.utils.sof.SofWriter;
 
-public class ChannelMessage implements SerialisableObject, LoggingMessage {
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+public class ChannelMessage implements SerialisableObject, LoggingMessage, RequestResponseMessage {
 
     private String[] channel;
     private SerialisableObject payload;
