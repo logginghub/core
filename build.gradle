@@ -4,7 +4,7 @@ plugins {
 
 subprojects {
 
-    version = '1.4.6'
+    version = '1.4.7'
     group = 'com.logginghub'
 
     apply plugin: 'java'
@@ -63,23 +63,6 @@ subprojects {
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-// jshaw - workaround to bring ant ssh/scp into the build
-//
-//    configurations {
-//        sshAntTask
-//    }
-//
-//    dependencies {
-//        sshAntTask 'org.apache.ant:ant-jsch:1.7.1'
-//        sshAntTask 'jsch:jsch:0.1.29'
-//    }
-//
-//    ant.taskdef(name: 'scp',
-//                classname: 'org.apache.tools.ant.taskdefs.optional.ssh.Scp',
-//                classpath: configurations.sshAntTask.asPath)
-
     remotes {
         hosting {
             host = 'hosting'
@@ -87,8 +70,6 @@ subprojects {
             identity = file(System.properties['user.home'] + "/.ssh/id_rsa")
         }
     }
-//
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     configurations {
         deployerJars
