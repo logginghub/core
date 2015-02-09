@@ -1,12 +1,5 @@
 package com.logginghub.logging.modules;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-
-import java.io.IOException;
-
-import org.junit.Test;
-
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.exceptions.ConnectorException;
 import com.logginghub.logging.exceptions.LoggingMessageSenderException;
@@ -19,7 +12,15 @@ import com.logginghub.utils.data.DataStructure;
 import com.logginghub.utils.data.DataStructure.Keys;
 import com.logginghub.utils.data.DataStructure.Values;
 import com.logginghub.utils.logging.Logger;
+import org.junit.Ignore;
+import org.junit.Test;
 
+import java.io.IOException;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+
+@Ignore
 public class TestHubTelemetryOutput extends BaseHub {
 
     @Test public void test_hub_outputs_machine_telemetry() throws IOException, ConnectorException, LoggingMessageSenderException {

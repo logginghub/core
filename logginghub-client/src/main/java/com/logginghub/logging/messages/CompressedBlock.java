@@ -52,6 +52,7 @@ public class CompressedBlock<T extends SerialisableObject> implements Serialisab
     public T[] decodeAll(Class<T> clazz) {
 
         final T[] array = (T[]) Array.newInstance(clazz, items);
+
         decodeObjects(clazz, new Visitor<T>() {
             int index = 0;
             public void visit(T t) {

@@ -24,7 +24,6 @@ import com.logginghub.logging.modules.configuration.MemoryMonitorConfiguration;
 import com.logginghub.logging.modules.configuration.PatternManagerConfiguration;
 import com.logginghub.logging.modules.configuration.PatternisedDiskHistoryConfiguration;
 import com.logginghub.logging.modules.configuration.PatterniserConfiguration;
-import com.logginghub.logging.modules.configuration.ReportsConfiguration;
 import com.logginghub.logging.modules.configuration.RestfulListenerConfiguration;
 import com.logginghub.logging.modules.configuration.SQLExtractConfiguration;
 import com.logginghub.logging.modules.configuration.SigarMachineTelemetryConfiguration;
@@ -49,23 +48,23 @@ import java.util.List;
 @XmlRootElement(name = "container") @XmlAccessorType(XmlAccessType.FIELD) public class LoggingContainerConfiguration {
 
     @XmlElement private List<LoggingContainerConfiguration> container = new ArrayList<LoggingContainerConfiguration>();
-    
-    
+
+
     @XmlElement private List<LoggingBridgeConfiguration> bridge = new ArrayList<LoggingBridgeConfiguration>();
-    
+
     @XmlElement private List<SocketTextReaderConfiguration> socketTextReader = new ArrayList<SocketTextReaderConfiguration>();
-    
+
     @XmlElement private List<MemoryMonitorConfiguration> memoryMonitor = new ArrayList<MemoryMonitorConfiguration>();
-    
+
     @XmlElement private List<RestfulListenerConfiguration> restfulListener = new ArrayList<RestfulListenerConfiguration>();
-    
+
     @XmlElement private List<TelemetryConfiguration> telemetry = new ArrayList<TelemetryConfiguration>();
     @XmlElement private List<TelemetryOutputConfiguration> telemetryOutput = new ArrayList<TelemetryOutputConfiguration>();
-    
+
     @XmlElement private List<InternalLoggingConfiguration> internalLogging = new ArrayList<InternalLoggingConfiguration>();
 
     @XmlElement private List<StackHistoryConfiguration> stackHistory = new ArrayList<StackHistoryConfiguration>();
-    
+
     @XmlElement private List<TransactionMonitorConfiguration> transactionMonitor = new ArrayList<TransactionMonitorConfiguration>();
     @XmlElement private List<HubConnectorConfiguration> hubConnector = new ArrayList<HubConnectorConfiguration>();
     @XmlElement private List<EmailConnectorConfiguration> emailConnector = new ArrayList<EmailConnectorConfiguration>();
@@ -77,105 +76,103 @@ import java.util.List;
 
     @XmlElement private List<AggregatorConfiguration> aggregator = new ArrayList<AggregatorConfiguration>();
     @XmlElement private List<PatterniserConfiguration> patterniser = new ArrayList<PatterniserConfiguration>();
-    
+
     @XmlElement private List<InMemoryHistoryConfiguration> inMemoryHistory = new ArrayList<InMemoryHistoryConfiguration>();
     @XmlElement private List<ChannelSubscriptionsConfiguration> channelSubscriptions = new ArrayList<ChannelSubscriptionsConfiguration>();
     @XmlElement private List<BinaryImportConfiguration> binaryImport = new ArrayList<BinaryImportConfiguration>();
     @XmlElement private List<BinaryWriterConfiguration> binaryWriter = new ArrayList<BinaryWriterConfiguration>();
-    
+
     @XmlElement private List<BinaryProcessorConfiguration> binaryProcessor = new ArrayList<BinaryProcessorConfiguration>();
     @XmlElement private List<ZeroCopyHubConfiguration> zeroCopyHub = new ArrayList<ZeroCopyHubConfiguration>();
-    
+
     @XmlElement private List<DiskHistoryConfiguration> diskHistory = new ArrayList<DiskHistoryConfiguration>();
     @XmlElement private List<DiskHistoryIndexConfiguration> diskHistoryIndex = new ArrayList<DiskHistoryIndexConfiguration>();
     @XmlElement private List<DiskValidationConfiguration> diskValidation = new ArrayList<DiskValidationConfiguration>();
-    
+
     @XmlElement private List<PatternisedDiskHistoryConfiguration> patternisedDiskHistory = new ArrayList<PatternisedDiskHistoryConfiguration>();
     @XmlElement private List<AggregatedDiskHistoryConfiguration> aggregatedDiskHistory = new ArrayList<AggregatedDiskHistoryConfiguration>();
-    
-    @XmlElement private List<SocketHubConfiguration> socketHub = new ArrayList<SocketHubConfiguration>();
-    
-    @XmlElement private List<HubStackCaptureConfiguration> stackCapture = new ArrayList<HubStackCaptureConfiguration>();
-    
-    @XmlElement private List<SQLExtractConfiguration> sqlExtract = new ArrayList<SQLExtractConfiguration>();
-    
-    @XmlElement private List<WebFrontendConfiguration> webFrontend = new ArrayList<WebFrontendConfiguration>();
-    
-    @XmlElement private List<PatternManagerConfiguration> patternManager = new ArrayList<PatternManagerConfiguration>();
-    
-    @XmlElement private List<VMStatMonitorConfiguration>  vmstatMonitor = new ArrayList<VMStatMonitorConfiguration>();
-    @XmlElement private List<IOStatMonitorConfiguration>  iostatMonitor = new ArrayList<IOStatMonitorConfiguration>();
-    
-    @XmlElement private List<ExternalFileMonitorConfiguration>  externalFileMonitor = new ArrayList<ExternalFileMonitorConfiguration>();
-    @XmlElement private List<ExternalProcessMonitorConfiguration>  externalProcessMonitor = new ArrayList<ExternalProcessMonitorConfiguration>();
-    
-    @XmlElement private List<SigarProcessTelemetryConfiguration> sigarProcessTelemetryModule= new ArrayList<SigarProcessTelemetryConfiguration>();
-    @XmlElement private List<SigarMachineTelemetryConfiguration> sigarMachineTelemetryModule= new ArrayList<SigarMachineTelemetryConfiguration>();
 
-    @XmlElement private List<ReportsConfiguration> reports = new ArrayList<ReportsConfiguration>();
-    
+    @XmlElement private List<SocketHubConfiguration> socketHub = new ArrayList<SocketHubConfiguration>();
+
+    @XmlElement private List<HubStackCaptureConfiguration> stackCapture = new ArrayList<HubStackCaptureConfiguration>();
+
+    @XmlElement private List<SQLExtractConfiguration> sqlExtract = new ArrayList<SQLExtractConfiguration>();
+
+    @XmlElement private List<WebFrontendConfiguration> webFrontend = new ArrayList<WebFrontendConfiguration>();
+
+    @XmlElement private List<PatternManagerConfiguration> patternManager = new ArrayList<PatternManagerConfiguration>();
+
+    @XmlElement private List<VMStatMonitorConfiguration> vmstatMonitor = new ArrayList<VMStatMonitorConfiguration>();
+    @XmlElement private List<IOStatMonitorConfiguration> iostatMonitor = new ArrayList<IOStatMonitorConfiguration>();
+
+    @XmlElement private List<ExternalFileMonitorConfiguration> externalFileMonitor = new ArrayList<ExternalFileMonitorConfiguration>();
+    @XmlElement private List<ExternalProcessMonitorConfiguration> externalProcessMonitor = new ArrayList<ExternalProcessMonitorConfiguration>();
+
+    @XmlElement private List<SigarProcessTelemetryConfiguration> sigarProcessTelemetryModule = new ArrayList<SigarProcessTelemetryConfiguration>();
+    @XmlElement private List<SigarMachineTelemetryConfiguration> sigarMachineTelemetryModule = new ArrayList<SigarMachineTelemetryConfiguration>();
+
     @XmlElement private List<GeneratorConfiguration> generator = new ArrayList<GeneratorConfiguration>();
-    
+
     public List<BinaryProcessorConfiguration> getBinaryProcessors() {
         return binaryProcessor;
     }
-    
+
     public List<BinaryWriterConfiguration> getBinaryWriters() {
         return binaryWriter;
     }
-    
+
     public List<LoggingBridgeConfiguration> getBridges() {
         return bridge;
     }
-    
+
     public List<SocketTextReaderConfiguration> getSocketTextReaders() {
         return socketTextReader;
     }
-    
+
     public List<RestfulListenerConfiguration> getRestfulListeners() {
         return restfulListener;
     }
-    
+
     public List<TelemetryOutputConfiguration> getTelemetryOutput() {
         return telemetryOutput;
     }
-    
+
     public List<TelemetryConfiguration> getTelemetry() {
         return telemetry;
     }
-    
+
     public List<HubStackCaptureConfiguration> getStackCapture() {
         return stackCapture;
     }
-    
+
     public List<SocketHubConfiguration> getSocketHubs() {
         return socketHub;
     }
-    
+
     public List<ChannelSubscriptionsConfiguration> getChannelSubscriptions() {
         return channelSubscriptions;
     }
-    
+
     public List<BinaryImportConfiguration> getBinaryImport() {
         return binaryImport;
     }
-    
+
     public List<InMemoryHistoryConfiguration> getInMemoryHistories() {
         return inMemoryHistory;
     }
-    
+
     public List<AggregatorConfiguration> getAggregators() {
         return aggregator;
     }
-    
+
     public List<PatterniserConfiguration> getPatternisers() {
         return patterniser;
     }
-    
+
     public List<GeneratorConfiguration> getGenerators() {
         return generator;
     }
-    
+
     public List<LoggingContainerConfiguration> getContainers() {
         return container;
     }
@@ -207,7 +204,7 @@ import java.util.List;
     public List<TimestampFixedRollingFileLoggerConfiguration> getTimestampFixedRollingFileLoggers() {
         return timestampFixedRollingFileLogger;
     }
-    
+
     public List<MemoryMonitorConfiguration> getMemoryMonitors() {
         return memoryMonitor;
     }
@@ -219,7 +216,7 @@ import java.util.List;
     public List<DiskHistoryConfiguration> getDiskHistories() {
         return diskHistory;
     }
-    
+
     public static LoggingContainerConfiguration fromResource(String resource) {
         return JAXBConfiguration.loadConfiguration(LoggingContainerConfiguration.class, resource);
     }
@@ -231,55 +228,55 @@ import java.util.List;
     public List<DiskValidationConfiguration> getDiskValidations() {
         return diskValidation;
     }
-    
+
     public List<SQLExtractConfiguration> getSqlExtract() {
         return sqlExtract;
     }
-    
+
     public List<WebFrontendConfiguration> getWebFrontends() {
         return webFrontend;
     }
-    
+
     public List<ZeroCopyHubConfiguration> getZeroCopyHubs() {
         return zeroCopyHub;
     }
-    
+
     public List<PatternManagerConfiguration> getPatternManagers() {
         return patternManager;
     }
-    
+
     public List<InternalLoggingConfiguration> getInternalLogging() {
         return internalLogging;
     }
-    
+
     public List<PatternisedDiskHistoryConfiguration> getPatternisedDiskHistory() {
         return patternisedDiskHistory;
     }
-    
+
     public List<AggregatedDiskHistoryConfiguration> getAggregatedDiskHistory() {
         return aggregatedDiskHistory;
     }
-    
+
     public List<VMStatMonitorConfiguration> getVmstatMonitor() {
         return vmstatMonitor;
     }
-    
+
     public List<IOStatMonitorConfiguration> getIostatMonitor() {
         return iostatMonitor;
     }
-    
+
     public List<ExternalFileMonitorConfiguration> getExternalFileMonitor() {
         return externalFileMonitor;
     }
-    
+
     public List<ExternalProcessMonitorConfiguration> getExternalProcessMonitor() {
         return externalProcessMonitor;
     }
-    
+
     public List<SigarMachineTelemetryConfiguration> getSigarMachineTelemetryModule() {
         return sigarMachineTelemetryModule;
     }
-    
+
     public List<SigarProcessTelemetryConfiguration> getSigarProcessTelemetryModule() {
         return sigarProcessTelemetryModule;
     }
@@ -288,7 +285,4 @@ import java.util.List;
         return stackHistory;
     }
 
-    public List<ReportsConfiguration> getReports() {
-        return reports;
-    }
 }

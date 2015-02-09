@@ -28,6 +28,9 @@ public interface StandardAppenderFeatures {
 
     void setHeapLogging(boolean value);
 
+    void setReportsModuleEnabled(boolean value);
+    void setReportsModuleConfiguration(String path);
+
     // Instance Key values
     void setSourceApplication(String sourceApplication);
 

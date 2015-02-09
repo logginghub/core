@@ -1,8 +1,24 @@
 package com.logginghub.logging.messaging;
 
 import com.logginghub.logging.LogEvent;
-import com.logginghub.logging.api.levelsetting.*;
-import com.logginghub.logging.api.patterns.*;
+import com.logginghub.logging.api.levelsetting.InstanceFilter;
+import com.logginghub.logging.api.levelsetting.LevelSettingAPI;
+import com.logginghub.logging.api.levelsetting.LevelSettingsConfirmation;
+import com.logginghub.logging.api.levelsetting.LevelSettingsGroup;
+import com.logginghub.logging.api.levelsetting.LevelSettingsRequest;
+import com.logginghub.logging.api.levelsetting.MultipleResultListener;
+import com.logginghub.logging.api.patterns.Aggregation;
+import com.logginghub.logging.api.patterns.AggregationListRequest;
+import com.logginghub.logging.api.patterns.AggregationListResponse;
+import com.logginghub.logging.api.patterns.HistoricalDataAPI;
+import com.logginghub.logging.api.patterns.InstanceDetails;
+import com.logginghub.logging.api.patterns.InstanceManagementAPI;
+import com.logginghub.logging.api.patterns.Pattern;
+import com.logginghub.logging.api.patterns.PatternListRequest;
+import com.logginghub.logging.api.patterns.PatternListResponse;
+import com.logginghub.logging.api.patterns.PatternManagementAPI;
+import com.logginghub.logging.api.patterns.PingRequest;
+import com.logginghub.logging.api.patterns.PingResponse;
 import com.logginghub.logging.exceptions.ConnectorException;
 import com.logginghub.logging.exceptions.LoggingMessageSenderException;
 import com.logginghub.logging.interfaces.AbstractLoggingMessageSource;
@@ -10,17 +26,57 @@ import com.logginghub.logging.interfaces.ChannelMessagingService;
 import com.logginghub.logging.interfaces.LoggingMessageSender;
 import com.logginghub.logging.listeners.LogEventListener;
 import com.logginghub.logging.listeners.LoggingMessageListener;
-import com.logginghub.logging.messages.*;
-import com.logginghub.utils.*;
+import com.logginghub.logging.messages.AggregationType;
+import com.logginghub.logging.messages.ChannelMessage;
+import com.logginghub.logging.messages.ChannelSubscriptionRequestMessage;
+import com.logginghub.logging.messages.ChannelSubscriptionResponseMessage;
+import com.logginghub.logging.messages.Channels;
+import com.logginghub.logging.messages.EventSubscriptionRequestMessage;
+import com.logginghub.logging.messages.EventSubscriptionResponseMessage;
+import com.logginghub.logging.messages.FilterRequestMessage;
+import com.logginghub.logging.messages.HistoricalAggregatedDataRequest;
+import com.logginghub.logging.messages.HistoricalAggregatedDataResponse;
+import com.logginghub.logging.messages.HistoricalIndexRequest;
+import com.logginghub.logging.messages.HistoricalPatternisedDataRequest;
+import com.logginghub.logging.messages.HistoricalPatternisedDataResponse;
+import com.logginghub.logging.messages.LogEventMessage;
+import com.logginghub.logging.messages.LoggingMessage;
+import com.logginghub.logging.messages.MapMessage;
+import com.logginghub.logging.messages.RequestResponseMessage;
+import com.logginghub.logging.messages.ResponseMessage;
+import com.logginghub.logging.messages.SubscriptionRequestMessage;
+import com.logginghub.logging.messages.SubscriptionResponseMessage;
+import com.logginghub.logging.messages.UnsubscriptionRequestMessage;
+import com.logginghub.logging.messages.UnsubscriptionResponseMessage;
+import com.logginghub.utils.Destination;
+import com.logginghub.utils.ExceptionPolicy;
 import com.logginghub.utils.ExceptionPolicy.Policy;
+import com.logginghub.utils.FormattedRuntimeException;
+import com.logginghub.utils.Handler;
+import com.logginghub.utils.LatchFuture;
+import com.logginghub.utils.MutableInt;
+import com.logginghub.utils.NetUtils;
+import com.logginghub.utils.Result;
+import com.logginghub.utils.ResultListener;
+import com.logginghub.utils.StreamingDestination;
+import com.logginghub.utils.StringUtils;
+import com.logginghub.utils.Timeout;
 import com.logginghub.utils.filter.Filter;
 import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.sof.SerialisableObject;
 
 import java.io.Closeable;
 import java.net.InetSocketAddress;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Exchanger;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
@@ -29,8 +85,7 @@ import java.util.logging.Level;
  *
  * @author admin
  */
-public class SocketClient extends AbstractLoggingMessageSource
-        implements LoggingMessageSender, Closeable, LogEventListener, ChannelMessagingService {
+public class SocketClient extends AbstractLoggingMessageSource implements LoggingMessageSender, Closeable, LogEventListener, ChannelMessagingService {
     private static final Logger logger = Logger.getLoggerFor(SocketClient.class);
     private Set<String> autoEventChannelSubscriptions = new HashSet<String>();
     private boolean autoGlobalSubscription = true;
@@ -45,13 +100,11 @@ public class SocketClient extends AbstractLoggingMessageSource
     // private List<LoggingMessage> queued = new ArrayList<LoggingMessage>();
     private Map<Integer, Handler<LoggingMessage>> requestResponseHandlers = new HashMap<Integer, Handler<LoggingMessage>>();
     private SubscriptionController<Destination<ChannelMessage>, ChannelMessage> subscriptionController = new SubscriptionController<Destination<ChannelMessage>, ChannelMessage>() {
-        @Override
-        protected Future<Boolean> handleFirstSubscription(String channel) {
+        @Override protected Future<Boolean> handleFirstSubscription(String channel) {
             return handleFirstSubscriptionInternal(channel);
         }
 
-        @Override
-        protected Future<Boolean> handleLastSubscription(String channel) {
+        @Override protected Future<Boolean> handleLastSubscription(String channel) {
             return handleLastSubscriptionInternal(channel);
         }
     };
@@ -95,9 +148,7 @@ public class SocketClient extends AbstractLoggingMessageSource
      * @return
      * @throws ConnectorException
      */
-    public static SocketClient connect(InetSocketAddress connectionPoint,
-                                       boolean autoSubscribe,
-                                       LogEventListener listener) throws ConnectorException {
+    public static SocketClient connect(InetSocketAddress connectionPoint, boolean autoSubscribe, LogEventListener listener) throws ConnectorException {
         SocketClient client = new SocketClient();
         client.addConnectionPoint(connectionPoint);
         client.setAutoSubscribe(autoSubscribe);
@@ -109,8 +160,7 @@ public class SocketClient extends AbstractLoggingMessageSource
     private void setupPingHandler() {
         if (respondToPings) {
             subscribe(Channels.pingRequests, new Destination<ChannelMessage>() {
-                @Override
-                public void send(ChannelMessage message) {
+                @Override public void send(ChannelMessage message) {
                     ChannelMessage channelRequestMessage = (ChannelMessage) message;
                     SerialisableObject payload = channelRequestMessage.getPayload();
                     if (payload instanceof PingRequest) {
@@ -124,8 +174,7 @@ public class SocketClient extends AbstractLoggingMessageSource
                             response.setInstanceDetails(instanceDetails);
                             response.setTimestamp(pingRequest.getTimestamp());
 
-                            ChannelMessage reply = new ChannelMessage(channelRequestMessage.getReplyToChannel(),
-                                                                      response);
+                            ChannelMessage reply = new ChannelMessage(channelRequestMessage.getReplyToChannel(), response);
                             reply.setCorrelationID(channelRequestMessage.getCorrelationID());
 
                             try {
@@ -261,40 +310,29 @@ public class SocketClient extends AbstractLoggingMessageSource
     //    }
 
     /**
-     * Has a real issue if two people call it at the same time, no way to tell which is which. The outcome on the hub is
-     * idempotent though, so it doesn't matter that much.
+     * Has a real issue if two people call it at the same time, no way to tell which is which. The outcome on the hub is idempotent though, so it doesn't matter that much.
      *
      * @param subscriptionRequestMessage
      * @throws LoggingMessageSenderException
      */
-    public SubscriptionResponseMessage sendBlocking(SubscriptionRequestMessage subscriptionRequestMessage) throws
-                                                                                                           LoggingMessageSenderException,
-                                                                                                           TimeoutException,
-                                                                                                           InterruptedException {
+    public SubscriptionResponseMessage sendBlocking(SubscriptionRequestMessage subscriptionRequestMessage) throws LoggingMessageSenderException, TimeoutException, InterruptedException {
         BlockingMessageFilter filter = new BlockingMessageFilter() {
-            @Override
-            public boolean passes(LoggingMessage loggingMessage) {
+            @Override public boolean passes(LoggingMessage loggingMessage) {
                 return loggingMessage instanceof SubscriptionResponseMessage;
             }
         };
 
-        SubscriptionResponseMessage responseMessage = (SubscriptionResponseMessage) sendBlocking(filter,
-                                                                                                 subscriptionRequestMessage);
+        SubscriptionResponseMessage responseMessage = (SubscriptionResponseMessage) sendBlocking(filter, subscriptionRequestMessage);
         return responseMessage;
     }
 
-    public RequestResponseMessage sendBlocking(RequestResponseMessage message) throws
-                                                                               LoggingMessageSenderException,
-                                                                               TimeoutException,
-                                                                               InterruptedException {
+    public RequestResponseMessage sendBlocking(RequestResponseMessage message) throws LoggingMessageSenderException, TimeoutException, InterruptedException {
         final int correlationID = getNextCorrelationID();
         message.setCorrelationID(correlationID);
 
         BlockingMessageFilter filter = new BlockingMessageFilter() {
-            @Override
-            public boolean passes(LoggingMessage message) {
-                return (message instanceof RequestResponseMessage && correlationID == ((RequestResponseMessage) message)
-                        .getCorrelationID());
+            @Override public boolean passes(LoggingMessage message) {
+                return (message instanceof RequestResponseMessage && correlationID == ((RequestResponseMessage) message).getCorrelationID());
             }
         };
 
@@ -302,10 +340,7 @@ public class SocketClient extends AbstractLoggingMessageSource
         return response;
     }
 
-    private LoggingMessage sendBlocking(BlockingMessageFilter filter, LoggingMessage message) throws
-                                                                                              LoggingMessageSenderException,
-                                                                                              TimeoutException,
-                                                                                              InterruptedException {
+    private LoggingMessage sendBlocking(BlockingMessageFilter filter, LoggingMessage message) throws LoggingMessageSenderException, TimeoutException, InterruptedException {
         sent++;
         addLoggingMessageListener(filter);
 
@@ -379,12 +414,10 @@ public class SocketClient extends AbstractLoggingMessageSource
             if (latch.await(10, TimeUnit.SECONDS)) {
                 // Happy
             } else {
-                throw new LoggingMessageSenderException(
-                        "Subscribe request failed; timed out waiting for the response message");
+                throw new LoggingMessageSenderException("Subscribe request failed; timed out waiting for the response message");
             }
         } catch (InterruptedException e) {
-            throw new LoggingMessageSenderException(
-                    "Subscribe request may have failed; the thread was interupted waiting for the response message");
+            throw new LoggingMessageSenderException("Subscribe request may have failed; the thread was interupted waiting for the response message");
         }
     }
 
@@ -405,20 +438,16 @@ public class SocketClient extends AbstractLoggingMessageSource
             }
         });
 
-        EventSubscriptionRequestMessage subscriptionMessage = new EventSubscriptionRequestMessage(getNextCorrelationID(),
-                                                                                                  true,
-                                                                                                  channel);
+        EventSubscriptionRequestMessage subscriptionMessage = new EventSubscriptionRequestMessage(getNextCorrelationID(), true, channel);
         send(subscriptionMessage);
         try {
             if (latch.await(10, TimeUnit.SECONDS)) {
                 // Happy
             } else {
-                throw new LoggingMessageSenderException(
-                        "Channel subscribe request failed; timed out waiting for the response message");
+                throw new LoggingMessageSenderException("Channel subscribe request failed; timed out waiting for the response message");
             }
         } catch (InterruptedException e) {
-            throw new LoggingMessageSenderException(
-                    "Channel subscribe request may have failed; the thread was interupted waiting for the response message");
+            throw new LoggingMessageSenderException("Channel subscribe request may have failed; the thread was interupted waiting for the response message");
         }
     }
 
@@ -453,12 +482,10 @@ public class SocketClient extends AbstractLoggingMessageSource
             if (latch.await(10, TimeUnit.SECONDS)) {
                 // Happy
             } else {
-                throw new LoggingMessageSenderException(
-                        "Subscribe request failed; timed out waiting for the response message");
+                throw new LoggingMessageSenderException("Subscribe request failed; timed out waiting for the response message");
             }
         } catch (InterruptedException e) {
-            throw new LoggingMessageSenderException(
-                    "Subscribe request may have failed; the thread was interupted waiting for the response message");
+            throw new LoggingMessageSenderException("Subscribe request may have failed; the thread was interupted waiting for the response message");
         }
     }
 
@@ -533,10 +560,7 @@ public class SocketClient extends AbstractLoggingMessageSource
         Set<String> channels = subscriptionController.getChannels();
         if (channels.size() > 0) {
             String[] channelsArray = channels.toArray(new String[channels.size()]);
-            ChannelSubscriptionRequestMessage subscriptionMessage = new ChannelSubscriptionRequestMessage(
-                    getNextCorrelationID(),
-                    true,
-                    channelsArray);
+            ChannelSubscriptionRequestMessage subscriptionMessage = new ChannelSubscriptionRequestMessage(getNextCorrelationID(), true, channelsArray);
             try {
                 send(subscriptionMessage);
             } catch (LoggingMessageSenderException e) {
@@ -549,9 +573,7 @@ public class SocketClient extends AbstractLoggingMessageSource
     private Future<Boolean> handleFirstSubscriptionInternal(String channel) {
         final LatchFuture<Boolean> future = new LatchFuture<Boolean>();
 
-        final ChannelSubscriptionRequestMessage request = new ChannelSubscriptionRequestMessage(getNextCorrelationID(),
-                                                                                                true,
-                                                                                                channel);
+        final ChannelSubscriptionRequestMessage request = new ChannelSubscriptionRequestMessage(getNextCorrelationID(), true, channel);
 
         requestResponseHandlers.put(request.getCorrelationID(), new Handler<LoggingMessage>() {
             public boolean handle(LoggingMessage t) {
@@ -614,9 +636,7 @@ public class SocketClient extends AbstractLoggingMessageSource
 
     public HistoricalDataAPI getHistoricalDataAPI() {
         return new HistoricalDataAPI() {
-            public void streamHistoricalPatternisedEvents(long fromTime,
-                                                          long toTime,
-                                                          final StreamingDestination<PatternisedLogEvent> destination) {
+            public void streamHistoricalPatternisedEvents(long fromTime, long toTime, final StreamingDestination<PatternisedLogEvent> destination) {
 
                 // Construct the history data request message to send to the hub
                 final HistoricalPatternisedDataRequest request = new HistoricalPatternisedDataRequest();
@@ -642,8 +662,7 @@ public class SocketClient extends AbstractLoggingMessageSource
                 // messages
                 LoggingMessageListener listener = new LoggingMessageListener() {
 
-                    @Override
-                    public void onNewLoggingMessage(LoggingMessage message) {
+                    @Override public void onNewLoggingMessage(LoggingMessage message) {
 
                         if (message instanceof HistoricalPatternisedDataResponse) {
                             HistoricalPatternisedDataResponse response = (HistoricalPatternisedDataResponse) message;
@@ -689,25 +708,29 @@ public class SocketClient extends AbstractLoggingMessageSource
                 }
 
                 // Block the main thread and wait for the response to arrive
-                try {
-                    // TODO : implement some sort of stream timeout based on how long it has been
-                    // since the last response
-                    latch.await();
-                    destination.onStreamComplete();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } finally {
-                    removeLoggingMessageListener(listener);
+                boolean done = false;
+                int lastBatches = 0;
+                while (!done) {
+                    try {
+                        if (latch.await(5, TimeUnit.SECONDS)) {
+                            done = true;
+                            destination.onStreamComplete();
+                        }else{
+                            if(batches.value == lastBatches) {
+                                throw new RuntimeException(StringUtils.format("Timeout reached waiting for another batch - we've received {} batches so far.", batches.value));
+                            }
+                        }
+                        lastBatches = batches.value;
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    } finally {
+                        removeLoggingMessageListener(listener);
+                    }
                 }
-
-                // append("Received {} events in {} batches", count, batches);
 
             }
 
-            @Override
-            public void streamHistoricalAggregatedEvents(long fromTime,
-                                                         long toTime,
-                                                         final StreamingDestination<AggregatedLogEvent> destination) {
+            @Override public void streamHistoricalAggregatedEvents(long fromTime, long toTime, final StreamingDestination<AggregatedLogEvent> destination) {
                 // Construct the history data request message to send to the hub
                 final HistoricalAggregatedDataRequest request = new HistoricalAggregatedDataRequest();
                 request.setCorrelationID(getNextCorrelationID());
@@ -732,8 +755,7 @@ public class SocketClient extends AbstractLoggingMessageSource
                 // messages
                 LoggingMessageListener listener = new LoggingMessageListener() {
 
-                    @Override
-                    public void onNewLoggingMessage(LoggingMessage message) {
+                    @Override public void onNewLoggingMessage(LoggingMessage message) {
 
                         if (message instanceof HistoricalAggregatedDataResponse) {
                             HistoricalAggregatedDataResponse response = (HistoricalAggregatedDataResponse) message;
@@ -779,17 +801,25 @@ public class SocketClient extends AbstractLoggingMessageSource
                 }
 
                 // Block the main thread and wait for the response to arrive
-                try {
-                    // TODO : implement some sort of stream timeout based on how long it has been
-                    // since the last response
-                    latch.await();
-                    destination.onStreamComplete();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } finally {
-                    removeLoggingMessageListener(listener);
+                boolean done = false;
+                int lastBatches = 0;
+                while (!done) {
+                    try {
+                        if (latch.await(5, TimeUnit.SECONDS)) {
+                            done = true;
+                            destination.onStreamComplete();
+                        }else{
+                            if(batches.value == lastBatches) {
+                                throw new RuntimeException(StringUtils.format("Timeout reached waiting for another batch - we've received {} batches so far.", batches.value));
+                            }
+                        }
+                        lastBatches = batches.value;
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    } finally {
+                        removeLoggingMessageListener(listener);
+                    }
                 }
-
                 // append("Received {} events in {} batches", count, batches);
             }
         };
@@ -798,28 +828,23 @@ public class SocketClient extends AbstractLoggingMessageSource
     public PatternManagementAPI getPatternManagementAPI() {
         return new PatternManagementAPI() {
 
-            @Override
-            public Result<Pattern> createPattern(Pattern template) {
+            @Override public Result<Pattern> createPattern(Pattern template) {
                 final Result<Pattern> result = new Result<Pattern>();
 
                 createPattern(template, new ResultListener<Pattern>() {
-                    @Override
-                    public void onUnsuccessful(String reason) {
+                    @Override public void onUnsuccessful(String reason) {
                         result.unsuccessful(reason);
                     }
 
-                    @Override
-                    public void onTimedout() {
+                    @Override public void onTimedout() {
                         result.timedOut();
                     }
 
-                    @Override
-                    public void onSuccessful(Pattern pattern) {
+                    @Override public void onSuccessful(Pattern pattern) {
                         result.success(pattern);
                     }
 
-                    @Override
-                    public void onFailed(Throwable t) {
+                    @Override public void onFailed(Throwable t) {
                         result.failed(t.getMessage());
                     }
                 });
@@ -827,8 +852,7 @@ public class SocketClient extends AbstractLoggingMessageSource
                 return result;
             }
 
-            @Override
-            public void getPatterns(ResultListener<List<Pattern>> listener) {
+            @Override public void getPatterns(ResultListener<List<Pattern>> listener) {
 
                 PatternListRequest request = new PatternListRequest();
                 ChannelMessage message = new ChannelMessage(Channels.patternListRequests, request);
@@ -838,8 +862,7 @@ public class SocketClient extends AbstractLoggingMessageSource
                 final Exchanger<PatternListResponse> exchanger = new Exchanger<PatternListResponse>();
 
                 LoggingMessageListener messageListener = new LoggingMessageListener() {
-                    @Override
-                    public void onNewLoggingMessage(LoggingMessage message) {
+                    @Override public void onNewLoggingMessage(LoggingMessage message) {
 
                         if (message instanceof ResponseMessage) {
                             ResponseMessage channelResponseMessage = (ResponseMessage) message;
@@ -871,9 +894,7 @@ public class SocketClient extends AbstractLoggingMessageSource
                 }
 
                 try {
-                    PatternListResponse response = exchanger.exchange(null,
-                                                                      Timeout.defaultTimeout.getMillis(),
-                                                                      TimeUnit.MILLISECONDS);
+                    PatternListResponse response = exchanger.exchange(null, Timeout.defaultTimeout.getMillis(), TimeUnit.MILLISECONDS);
 
                     if (response.wasSuccessful()) {
                         listener.onSuccessful(response.getPatterns());
@@ -891,29 +912,24 @@ public class SocketClient extends AbstractLoggingMessageSource
                 connector.removeLoggingMessageListener(messageListener);
             }
 
-            @Override
-            public Result<List<Pattern>> getPatterns() {
+            @Override public Result<List<Pattern>> getPatterns() {
 
                 final Result<List<Pattern>> result = new Result<List<Pattern>>();
 
                 getPatterns(new ResultListener<List<Pattern>>() {
-                    @Override
-                    public void onUnsuccessful(String reason) {
+                    @Override public void onUnsuccessful(String reason) {
                         result.unsuccessful(reason);
                     }
 
-                    @Override
-                    public void onTimedout() {
+                    @Override public void onTimedout() {
                         result.timedOut();
                     }
 
-                    @Override
-                    public void onSuccessful(List<Pattern> patternList) {
+                    @Override public void onSuccessful(List<Pattern> patternList) {
                         result.success(patternList);
                     }
 
-                    @Override
-                    public void onFailed(Throwable t) {
+                    @Override public void onFailed(Throwable t) {
                         result.failed(t.getMessage());
                     }
                 });
@@ -922,8 +938,7 @@ public class SocketClient extends AbstractLoggingMessageSource
 
             }
 
-            @Override
-            public void createPattern(Pattern template, ResultListener<Pattern> listener) {
+            @Override public void createPattern(Pattern template, ResultListener<Pattern> listener) {
                 MapMessage map = new MapMessage();
                 map.put("action", "createPattern");
                 map.put("name", template.getName());
@@ -936,8 +951,7 @@ public class SocketClient extends AbstractLoggingMessageSource
                 final Exchanger<ResponseMessage> exchanger = new Exchanger<ResponseMessage>();
 
                 LoggingMessageListener messageListener = new LoggingMessageListener() {
-                    @Override
-                    public void onNewLoggingMessage(LoggingMessage message) {
+                    @Override public void onNewLoggingMessage(LoggingMessage message) {
 
                         if (message instanceof ResponseMessage) {
                             ResponseMessage channelResponseMessage = (ResponseMessage) message;
@@ -967,9 +981,7 @@ public class SocketClient extends AbstractLoggingMessageSource
                 }
 
                 try {
-                    ResponseMessage response = exchanger.exchange(null,
-                                                                  Timeout.defaultTimeout.getMillis(),
-                                                                  TimeUnit.MILLISECONDS);
+                    ResponseMessage response = exchanger.exchange(null, Timeout.defaultTimeout.getMillis(), TimeUnit.MILLISECONDS);
 
                     if (response.wasSuccessful()) {
 
@@ -999,8 +1011,7 @@ public class SocketClient extends AbstractLoggingMessageSource
                 connector.removeLoggingMessageListener(messageListener);
             }
 
-            @Override
-            public void getAggregations(ResultListener<List<Aggregation>> listener) {
+            @Override public void getAggregations(ResultListener<List<Aggregation>> listener) {
                 AggregationListRequest request = new AggregationListRequest();
                 ChannelMessage message = new ChannelMessage(Channels.aggregationListRequests, request);
                 final int requestID = getNextCorrelationID();
@@ -1009,8 +1020,7 @@ public class SocketClient extends AbstractLoggingMessageSource
                 final Exchanger<AggregationListResponse> exchanger = new Exchanger<AggregationListResponse>();
 
                 LoggingMessageListener messageListener = new LoggingMessageListener() {
-                    @Override
-                    public void onNewLoggingMessage(LoggingMessage message) {
+                    @Override public void onNewLoggingMessage(LoggingMessage message) {
 
                         if (message instanceof ResponseMessage) {
                             ResponseMessage channelResponseMessage = (ResponseMessage) message;
@@ -1042,9 +1052,7 @@ public class SocketClient extends AbstractLoggingMessageSource
                 }
 
                 try {
-                    AggregationListResponse response = exchanger.exchange(null,
-                                                                          Timeout.defaultTimeout.getMillis(),
-                                                                          TimeUnit.MILLISECONDS);
+                    AggregationListResponse response = exchanger.exchange(null, Timeout.defaultTimeout.getMillis(), TimeUnit.MILLISECONDS);
 
                     if (response.wasSuccessful()) {
                         listener.onSuccessful(response.getAggregations());
@@ -1062,28 +1070,23 @@ public class SocketClient extends AbstractLoggingMessageSource
                 connector.removeLoggingMessageListener(messageListener);
             }
 
-            @Override
-            public Result<List<Aggregation>> getAggregations() {
+            @Override public Result<List<Aggregation>> getAggregations() {
                 final Result<List<Aggregation>> result = new Result<List<Aggregation>>();
 
                 getAggregations(new ResultListener<List<Aggregation>>() {
-                    @Override
-                    public void onUnsuccessful(String reason) {
+                    @Override public void onUnsuccessful(String reason) {
                         result.unsuccessful(reason);
                     }
 
-                    @Override
-                    public void onTimedout() {
+                    @Override public void onTimedout() {
                         result.timedOut();
                     }
 
-                    @Override
-                    public void onSuccessful(List<Aggregation> patternList) {
+                    @Override public void onSuccessful(List<Aggregation> patternList) {
                         result.success(patternList);
                     }
 
-                    @Override
-                    public void onFailed(Throwable t) {
+                    @Override public void onFailed(Throwable t) {
                         result.failed(t.getMessage());
                     }
                 });
@@ -1092,28 +1095,23 @@ public class SocketClient extends AbstractLoggingMessageSource
 
             }
 
-            @Override
-            public Result<Aggregation> createAggregation(Aggregation template) {
+            @Override public Result<Aggregation> createAggregation(Aggregation template) {
                 final Result<Aggregation> result = new Result<Aggregation>();
 
                 createAggregation(template, new ResultListener<Aggregation>() {
-                    @Override
-                    public void onUnsuccessful(String reason) {
+                    @Override public void onUnsuccessful(String reason) {
                         result.unsuccessful(reason);
                     }
 
-                    @Override
-                    public void onTimedout() {
+                    @Override public void onTimedout() {
                         result.timedOut();
                     }
 
-                    @Override
-                    public void onSuccessful(Aggregation pattern) {
+                    @Override public void onSuccessful(Aggregation pattern) {
                         result.success(pattern);
                     }
 
-                    @Override
-                    public void onFailed(Throwable t) {
+                    @Override public void onFailed(Throwable t) {
                         result.failed(t.getMessage());
                     }
                 });
@@ -1122,8 +1120,7 @@ public class SocketClient extends AbstractLoggingMessageSource
 
             }
 
-            @Override
-            public void createAggregation(Aggregation template, ResultListener<Aggregation> listener) {
+            @Override public void createAggregation(Aggregation template, ResultListener<Aggregation> listener) {
                 MapMessage map = new MapMessage();
                 map.put("action", "createAggregation");
                 map.put("patternID", template.getPatternID());
@@ -1139,8 +1136,7 @@ public class SocketClient extends AbstractLoggingMessageSource
                 final Exchanger<ResponseMessage> exchanger = new Exchanger<ResponseMessage>();
 
                 LoggingMessageListener messageListener = new LoggingMessageListener() {
-                    @Override
-                    public void onNewLoggingMessage(LoggingMessage message) {
+                    @Override public void onNewLoggingMessage(LoggingMessage message) {
 
                         if (message instanceof ResponseMessage) {
                             ResponseMessage channelResponseMessage = (ResponseMessage) message;
@@ -1170,9 +1166,7 @@ public class SocketClient extends AbstractLoggingMessageSource
                 }
 
                 try {
-                    ResponseMessage response = exchanger.exchange(null,
-                                                                  Timeout.defaultTimeout.getMillis(),
-                                                                  TimeUnit.MILLISECONDS);
+                    ResponseMessage response = exchanger.exchange(null, Timeout.defaultTimeout.getMillis(), TimeUnit.MILLISECONDS);
 
                     if (response.wasSuccessful()) {
 
@@ -1209,10 +1203,7 @@ public class SocketClient extends AbstractLoggingMessageSource
     public LevelSettingAPI getLevelSettingAPI() {
         return new LevelSettingAPI() {
 
-            @Override
-            public void setLevels(InstanceFilter filter,
-                                  LevelSettingsGroup settings,
-                                  final MultipleResultListener<LevelSettingsConfirmation> listener) {
+            @Override public void setLevels(InstanceFilter filter, LevelSettingsGroup settings, final MultipleResultListener<LevelSettingsConfirmation> listener) {
 
                 LevelSettingsRequest request = new LevelSettingsRequest();
                 request.setFilter(filter);
@@ -1224,8 +1215,7 @@ public class SocketClient extends AbstractLoggingMessageSource
                 channelMessage.setReplyToChannel(Channels.getPrivateConnectionChannel(connector.getConnectionID()));
 
                 final Filter<LoggingMessage> responseFilter = new Filter<LoggingMessage>() {
-                    @Override
-                    public boolean passes(LoggingMessage t) {
+                    @Override public boolean passes(LoggingMessage t) {
                         boolean passes = false;
                         if (t instanceof ChannelMessage) {
                             ChannelMessage response = (ChannelMessage) t;
@@ -1239,12 +1229,10 @@ public class SocketClient extends AbstractLoggingMessageSource
 
                 // TODO : figure out a way to remove these transient listeners over time?
                 addLoggingMessageListener(new LoggingMessageListener() {
-                    @Override
-                    public void onNewLoggingMessage(LoggingMessage message) {
+                    @Override public void onNewLoggingMessage(LoggingMessage message) {
                         if (responseFilter.passes(message)) {
                             ChannelMessage channelMessage = (ChannelMessage) message;
-                            Result<LevelSettingsConfirmation> payload = (Result<LevelSettingsConfirmation>) channelMessage
-                                    .getPayload();
+                            Result<LevelSettingsConfirmation> payload = (Result<LevelSettingsConfirmation>) channelMessage.getPayload();
                             listener.onResult(payload);
                         }
                     }
@@ -1263,8 +1251,7 @@ public class SocketClient extends AbstractLoggingMessageSource
     public InstanceManagementAPI getInstanceManagementAPI() {
         return new InstanceManagementAPI() {
 
-            @Override
-            public void sendPing() {
+            @Override public void sendPing() {
                 ChannelMessage request = new ChannelMessage(Channels.pingRequests, new PingRequest());
                 request.setCorrelationID(getNextCorrelationID());
                 request.setReplyToChannel(Channels.getPrivateConnectionChannel(connector.getConnectionID()));
@@ -1275,11 +1262,9 @@ public class SocketClient extends AbstractLoggingMessageSource
                 }
             }
 
-            @Override
-            public void addPingListener(final Destination<PingResponse> destination) {
+            @Override public void addPingListener(final Destination<PingResponse> destination) {
                 LoggingMessageListener listener = new LoggingMessageListener() {
-                    @Override
-                    public void onNewLoggingMessage(LoggingMessage message) {
+                    @Override public void onNewLoggingMessage(LoggingMessage message) {
                         if (message instanceof ChannelMessage) {
                             ChannelMessage channelRequestMessage = (ChannelMessage) message;
                             SerialisableObject payload = channelRequestMessage.getPayload();

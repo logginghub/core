@@ -269,6 +269,21 @@ public class SocketHandler extends Handler implements PropertyChangeListener, St
             setInstanceType(instanceType);
         }
 
+        String environment = manager.getProperty(cname + ".environment");
+        if (environment != null) {
+            setEnvironment(environment);
+        }
+
+        String reportsModuleEnabled = manager.getProperty(cname + ".reportsModuleEnabled");
+        if (reportsModuleEnabled != null) {
+            setReportsModuleEnabled(Boolean.parseBoolean(reportsModuleEnabled));
+        }
+
+        String reportsModuleConfiguration = manager.getProperty(cname + ".reportsModuleConfiguration");
+        if (reportsModuleConfiguration != null) {
+            setReportsModuleConfiguration(reportsModuleConfiguration);
+        }
+
         String failureDelay = manager.getProperty(cname + ".failureDelayMaximum");
         String failureDelayMaximum = manager.getProperty(cname + ".failureDelayMaximum");
         String failureDelayMultiplier = manager.getProperty(cname + ".failureDelayMultiplier");
@@ -518,5 +533,14 @@ public class SocketHandler extends Handler implements PropertyChangeListener, St
 
         return levelValue;
 
+    }
+
+
+    public void setReportsModuleEnabled(boolean value) {
+        this.appenderHelper.setReportsModuleEnabled(value);
+    }
+
+    public void setReportsModuleConfiguration(String path) {
+        this.appenderHelper.setReportsConfigurationPath(path);
     }
 }

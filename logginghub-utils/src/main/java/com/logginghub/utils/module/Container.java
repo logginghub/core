@@ -8,7 +8,6 @@ import com.logginghub.utils.StringUtils;
 import com.logginghub.utils.StringUtils.StringUtilsBuilder;
 import com.logginghub.utils.logging.Logger;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -58,7 +57,8 @@ public class Container<T> implements Module<T> {
                                 Class<?> value = annotation.value();
 
                                 logger.fine("Found configuration object '{}' which instantiates '{}'", objectClass.getName(), value.getName());
-                                Object moduleInstance = attemptInstantiation(value, serviceDiscovery);
+//                                Object moduleInstance = attemptInstantiation(value, serviceDiscovery);
+                                Object moduleInstance = ReflectionUtils.newInstance(value.getName());
 
                                 if (moduleInstance instanceof Module<?>) {
                                     Module<?> module = (Module<?>) moduleInstance;
@@ -79,9 +79,10 @@ public class Container<T> implements Module<T> {
                         e.printStackTrace();
                     } catch (InvocationTargetException e) {
                         e.printStackTrace();
-                    } catch (InstantiationException e) {
-                        e.printStackTrace();
                     }
+//                    } catch (InstantiationException e) {
+//                        e.printStackTrace();
+//                    }
                 }
             }
         }
@@ -177,35 +178,35 @@ public class Container<T> implements Module<T> {
         logger.info("Successfully configured all modules");
     }
 
-    private Object attemptInstantiation(Class<?> clazz, ServiceDiscovery serviceDiscovery) throws IllegalAccessException, InvocationTargetException, InstantiationException {
-
-        Object instance = null;
-
-        // Have a look for a constructor we can use
-        final Constructor<?>[] constructors = clazz.getConstructors();
-        for (Constructor<?> constructor : constructors) {
-            final Class<?>[] parameterTypes = constructor.getParameterTypes();
-
-            boolean canBuild = true;
-
-            List<Object> parameters = new ArrayList<Object>();
-
-            for (Class<?> parameterType : parameterTypes) {
-                final Object service = serviceDiscovery.findService(parameterType);
-                if (service != null) {
-                    parameters.add(service);
-                }
-            }
-
-            if (parameters.size() == parameterTypes.length) {
-                instance = constructor.newInstance(parameters.toArray());
-                break;
-            }
-
-        }
-
-        return instance;
-    }
+//    private Object attemptInstantiation(Class<?> clazz, ServiceDiscovery serviceDiscovery) throws IllegalAccessException, InvocationTargetException, InstantiationException {
+//
+//        Object instance = null;
+//
+//        // Have a look for a constructor we can use
+//        final Constructor<?>[] constructors = clazz.getConstructors();
+//        for (Constructor<?> constructor : constructors) {
+//            final Class<?>[] parameterTypes = constructor.getParameterTypes();
+//
+//            boolean canBuild = true;
+//
+//            List<Object> parameters = new ArrayList<Object>();
+//
+//            for (Class<?> parameterType : parameterTypes) {
+//                final Object service = serviceDiscovery.findService(parameterType);
+//                if (service != null) {
+//                    parameters.add(service);
+//                }
+//            }
+//
+//            if (parameters.size() == parameterTypes.length) {
+//                instance = constructor.newInstance(parameters.toArray());
+//                break;
+//            }
+//        }
+//
+//
+//        return instance;
+//    }
 
     public boolean isConfigured(Module<?> module) {
         return successfullyConfiguredModules.contains(module);

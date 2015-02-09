@@ -29,6 +29,7 @@ public class HistoricalPatternisedDataResponse extends BaseRequestResponseMessag
     @SuppressWarnings("unchecked") public void read(SofReader reader) throws SofException {
         setCorrelationID(reader.readInt(1));
         this.compressedBlock = (CompressedBlock<PatternisedLogEvent>) reader.readObject(2);
+        compressedBlock.setSofConfiguration(reader.getConfiguration());
         this.events = compressedBlock.decodeAll(PatternisedLogEvent.class);
         this.lastBatch = reader.readBoolean(3);
     }

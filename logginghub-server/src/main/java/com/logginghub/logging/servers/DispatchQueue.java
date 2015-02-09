@@ -1,14 +1,5 @@
 package com.logginghub.logging.servers;
 
-import java.io.IOException;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
-import javax.xml.bind.annotation.XmlAttribute;
-
 import com.logginghub.logging.servers.DispatchQueue.DispatchQueueConfiguration;
 import com.logginghub.utils.Destination;
 import com.logginghub.utils.Multiplexer;
@@ -19,6 +10,14 @@ import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.module.Configures;
 import com.logginghub.utils.module.Module;
 import com.logginghub.utils.module.ServiceDiscovery;
+
+import javax.xml.bind.annotation.XmlAttribute;
+import java.io.IOException;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class DispatchQueue<T> implements Module<DispatchQueueConfiguration>, Source<T>, Destination<T> {
 
@@ -54,7 +53,7 @@ public class DispatchQueue<T> implements Module<DispatchQueueConfiguration>, Sou
     @Override public void send(final T t) {
         if (queue != null) {
             int size = queue.size();
-            if (size < configuration.asynchronousQueueDiscardSize) {
+            if (size < configuration.asynchronousQueueDiscardSize && pool != null) {
                 pool.execute(new Runnable() {
                     public void run() {
                         try {

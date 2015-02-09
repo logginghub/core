@@ -1,19 +1,19 @@
 package com.logginghub.logging.messages;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import com.logginghub.logging.DefaultLogEvent;
+import com.logginghub.logging.LogEventBuilder;
+import com.logginghub.utils.Visitor;
+import com.logginghub.utils.logging.Logger;
+import com.logginghub.utils.sof.SofConfiguration;
+import com.logginghub.utils.sof.SofSerialiser;
+import org.junit.Test;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Test;
-
-import com.logginghub.logging.DefaultLogEvent;
-import com.logginghub.logging.LogEventBuilder;
-import com.logginghub.utils.Visitor;
-import com.logginghub.utils.logging.Logger;
-import com.logginghub.utils.sof.SofSerialiser;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 public class TestCompressedBlock {
 
@@ -22,9 +22,9 @@ public class TestCompressedBlock {
     private DefaultLogEvent event3 = LogEventBuilder.create(0, Logger.severe, "event3");
     private DefaultLogEvent event4 = LogEventBuilder.create(0, Logger.info, "event4");
     private DefaultLogEvent event5 = LogEventBuilder.create(0, Logger.debug, "event5");
-    
+
     @Test public void test_breaking_it_down() throws Exception {
-        
+
         SofSerialisationStrategy serialiser = new SofSerialisationStrategy(true, true);
         serialiser.getConfiguration().registerType(DefaultLogEvent.class, 0);
         LZ4CompressionStrategy compression = new LZ4CompressionStrategy();
@@ -36,31 +36,35 @@ public class TestCompressedBlock {
         serialiser.serialise(byteBuffer, event3);
         serialiser.serialise(byteBuffer, event4);
         serialiser.serialise(byteBuffer, event5);
-        
+
         byteBuffer.flip();
         byteBuffer.mark();
-        
-        assertThat((DefaultLogEvent)serialiser.deserialise(byteBuffer), is(event1));
-        assertThat((DefaultLogEvent)serialiser.deserialise(byteBuffer), is(event2));
-        assertThat((DefaultLogEvent)serialiser.deserialise(byteBuffer), is(event3));
-        assertThat((DefaultLogEvent)serialiser.deserialise(byteBuffer), is(event4));
-        assertThat((DefaultLogEvent)serialiser.deserialise(byteBuffer), is(event5));
-        
+
+        assertThat((DefaultLogEvent) serialiser.deserialise(byteBuffer), is(event1));
+        assertThat((DefaultLogEvent) serialiser.deserialise(byteBuffer), is(event2));
+        assertThat((DefaultLogEvent) serialiser.deserialise(byteBuffer), is(event3));
+        assertThat((DefaultLogEvent) serialiser.deserialise(byteBuffer), is(event4));
+        assertThat((DefaultLogEvent) serialiser.deserialise(byteBuffer), is(event5));
+
         byteBuffer.reset();
-        
+
         ByteBuffer compressed = compression.compress(byteBuffer);
         ByteBuffer decompressed = compression.decompress(compressed);
 
-        assertThat((DefaultLogEvent)serialiser.deserialise(decompressed), is(event1));
-        assertThat((DefaultLogEvent)serialiser.deserialise(decompressed), is(event2));
-        assertThat((DefaultLogEvent)serialiser.deserialise(decompressed), is(event3));
-        assertThat((DefaultLogEvent)serialiser.deserialise(decompressed), is(event4));
-        assertThat((DefaultLogEvent)serialiser.deserialise(decompressed), is(event5));
+        assertThat((DefaultLogEvent) serialiser.deserialise(decompressed), is(event1));
+        assertThat((DefaultLogEvent) serialiser.deserialise(decompressed), is(event2));
+        assertThat((DefaultLogEvent) serialiser.deserialise(decompressed), is(event3));
+        assertThat((DefaultLogEvent) serialiser.deserialise(decompressed), is(event4));
+        assertThat((DefaultLogEvent) serialiser.deserialise(decompressed), is(event5));
 
-        
+
     }
-    
+
     @Test public void test_lz4() throws Exception {
+
+        SofConfiguration sofConfiguration = new SofConfiguration();
+        sofConfiguration.registerType(CompressedBlock.class, 0);
+        sofConfiguration.registerType(DefaultLogEvent.class, 1);
 
         CompressedBlock<DefaultLogEvent> block = new CompressedBlock<DefaultLogEvent>();
         block.setCompressionStrategy(CompressionStrategyFactory.compression_lz4);
@@ -71,13 +75,13 @@ public class TestCompressedBlock {
         block.addObject(event4);
         block.addObject(event5);
 
-        byte[] bytes = SofSerialiser.toBytes(block);
-        System.out.println(bytes.length);
+        byte[] bytes = SofSerialiser.toBytes(block, sofConfiguration);
 
         CompressedBlock<DefaultLogEvent> decoded = SofSerialiser.fromBytes(bytes, CompressedBlock.class);
 
         final List<DefaultLogEvent> events = new ArrayList<DefaultLogEvent>();
 
+        decoded.setSofConfiguration(sofConfiguration);
         decoded.decodeObjects(DefaultLogEvent.class, new Visitor<DefaultLogEvent>() {
             public void visit(DefaultLogEvent t) {
                 events.add(t);
@@ -98,10 +102,14 @@ public class TestCompressedBlock {
         assertThat(decodeAll[2], is(event3));
         assertThat(decodeAll[3], is(event4));
         assertThat(decodeAll[4], is(event5));
-        
+
     }
-    
+
     @Test public void test_plain() throws Exception {
+
+        SofConfiguration sofConfiguration = new SofConfiguration();
+        sofConfiguration.registerType(CompressedBlock.class, 0);
+        sofConfiguration.registerType(DefaultLogEvent.class, 1);
 
         CompressedBlock<DefaultLogEvent> block = new CompressedBlock<DefaultLogEvent>();
         block.setCompressionStrategy(CompressionStrategyFactory.compression_none);
@@ -112,10 +120,11 @@ public class TestCompressedBlock {
         block.addObject(event4);
         block.addObject(event5);
 
-        byte[] bytes = SofSerialiser.toBytes(block);
-        System.out.println(bytes.length);
+        byte[] bytes = SofSerialiser.toBytes(block, sofConfiguration);
 
         CompressedBlock<DefaultLogEvent> decoded = SofSerialiser.fromBytes(bytes, CompressedBlock.class);
+
+        decoded.setSofConfiguration(sofConfiguration);
 
         final List<DefaultLogEvent> events = new ArrayList<DefaultLogEvent>();
 

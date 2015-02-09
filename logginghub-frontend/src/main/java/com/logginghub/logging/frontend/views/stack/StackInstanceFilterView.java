@@ -15,7 +15,7 @@ import javax.swing.JTextField;
 import java.awt.Color;
 import java.util.regex.PatternSyntaxException;
 
-public class MutlipleThreadViewFilterPanel extends JPanel {
+public class StackInstanceFilterView extends JPanel {
 
     private final JTextField threadFilter;
     private final JCheckBox threadFilterRegexCheckBox;
@@ -32,7 +32,7 @@ public class MutlipleThreadViewFilterPanel extends JPanel {
     private WildcardOrRegexMatcher threadMatcher;
     private boolean badFilters;
 
-    public MutlipleThreadViewFilterPanel() {
+    public StackInstanceFilterView() {
         setLayout(new MigLayout("", "[][grow,fill][]", "[][][fill]"));
 
         instanceFilter = new JTextField("*.*.*.*");

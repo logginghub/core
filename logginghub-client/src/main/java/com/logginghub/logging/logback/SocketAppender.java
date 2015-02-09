@@ -363,4 +363,13 @@ public class SocketAppender extends AppenderBase<ILoggingEvent> implements Stand
     public AppenderHelper getAppenderHelper() {
         return appenderHelper;
     }
+
+
+    public void setReportsModuleEnabled(boolean value) {
+        this.appenderHelper.setReportsModuleEnabled(value);
+    }
+
+    public void setReportsModuleConfiguration(String path) {
+        this.appenderHelper.setReportsConfigurationPath(path);
+    }
 }

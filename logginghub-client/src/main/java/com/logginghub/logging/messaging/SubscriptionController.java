@@ -1,5 +1,8 @@
 package com.logginghub.logging.messaging;
 
+import com.logginghub.utils.Destination;
+import com.logginghub.utils.logging.Logger;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -10,18 +13,12 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
 
-import com.logginghub.utils.Destination;
-import com.logginghub.utils.logging.Logger;
-
 /**
- * Quite a complex undertaking with lots of generics that was intended to abstract channel
- * subscriptions for both hub and client. Its become a little bit to hard to work with though, too
- * complex!
- * 
- * @author james
+ * Quite a complex undertaking with lots of generics that was intended to abstract channel subscriptions for both hub and client. Its become a little bit to hard to work with though, too complex!
  *
  * @param <T>
  * @param <K>
+ * @author james
  */
 public abstract class SubscriptionController<T extends Destination<K>, K> {
 
@@ -41,7 +38,9 @@ public abstract class SubscriptionController<T extends Destination<K>, K> {
             }
         }
 
-        list.add(counterpart);
+        if (!list.contains(counterpart)) {
+            list.add(counterpart);
+        }
 
         Future<Boolean> future = subscriptionFutures.get(channel);
         return future;
@@ -50,8 +49,7 @@ public abstract class SubscriptionController<T extends Destination<K>, K> {
     private String tidy(String channel) {
         if (channel.endsWith("/")) {
             return channel.substring(0, channel.length() - 1);
-        }
-        else {
+        } else {
             return channel;
         }
     }
@@ -130,13 +128,12 @@ public abstract class SubscriptionController<T extends Destination<K>, K> {
 
             List<T> toRemove = null;
 
-            for (Iterator<T> iterator = list.iterator(); iterator.hasNext();) {
+            for (Iterator<T> iterator = list.iterator(); iterator.hasNext(); ) {
                 T t = iterator.next();
                 if (t != source) {
                     try {
                         t.send(message);
-                    }
-                    catch (RuntimeException e) {
+                    } catch (RuntimeException e) {
                         logger.warning(e, "Failed to dispatch to destination");
                         if (toRemove == null) {
                             toRemove = new ArrayList<T>();
@@ -208,8 +205,7 @@ public abstract class SubscriptionController<T extends Destination<K>, K> {
         int count;
         if (list == null) {
             count = 0;
-        }
-        else {
+        } else {
             count = list.size();
         }
 

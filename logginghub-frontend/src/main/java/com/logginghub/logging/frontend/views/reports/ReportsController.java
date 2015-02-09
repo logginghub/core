@@ -5,14 +5,21 @@ import com.logginghub.logging.frontend.modules.EnvironmentMessagingService;
 import com.logginghub.logging.messages.ChannelMessage;
 import com.logginghub.logging.messages.Channels;
 import com.logginghub.logging.messages.LoggingMessage;
+import com.logginghub.logging.messages.ReportDetails;
 import com.logginghub.logging.messages.ReportExecuteRequest;
 import com.logginghub.logging.messages.ReportExecuteResponse;
+import com.logginghub.logging.messages.ReportExecuteResult;
 import com.logginghub.logging.messages.ReportListRequest;
 import com.logginghub.logging.messages.ReportListResponse;
 import com.logginghub.utils.Destination;
+import com.logginghub.utils.Result;
 import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.observable.Binder2;
 import com.logginghub.utils.sof.SerialisableObject;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by james on 04/02/15.
@@ -24,21 +31,38 @@ public class ReportsController {
     private final EnvironmentMessagingService messagingService;
     private Binder2 binder = new Binder2();
 
+    private Set<String> reportNames = new HashSet<String>();
+
     public ReportsController(final ReportsModel model, final EnvironmentMessagingService messagingService) {
         this.model = model;
         this.messagingService = messagingService;
 
         final Destination<ChannelMessage> destination = new Destination<ChannelMessage>() {
             @Override public void send(ChannelMessage message) {
-                logger.info("Received private channel message '{}'", message);
                 final SerialisableObject payload = message.getPayload();
 
                 if (payload instanceof ReportListResponse) {
+
                     final ReportListResponse response = (ReportListResponse) payload;
-                    model.getReportDetails().clear();
-                    model.getReportDetails().addAll(response.getReportDetails());
+                    final List<ReportDetails> reportDetails = response.getReportDetails();
+
+                    for (ReportDetails reportDetail : reportDetails) {
+                        if(!reportNames.contains(reportDetail.getName())) {
+                            model.getReportDetails().add(reportDetail);
+                            reportNames.add(reportDetail.getName());
+                        }
+                    }
+
+
                 } else if (payload instanceof ReportExecuteResponse) {
                     final ReportExecuteResponse response = (ReportExecuteResponse) payload;
+                    if(model.getTrimWhitespsace().get()) {
+                        final Result<ReportExecuteResult> result = response.getResult();
+                        if(result.isSuccessful()) {
+                            final ReportExecuteResult value = result.getValue();
+                            value.setResult(value.getResult().trim());
+                        }
+                    }
                     model.getResponses().add(response);
                 }
             }
@@ -62,6 +86,8 @@ public class ReportsController {
         request.setRespondToChannel(messagingService.getConnectionID());
         ChannelMessage message = new ChannelMessage(Channels.reportListRequests, request);
 
+        reportNames.clear();
+        model.getReportDetails().clear();
         try {
             messagingService.send(message);
         } catch (LoggingMessageSenderException e) {

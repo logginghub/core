@@ -382,4 +382,13 @@ public class SocketAppender extends AppenderSkeleton implements StandardAppender
     public void setMaxWriteQueueSize(int i) {
         appenderHelper.setMaxWriteQueueSize(i);
     }
+
+
+    public void setReportsModuleEnabled(boolean value) {
+        this.appenderHelper.setReportsModuleEnabled(value);
+    }
+
+    public void setReportsModuleConfiguration(String path) {
+        this.appenderHelper.setReportsConfigurationPath(path);
+    }
 }

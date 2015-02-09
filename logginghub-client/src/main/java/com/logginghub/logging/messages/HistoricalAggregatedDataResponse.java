@@ -27,6 +27,7 @@ public class HistoricalAggregatedDataResponse extends BaseRequestResponseMessage
     @SuppressWarnings("unchecked") public void read(SofReader reader) throws SofException {
         setCorrelationID(reader.readInt(1));
         this.compressedBlock = (CompressedBlock<AggregatedLogEvent>) reader.readObject(2);
+        compressedBlock.setSofConfiguration(reader.getConfiguration());
         this.events = compressedBlock.decodeAll(AggregatedLogEvent.class);
         this.lastBatch = reader.readBoolean(3);
     }

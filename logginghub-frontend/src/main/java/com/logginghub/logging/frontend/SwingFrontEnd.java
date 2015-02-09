@@ -1,17 +1,5 @@
 package com.logginghub.logging.frontend;
 
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.EventQueue;
-import java.awt.Toolkit;
-import java.io.Closeable;
-import java.io.File;
-import java.util.Timer;
-
-import javax.swing.JFrame;
-import javax.swing.JTabbedPane;
-import javax.swing.UnsupportedLookAndFeelException;
-
 import com.logginghub.logging.frontend.charting.model.NewChartingModel;
 import com.logginghub.logging.frontend.configuration.LoggingFrontendConfiguration;
 import com.logginghub.logging.frontend.images.Icons;
@@ -32,7 +20,6 @@ import com.logginghub.utils.DelayedAutosavingFileBasedMetadata;
 import com.logginghub.utils.FileUtils;
 import com.logginghub.utils.MainUtils;
 import com.logginghub.utils.Metadata;
-import com.logginghub.utils.OSUtils;
 import com.logginghub.utils.StringUtils;
 import com.logginghub.utils.TimerUtils;
 import com.logginghub.utils.VisualStopwatchController;
@@ -42,6 +29,16 @@ import com.logginghub.utils.module.ClassResolver;
 import com.logginghub.utils.module.Container2;
 import com.logginghub.utils.observable.ObservableItemContainer;
 import com.logginghub.utils.observable.ObservableListener;
+
+import javax.swing.JFrame;
+import javax.swing.JTabbedPane;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.EventQueue;
+import java.awt.Toolkit;
+import java.io.Closeable;
+import java.io.File;
+import java.util.Timer;
 
 public class SwingFrontEnd extends SmartJFrame implements Closeable {
     private LoggingFrontendModel model;
@@ -174,28 +171,28 @@ public class SwingFrontEnd extends SmartJFrame implements Closeable {
     }
 
     private static void setLAF() {
-        if (OSUtils.isUnix()) {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("com.sun.java.swing.plaf.gtk.GTKLookAndFeel".equals(info.getClassName())) {
-                    try {
-                        javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    }
-                    catch (ClassNotFoundException e) {
-                        e.printStackTrace();
-                    }
-                    catch (InstantiationException e) {
-                        e.printStackTrace();
-                    }
-                    catch (IllegalAccessException e) {
-                        e.printStackTrace();
-                    }
-                    catch (UnsupportedLookAndFeelException e) {
-                        e.printStackTrace();
-                    }
-                    break;
-                }
-            }
-        }
+//        if (OSUtils.isUnix()) {
+//            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+//                if ("com.sun.java.swing.plaf.gtk.GTKLookAndFeel".equals(info.getClassName())) {
+//                    try {
+//                        javax.swing.UIManager.setLookAndFeel(info.getClassName());
+//                    }
+//                    catch (ClassNotFoundException e) {
+//                        e.printStackTrace();
+//                    }
+//                    catch (InstantiationException e) {
+//                        e.printStackTrace();
+//                    }
+//                    catch (IllegalAccessException e) {
+//                        e.printStackTrace();
+//                    }
+//                    catch (UnsupportedLookAndFeelException e) {
+//                        e.printStackTrace();
+//                    }
+//                    break;
+//                }
+//            }
+//        }
     }
 
     public static SwingFrontEnd mainInternal(String[] args) {

@@ -47,7 +47,6 @@ public class StackTraceView extends JPanel {
     private final JButton copyHTMLButton;
 
     private StackInstanceFiltersView filtersView = new StackInstanceFiltersView();
-
     private StackInstanceFiltersModel filtersModel;
 
     //    private List<MutlipleThreadViewFilterPanel> filterPanels = new ArrayList<MutlipleThreadViewFilterPanel>();
@@ -267,39 +266,6 @@ public class StackTraceView extends JPanel {
 
     }
 
-    //    private void toggleAndOr() {
-    //        andMatch = !andMatch;
-    //        if (andMatch) {
-    //            andOrButton.setText("AND");
-    //        } else {
-    //            andOrButton.setText("OR");
-    //        }
-    //    }
-
-    //    private void addFilter() {
-    //        MutlipleThreadViewFilterPanel filterPanel = new MutlipleThreadViewFilterPanel();
-    //        StackInstanceFilterModel filterModel = new StackInstanceFilterModel();
-    //
-    //        filterPanel.bind(filterModel);
-    //
-    //        filterModel.addListener(new ObservableListener() {
-    //            @Override public void onChanged(ObservableItemContainer observable, Object childPropertyThatChanged) {
-    //                filterDelay.execute(new Runnable() {
-    //                    @Override public void run() {
-    //                        SwingUtilities.invokeLater(new Runnable() {
-    //                            @Override public void run() {
-    //                                runFilter();
-    //                            }
-    //                        });
-    //                    }
-    //                });
-    //            }
-    //        });
-    //
-    //        filterPanels.add(filterPanel);
-    //        filterPane.add(filterPanel, "cell 0 0");
-    //    }
-
     public void bind(StackTraceController controller, ObservableList<ThreadsInProcessViewModel> viewList, StackInstanceFiltersModel filtersModel) {
 
         this.controller = controller;
@@ -371,7 +337,7 @@ public class StackTraceView extends JPanel {
         for (Column column : allColumns) {
             boolean includeColumn = andMatch;
 
-            for (MutlipleThreadViewFilterPanel filter : filtersView.getFilterPanels()) {
+            for (StackInstanceFilterView filter : filtersView.getFilterPanels()) {
                 if (andMatch) {
                     includeColumn &= filter.includeColumn(column);
                 } else {
@@ -389,7 +355,7 @@ public class StackTraceView extends JPanel {
 
                     boolean includeCell = andMatch;
 
-                    for (MutlipleThreadViewFilterPanel filter : filtersView.getFilterPanels()) {
+                    for (StackInstanceFilterView filter : filtersView.getFilterPanels()) {
                         if (andMatch) {
                             includeCell &= filter.includeCell(cell);
                         } else {

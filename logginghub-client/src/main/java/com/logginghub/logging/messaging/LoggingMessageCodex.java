@@ -54,8 +54,6 @@ import com.logginghub.logging.messages.ReportExecuteResponse;
 import com.logginghub.logging.messages.ReportExecuteResult;
 import com.logginghub.logging.messages.ReportListRequest;
 import com.logginghub.logging.messages.ReportListResponse;
-import com.logginghub.logging.messages.ReportRunRequest;
-import com.logginghub.logging.messages.ReportRunResponse;
 import com.logginghub.logging.messages.ResponseMessage;
 import com.logginghub.logging.messages.StackSnapshot;
 import com.logginghub.logging.messages.StackStrobeRequest;
@@ -220,15 +218,12 @@ public class LoggingMessageCodex {
             registerType(ReportListRequest.class, 64);
             registerType(ReportDetails.class, 65);
 
-            registerType(ReportRunRequest.class, 66);
-            registerType(ReportRunResponse.class, 67);
+            registerType(ReportExecuteRequest.class, 66);
+            registerType(ReportExecuteResponse.class, 67);
+            registerType(ReportExecuteResult.class, 68);
 
-            registerType(ReportExecuteRequest.class, 68);
-            registerType(ReportExecuteResponse.class, 69);
+            registerType(InstanceKey.class, 69);
 
-            registerType(InstanceKey.class, 70);
-
-            registerType(ReportExecuteResult.class, 71);
         }
     };
 
