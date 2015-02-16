@@ -4,7 +4,7 @@ plugins {
 
 subprojects {
 
-    version = '1.4.7'
+    version = '1.4.8'
     group = 'com.logginghub'
 
     apply plugin: 'java'
@@ -65,7 +65,7 @@ subprojects {
 
     remotes {
         hosting {
-            host = 'hosting'
+            host = 'www.vertexlabs.co.uk'
             user = 'mavenrepo'
             identity = file(System.properties['user.home'] + "/.ssh/id_rsa")
         }
@@ -82,7 +82,7 @@ subprojects {
     uploadArchives {
         repositories.mavenDeployer {
             configuration = configurations.deployerJars
-            repository(url: "scp://mavenrepo@hosting:/var/www/repository")  {
+            repository(url: "scp://mavenrepo@www.vertexlabs.co.uk:/var/www/repository")  {
                 authentication(userName: "mavenrepo", privateKey: System.properties['user.home'] + "/.ssh/id_rsa")
             }
         }
