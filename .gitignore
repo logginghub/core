@@ -30,3 +30,4 @@ target/
 logginghub-integrationtests/results/
 logginghub-server/binarylogs/
 logginghub-server/stackTraceHistory/
+*.iml
