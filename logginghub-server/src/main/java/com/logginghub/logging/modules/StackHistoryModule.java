@@ -3,17 +3,7 @@ package com.logginghub.logging.modules;
 import com.logginghub.logging.exceptions.LoggingMessageSenderException;
 import com.logginghub.logging.interfaces.ChannelMessagingService;
 import com.logginghub.logging.interfaces.QueueAwareLoggingMessageSender;
-import com.logginghub.logging.messages.BaseRequestResponseMessage;
-import com.logginghub.logging.messages.ChannelMessage;
-import com.logginghub.logging.messages.Channels;
-import com.logginghub.logging.messages.HistoricalDataRequest;
-import com.logginghub.logging.messages.HistoricalStackDataJobKillRequest;
-import com.logginghub.logging.messages.HistoricalStackDataRequest;
-import com.logginghub.logging.messages.HistoricalStackDataResponse;
-import com.logginghub.logging.messages.LoggingMessage;
-import com.logginghub.logging.messages.StackSnapshot;
-import com.logginghub.logging.messages.StackTrace;
-import com.logginghub.logging.messages.StackTraceItem;
+import com.logginghub.logging.messages.*;
 import com.logginghub.logging.messaging.SocketConnectionInterface;
 import com.logginghub.logging.modules.configuration.StackHistoryConfiguration;
 import com.logginghub.logging.repository.SofBlockStreamRotatingReader;
@@ -79,6 +69,7 @@ public class StackHistoryModule implements Module<StackHistoryConfiguration>, De
         sofConfiguration.registerType(StackSnapshot.class, 0);
         sofConfiguration.registerType(StackTrace.class, 1);
         sofConfiguration.registerType(StackTraceItem.class, 2);
+        sofConfiguration.registerType(InstanceKey.class, 3);
 
         writer = new SofBlockStreamRotatingWriter(folder, prefix, postfix, sofConfiguration);
         writer.setTotalFileSizeLimit(configuration.getTotalFileSizeLimit());

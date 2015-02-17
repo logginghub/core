@@ -1,5 +1,5 @@
 { "reports":
   [
-    {"name": "uname", "command": "uname" }
+    {"name": "uname", "command": "/usr/bin/uname" }
   ]
 }
