@@ -1,36 +1,20 @@
 package com.logginghub.logging.modules;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.LogEventBuilder;
 import com.logginghub.logging.modules.configuration.VMStatMonitorConfiguration;
-import com.logginghub.utils.Asynchronous;
-import com.logginghub.utils.Destination;
-import com.logginghub.utils.InputStreamReaderThread;
-import com.logginghub.utils.InputStreamReaderThreadListener;
-import com.logginghub.utils.Multiplexer;
-import com.logginghub.utils.NetUtils;
-import com.logginghub.utils.OSUtils;
-import com.logginghub.utils.ProcessWrapper;
-import com.logginghub.utils.ResourceUtils;
-import com.logginghub.utils.StringUtils;
-import com.logginghub.utils.ThreadUtils;
-import com.logginghub.utils.TimeUtils;
-import com.logginghub.utils.WorkerThread;
+import com.logginghub.utils.*;
 import com.logginghub.utils.data.DataStructure;
 import com.logginghub.utils.data.DataStructure.Values;
 import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.module.Module;
 import com.logginghub.utils.module.ServiceDiscovery;
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class VMStatMonitorModule implements Module<VMStatMonitorConfiguration>, Asynchronous {
 
@@ -56,7 +40,8 @@ public class VMStatMonitorModule implements Module<VMStatMonitorConfiguration>, 
     private Multiplexer<DataStructure> dataStructureMultiplexer = new Multiplexer<DataStructure>();
     private long retryDelay = 5000;
 
-    @Override public void configure(VMStatMonitorConfiguration configuration, ServiceDiscovery discovery) {
+    @Override
+    public void configure(VMStatMonitorConfiguration configuration, ServiceDiscovery discovery) {
         // this.processName = processName;
         this.configuration = configuration;
         setupKnownHeaders();
@@ -70,19 +55,18 @@ public class VMStatMonitorModule implements Module<VMStatMonitorConfiguration>, 
 
     protected void executeVMStat() {
 
-        InputStream stream = null;
-        if (!forceSimulator && OSUtils.isNixVariant()) {
-            stream = startSubProcess();
-        }
-        else {
-            stream = startSimulator();
-        }
-
-        InputStreamReader reader = new InputStreamReader(stream);
-
-        BufferedReader bufferedReader = new BufferedReader(reader);
-
         try {
+            InputStream stream = null;
+            if (!forceSimulator && OSUtils.isNixVariant()) {
+                stream = startSubProcess();
+            } else {
+                stream = startSimulator();
+            }
+
+            InputStreamReader reader = new InputStreamReader(stream);
+
+            BufferedReader bufferedReader = new BufferedReader(reader);
+
             int count = 0;
             String line;
             while ((line = bufferedReader.readLine()) != null) {
@@ -94,8 +78,7 @@ public class VMStatMonitorModule implements Module<VMStatMonitorConfiguration>, 
                 }
 
             }
-        }
-        catch (IOException e) {
+        } catch (Exception e) {
             if (keepRunning) {
                 logger.warn(e,
                             "Failed to read vmstat input stream, will sleep for {} before trying again",
@@ -117,7 +100,8 @@ public class VMStatMonitorModule implements Module<VMStatMonitorConfiguration>, 
     public void start() {
         keepRunning = true;
         thread = new WorkerThread("LoggingHub-vmstat-reader") {
-            @Override protected void onRun() throws Throwable {
+            @Override
+            protected void onRun() throws Throwable {
                 executeVMStat();
             }
         };
@@ -148,8 +132,7 @@ public class VMStatMonitorModule implements Module<VMStatMonitorConfiguration>, 
             // attachReaderThread(inputStream);
             return inputStream;
 
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException(String.format("Failed to start process '%s'", command), e);
         }
     }
@@ -220,11 +203,11 @@ public class VMStatMonitorModule implements Module<VMStatMonitorConfiguration>, 
 
         if (configuration.isLogRawEvents()) {
             logEventMultiplexer.send(LogEventBuilder.start()
-                                                    .setLevel(configuration.getLevelForRawEvents())
-                                                    .setSourceApplication("TelemetryAgent")
-                                                    .setMessage(configuration.getPrefix() + keyValueLine.toString())
-                                                    .setChannel(configuration.getChannel())
-                                                    .toLogEvent());
+                                             .setLevel(configuration.getLevelForRawEvents())
+                                             .setSourceApplication("TelemetryAgent")
+                                             .setMessage(configuration.getPrefix() + keyValueLine.toString())
+                                             .setChannel(configuration.getChannel())
+                                             .toLogEvent());
         }
     }
 
@@ -241,8 +224,9 @@ public class VMStatMonitorModule implements Module<VMStatMonitorConfiguration>, 
             orderedValues.add(values);
 
             if (values == null) {
-                logger.warn("We've come across an unknown header entry '{}' - we'll carry on, but this value wont be included in the output. Please check your configuration if this is a non-standard column",
-                            string);
+                logger.warn(
+                        "We've come across an unknown header entry '{}' - we'll carry on, but this value wont be included in the output. Please check your configuration if this is a non-standard column",
+                        string);
             }
 
             logger.debug("Added header '{}'", values);

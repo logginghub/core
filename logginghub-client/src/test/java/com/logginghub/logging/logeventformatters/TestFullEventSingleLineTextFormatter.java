@@ -8,6 +8,8 @@ import com.logginghub.utils.StringUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.text.MessageFormat;
+import java.util.Date;
 import java.util.logging.Level;
 
 import static org.hamcrest.core.Is.is;
@@ -25,9 +27,18 @@ import static org.junit.Assert.assertThat;
                                            .setLevel(Level.INFO.intValue())
                                            .toLogEvent();
         String format = formatter.format(logEvent);
+
+        String formatStyle = "{0,date} {0,time,HH:mm:ss.SSS}";
+        MessageFormat messageFormat = new MessageFormat(formatStyle);
+
+        Object[] args = { new Date(1) };
+        StringBuffer text = new StringBuffer();
+        messageFormat.format(args, text, null);
+        String date = text.toString();
+
         assertThat(format,
                    is(StringUtils.format("{} {} {} {} {} {} {} {}  {}",
-                                         "01-Jan-1970 01:00:00.001",
+                                         date,
                                          StringUtils.padRight(NetUtils.getLocalHostname(), 15),
                                          StringUtils.padRight(NetUtils.getLocalIP(), 15),
                                          StringUtils.padRight("0", 7),

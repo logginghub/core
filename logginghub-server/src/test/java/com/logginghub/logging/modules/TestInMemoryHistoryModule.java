@@ -1,31 +1,22 @@
 package com.logginghub.logging.modules;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.endsWith;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.startsWith;
-import static org.junit.Assert.fail;
-
-import java.util.Iterator;
-
-import org.junit.Test;
-
 import com.logginghub.logging.DefaultLogEvent;
 import com.logginghub.logging.LogEventBuilder;
 import com.logginghub.logging.exceptions.LoggingMessageSenderException;
 import com.logginghub.logging.interfaces.QueueAwareLoggingMessageSender;
-import com.logginghub.logging.messages.HistoricalDataRequest;
-import com.logginghub.logging.messages.HistoricalDataResponse;
-import com.logginghub.logging.messages.HistoricalIndexElement;
-import com.logginghub.logging.messages.HistoricalIndexRequest;
-import com.logginghub.logging.messages.HistoricalIndexResponse;
-import com.logginghub.logging.messages.LoggingMessage;
-import com.logginghub.logging.modules.InMemoryHistoryModule;
+import com.logginghub.logging.messages.*;
 import com.logginghub.logging.modules.configuration.InMemoryHistoryConfiguration;
 import com.logginghub.utils.Bucket;
 import com.logginghub.utils.OSUtils;
 import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.module.ProxyServiceDiscovery;
+import org.junit.Test;
+
+import java.util.Iterator;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.fail;
 
 public class TestInMemoryHistoryModule {
 

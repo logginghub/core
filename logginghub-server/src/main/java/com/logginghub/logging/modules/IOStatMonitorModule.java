@@ -1,37 +1,18 @@
 package com.logginghub.logging.modules;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.LogEventBuilder;
 import com.logginghub.logging.modules.configuration.IOStatMonitorConfiguration;
-import com.logginghub.utils.Asynchronous;
-import com.logginghub.utils.Destination;
-import com.logginghub.utils.InputStreamReaderThread;
-import com.logginghub.utils.InputStreamReaderThreadListener;
-import com.logginghub.utils.Multiplexer;
-import com.logginghub.utils.NetUtils;
-import com.logginghub.utils.ProcessWrapper;
-import com.logginghub.utils.ResourceUtils;
-import com.logginghub.utils.StringUtils;
+import com.logginghub.utils.*;
 import com.logginghub.utils.StringUtils.StringUtilsBuilder;
-import com.logginghub.utils.ThreadUtils;
-import com.logginghub.utils.WorkerThread;
 import com.logginghub.utils.data.DataStructure;
 import com.logginghub.utils.data.DataStructure.Values;
 import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.module.Module;
 import com.logginghub.utils.module.ServiceDiscovery;
+
+import java.io.*;
+import java.util.*;
 
 public class IOStatMonitorModule implements Module<IOStatMonitorConfiguration>, Asynchronous {
 
@@ -134,14 +115,20 @@ public class IOStatMonitorModule implements Module<IOStatMonitorConfiguration>, 
                         line = bufferedReader.readLine();
                     }
 
-                    if (line.trim().length() == 0) {
-                        blankLines++;
-                    }
+                    if(line != null) {
+                        if (line.trim().length() == 0) {
+                            blankLines++;
+                        }
 
-                    parseLine(line);
+                        parseLine(line);
+                    }else{
+                        // A null line means the process is dead
+                        throw new WorkerThread.StopRunningException();
+                    }
                 }
                 catch (IOException e) {
                     logger.info(e);
+                    throw new WorkerThread.StopRunningException();
                 }
 
                 if (configuration.isSimulating()) {
