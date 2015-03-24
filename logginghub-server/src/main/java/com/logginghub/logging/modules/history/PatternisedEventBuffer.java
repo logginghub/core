@@ -1,7 +1,5 @@
 package com.logginghub.logging.modules.history;
 
-import java.util.List;
-
 import com.logginghub.logging.DefaultLogEvent;
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.messages.HistoricalIndexElement;
@@ -13,6 +11,8 @@ import com.logginghub.utils.Destination;
 import com.logginghub.utils.JAXBConfiguration;
 import com.logginghub.utils.Pair;
 import com.logginghub.utils.module.ProxyServiceDiscovery;
+
+import java.util.List;
 
 public class PatternisedEventBuffer implements EventBuffer {
 
@@ -89,6 +89,11 @@ public class PatternisedEventBuffer implements EventBuffer {
 
         watermark += sizeOfAdded;
 
+    }
+
+    @Override
+    public int sizeof(DefaultLogEvent t) {
+        return 0;
     }
 
     @Override public long getWatermark() {

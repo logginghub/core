@@ -350,4 +350,9 @@ public class InMemoryHistoryModule implements Module<InMemoryHistoryConfiguratio
         return events.getBlockSequence();
     }
 
+
+    public EventBuffer getEventBuffer() {
+        return events;
+    }
 }
+

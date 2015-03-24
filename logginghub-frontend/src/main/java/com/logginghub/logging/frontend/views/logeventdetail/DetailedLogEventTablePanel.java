@@ -14,16 +14,7 @@ import com.logginghub.logging.frontend.components.QuickFilterHistoryController;
 import com.logginghub.logging.frontend.configuration.RowFormatConfiguration;
 import com.logginghub.logging.frontend.images.Icons;
 import com.logginghub.logging.frontend.images.Icons.IconIdentifier;
-import com.logginghub.logging.frontend.model.EnvironmentModel;
-import com.logginghub.logging.frontend.model.HighlighterModel;
-import com.logginghub.logging.frontend.model.HubConnectionModel;
-import com.logginghub.logging.frontend.model.LogEventContainer;
-import com.logginghub.logging.frontend.model.LogEventContainerController;
-import com.logginghub.logging.frontend.model.LogEventContainerListener;
-import com.logginghub.logging.frontend.model.ObservableField;
-import com.logginghub.logging.frontend.model.QuickFilterController;
-import com.logginghub.logging.frontend.model.QuickFilterModel;
-import com.logginghub.logging.frontend.model.RowFormatModel;
+import com.logginghub.logging.frontend.model.*;
 import com.logginghub.logging.frontend.views.logeventdetail.time.TimeController;
 import com.logginghub.logging.frontend.views.logeventdetail.time.TimeModel;
 import com.logginghub.logging.frontend.views.logeventdetail.time.TimeView;
@@ -38,17 +29,7 @@ import com.logginghub.logging.messaging.SocketClientManager;
 import com.logginghub.logging.modules.TimestampVariableRollingFileLogger;
 import com.logginghub.logging.repository.LocalDiskRepository;
 import com.logginghub.logging.repository.config.LocalDiskRepositoryConfiguration;
-import com.logginghub.utils.ColourUtils;
-import com.logginghub.utils.MemorySnapshot;
-import com.logginghub.utils.Metadata;
-import com.logginghub.utils.MovingAverage;
-import com.logginghub.utils.Stopwatch;
-import com.logginghub.utils.Throttler;
-import com.logginghub.utils.TimeProvider;
-import com.logginghub.utils.TimeUtils;
-import com.logginghub.utils.TimerUtils;
-import com.logginghub.utils.VisualStopwatchController;
-import com.logginghub.utils.WorkerThread;
+import com.logginghub.utils.*;
 import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.module.ProxyServiceDiscovery;
 import com.logginghub.utils.observable.Binder2;
@@ -56,47 +37,14 @@ import com.logginghub.utils.observable.ObservableList;
 import com.logginghub.utils.observable.ObservablePropertyListener;
 import net.miginfocom.swing.MigLayout;
 
-import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JEditorPane;
-import javax.swing.JFileChooser;
-import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSlider;
-import javax.swing.JSplitPane;
-import javax.swing.JTable;
-import javax.swing.JViewport;
-import javax.swing.KeyStroke;
-import javax.swing.MenuElement;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Desktop;
+import java.awt.*;
 import java.awt.Dialog.ModalityType;
-import java.awt.Dimension;
-import java.awt.Event;
-import java.awt.EventQueue;
-import java.awt.GridLayout;
-import java.awt.Rectangle;
-import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -110,9 +58,8 @@ import java.util.logging.Level;
 
 /**
  * Second attempt - this one aims to be faster when there are a lot of events coming in
- * 
+ *
  * @author James
- * 
  */
 public class DetailedLogEventTablePanel extends JPanel implements LogEventListener {
 
@@ -145,16 +92,23 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
     private int nextFilterID = 0;
     private TimestampVariableRollingFileLogger outputLogger;
     private LogEventContainerListener outputLogListener = new LogEventContainerListener() {
-        @Override public void onAdded(LogEvent event) {}
+        @Override
+        public void onAdded(LogEvent event) {
+        }
 
-        @Override public void onCleared() {}
+        @Override
+        public void onCleared() {
+        }
 
-        @Override public void onPassedFilter(LogEvent event) {
+        @Override
+        public void onPassedFilter(LogEvent event) {
             logger.fine("Event has passed filter and writeOutputLog is turned on, writing event '{}'", event);
             writeOutputLog(event);
         }
 
-        @Override public void onRemoved(LogEvent removed) {}
+        @Override
+        public void onRemoved(LogEvent removed) {
+        }
     };
     private ImageIcon pauseIcon;
     private ImageIcon playIcon;
@@ -199,11 +153,8 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         setLayout(new BorderLayout());
     }
 
-    public DetailedLogEventTablePanel(JMenuBar menuBar,
-                                      String propertiesName,
-                                      final LogEventContainerController eventController,
-                                      TimeProvider timeProvider,
-                                      boolean showHeapSlider) {
+    public DetailedLogEventTablePanel(JMenuBar menuBar, String propertiesName, final LogEventContainerController eventController, TimeProvider
+            timeProvider, boolean showHeapSlider) {
         this();
 
         this.eventController = eventController;
@@ -226,6 +177,13 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
 
         tableScrollPane = new JScrollPane(table);
 
+        tableScrollPane.addMouseWheelListener(new MouseWheelListener() {
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                pause();
+            }
+        });
+
         autoPauser = new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
                 pause();
@@ -238,9 +196,27 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
             tableScrollPane.getVerticalScrollBar().addMouseListener(autoPauser);
             topButton.addMouseListener(autoPauser);
             bottomButton.addMouseListener(autoPauser);
-        }
-        catch (Exception e) {
-            logger.warn(e, "Failed to setup scroll bar listeners");
+        } catch (Exception e) {
+            // This goes bang on macs - need an alternative approach
+
+            tableScrollPane.getVerticalScrollBar().addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    pause();
+                }
+
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    pause();
+                }
+
+                @Override
+                public void mouseDragged(MouseEvent e) {
+                    pause();
+                }
+            });
+
+
         }
 
         JPanel filtersAndButtonsPanel = new JPanel();
@@ -248,7 +224,8 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         timeTravelButton = new JLabel();
         timeTravelButton.setName("timeTravel");
         timeTravelButton.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent e) {
+            @Override
+            public void mouseClicked(MouseEvent e) {
                 toggleTimeViewer();
             }
         });
@@ -265,7 +242,8 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
 
         clearButton.setIcon(clearIcon);
         clearButton.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent e) {
+            @Override
+            public void mouseClicked(MouseEvent e) {
                 clearEvents();
             }
         });
@@ -273,7 +251,8 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
 
         autoScrollButton.setIcon(pauseIcon);
         autoScrollButton.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent e) {
+            @Override
+            public void mouseClicked(MouseEvent e) {
                 togglePlaying();
             }
         });
@@ -282,7 +261,8 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         final JLabel addQuickFilterButton = new JLabel();
         addQuickFilterButton.setIcon(Icons.get(IconIdentifier.AddCircleSmall));
         addQuickFilterButton.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent e) {
+            @Override
+            public void mouseClicked(MouseEvent e) {
                 addQuickFilter();
             }
         });
@@ -402,7 +382,8 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
             slider.setMaximum(100);
             slider.setValue((int) (100 * (eventController.getThreshold() / (double) Runtime.getRuntime().maxMemory())));
             slider.addChangeListener(new ChangeListener() {
-                @Override public void stateChanged(ChangeEvent e) {
+                @Override
+                public void stateChanged(ChangeEvent e) {
                     int value = slider.getValue();
                     float percentage = (float) value / 100f;
                     eventController.setThreshold((long) (Runtime.getRuntime().maxMemory() * percentage));
@@ -443,16 +424,17 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         TimerUtils.every("LogEventTableUpdater", 50, TimeUnit.MILLISECONDS, new Runnable() {
             public void run() {
                 SwingUtilities.invokeLater(new Runnable() {
-                    @Override public void run() {
+                    @Override
+                    public void run() {
 
                         Stopwatch start = Stopwatch.start("Updating table with new batch");
                         LogEventContainer newEvents;
                         synchronized (incommingEventBatchLock) {
-                            if(incommingEventBatch.size() > 0) {
+                            if (incommingEventBatch.size() > 0) {
                                 newEvents = incommingEventBatch;
                                 incommingEventBatch = new LogEventContainer();
-                            }else{
-                                 newEvents = null;
+                            } else {
+                                newEvents = null;
                             }
                         }
 
@@ -478,8 +460,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
     public void setDetailPaneOrientation(boolean horizontal) {
         if (horizontal) {
             eventDetailsSplitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
-        }
-        else {
+        } else {
             eventDetailsSplitPane.setOrientation(JSplitPane.HORIZONTAL_SPLIT);
         }
     }
@@ -491,8 +472,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         if (isTimeViewerVisible()) {
             previousTimeSplitterLocation = timeSplitter.getDividerLocation();
             timeSplitter.setDividerLocation(1);
-        }
-        else {
+        } else {
             timeSplitter.setDividerLocation(previousTimeSplitterLocation);
             previousTimeSplitterLocation = 0;
         }
@@ -521,7 +501,8 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         table.addHighlighter(highlighter);
     }
 
-    @Override public synchronized void addMouseMotionListener(MouseMotionListener l) {
+    @Override
+    public synchronized void addMouseMotionListener(MouseMotionListener l) {
         super.addMouseMotionListener(l);
         table.addMouseMotionListener(l);
         tableScrollPane.addMouseMotionListener(l);
@@ -534,7 +515,8 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         environmentModel.getQuickFilterModels().add(quickFilterModel);
 
         quickFilterModel.getLevelFilter().get().getSelectedLevel().addListener(new ObservablePropertyListener<Level>() {
-            @Override public void onPropertyChanged(Level oldValue, Level newValue) {
+            @Override
+            public void onPropertyChanged(Level oldValue, Level newValue) {
                 notifyLevelChanges();
             }
         });
@@ -547,7 +529,8 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         getFirstQuickFilter().bind(quickFilterHistoryController, quickFilterModel, quickFilterController.getIsAndFilter());
 
         environmentModel.getFilterUpdateCount().addListener(new ObservablePropertyListener<Integer>() {
-            @Override public void onPropertyChanged(Integer oldValue, Integer newValue) {
+            @Override
+            public void onPropertyChanged(Integer oldValue, Integer newValue) {
                 logger.debug("Environment filter models have changed, starting refresh timer...");
                 updateQuickFilterTimer();
             }
@@ -556,7 +539,8 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         TimeModel timeModel = timeController.getModel();
 
         timeModelBinder.attachPropertyListener(timeModel.getSelectionChanged(), new ObservablePropertyListener<Integer>() {
-            @Override public void onPropertyChanged(Integer oldValue, Integer newValue) {
+            @Override
+            public void onPropertyChanged(Integer oldValue, Integer newValue) {
                 tableModel.refreshFilters(null);
                 scrollToCenter(table, 0, 0);
             }
@@ -564,7 +548,8 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
 
         // Bind to the time click selector to jump to a particular time
         timeModelBinder.attachPropertyListener(timeModel.getClickedTime(), new ObservablePropertyListener<Long>() {
-            @Override public void onPropertyChanged(Long oldValue, Long newValue) {
+            @Override
+            public void onPropertyChanged(Long oldValue, Long newValue) {
                 if (newValue != Long.MAX_VALUE) {
                     if (playing) {
                         pause();
@@ -576,7 +561,8 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
 
         // Bind to the clear selection from the time selector to clear and start playing again
         timeModelBinder.attachPropertyListener(timeModel.getSelectionCleared(), new ObservablePropertyListener<Integer>() {
-            @Override public void onPropertyChanged(Integer oldValue, Integer newValue) {
+            @Override
+            public void onPropertyChanged(Integer oldValue, Integer newValue) {
                 if (!playing) {
                     togglePlaying();
                 }
@@ -641,8 +627,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
     public void findBackwardsAgain() {
         if (lastSearchTerm.length() > 0) {
             findBackwards(lastSearchTerm);
-        }
-        else {
+        } else {
             findBackwards();
         }
     }
@@ -657,8 +642,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
     public void findForwardsAgain() {
         if (lastSearchTerm.length() > 0) {
             findForwards(lastSearchTerm);
-        }
-        else {
+        } else {
             findForwards();
         }
     }
@@ -767,8 +751,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
 
             if (writeOutputLog) {
                 eventController.addLogEventContainerListener(outputLogListener);
-            }
-            else {
+            } else {
                 eventController.removeLogEventContainerListener(outputLogListener);
             }
         }
@@ -777,8 +760,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
     public void togglePlaying() {
         if (playing) {
             pause();
-        }
-        else {
+        } else {
             play();
         }
     }
@@ -798,8 +780,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
             CountingEventQueue eventQueue = (CountingEventQueue) systemEventQueue;
             eventQueueCount = eventQueue.getCount();
             eventQueueProcessed = eventQueue.getProcessedSinceLastCheck();
-        }
-        else {
+        } else {
             eventQueueCount = 0;
             eventQueueProcessed = 0;
         }
@@ -807,17 +788,18 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         boolean detailed = Boolean.getBoolean("detailedLogEventTablePanel.detailedStatus");
 
         if (detailed) {
-            statusText.setText(String.format("%d events | %d filtered | event buffer %.1f %%  | memory usage %.1f %%  | %.0f events/sec | %d events in next batch | Awt queue size %d | Awt processed %d",
-                                             eventController.getLiveEventsThatPassFilter().size(),
-                                             eventController.getLiveEventsThatFailedFilter().size(),
-                                             eventController.getUsedPercentage(),
-                                             memorySnapshot.getAvailableMemoryPercentage(),
-                                             movingAverage.calculateMovingAverage(),
-                                             incommingEventBatch.size(),
-                                             eventQueueCount,
-                                             eventQueueProcessed));
-        }
-        else {
+            statusText.setText(String.format(
+                    "%d events | %d filtered | event buffer %.1f %%  | memory usage %.1f %%  | %.0f events/sec | %d events in next batch | Awt " +
+                    "queue size %d | Awt processed %d",
+                    eventController.getLiveEventsThatPassFilter().size(),
+                    eventController.getLiveEventsThatFailedFilter().size(),
+                    eventController.getUsedPercentage(),
+                    memorySnapshot.getAvailableMemoryPercentage(),
+                    movingAverage.calculateMovingAverage(),
+                    incommingEventBatch.size(),
+                    eventQueueCount,
+                    eventQueueProcessed));
+        } else {
             statusText.setText(String.format("%d events | %d filtered | %.0f events/sec | event buffer %.1f %%  | memory usage %.1f %%",
                                              eventController.getLiveEventsThatPassFilter().size(),
                                              eventController.getLiveEventsThatFailedFilter().size(),
@@ -853,7 +835,8 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         removeButton.setToolTipText("Remove this quick filter");
         removeButton.addMouseListener(new MouseAdapter() {
 
-            @Override public void mouseClicked(MouseEvent e) {
+            @Override
+            public void mouseClicked(MouseEvent e) {
                 quickFilterContainerPanel.remove(wrapperPanel);
                 quickFilterContainerPanel.validate();
                 filterCount--;
@@ -1028,7 +1011,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         int bookmarks = 9;
         for (int i = 1; i < bookmarks; i++) {
             JMenuItem bookmark = new JMenuItem("Add bookmark " + i);
-            bookmark.addActionListener(new ReflectionDispatchActionListener("addBookmark", new Object[] { i }, this));
+            bookmark.addActionListener(new ReflectionDispatchActionListener("addBookmark", new Object[]{i}, this));
             bookmark.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_0 + i, Event.CTRL_MASK));
             searchMenu.add(bookmark);
         }
@@ -1037,7 +1020,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
 
         for (int i = 1; i < bookmarks; i++) {
             JMenuItem bookmark = new JMenuItem("Go to bookmark " + i);
-            bookmark.addActionListener(new ReflectionDispatchActionListener("gotoBookmark", new Object[] { i }, this));
+            bookmark.addActionListener(new ReflectionDispatchActionListener("gotoBookmark", new Object[]{i}, this));
             bookmark.setAccelerator(KeyStroke.getKeyStroke((char) ('0' + i)));
             searchMenu.add(bookmark);
         }
@@ -1129,7 +1112,8 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         quickFilterContainerPanel.validate();
 
         quickFilterModel.getLevelFilter().get().getSelectedLevel().addListener(new ObservablePropertyListener<Level>() {
-            @Override public void onPropertyChanged(Level oldValue, Level newValue) {
+            @Override
+            public void onPropertyChanged(Level oldValue, Level newValue) {
                 notifyLevelChanges();
             }
         });
@@ -1208,8 +1192,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
             quickFilterContainerPanel.add(existing, "wrap");
             quickFilterContainerPanel.validate();
 
-        }
-        else {
+        } else {
 
         }
     }
@@ -1225,11 +1208,11 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
 
         // Create a new instance
         executeQuickFilter = new TimerTask() {
-            @Override public void run() {
+            @Override
+            public void run() {
                 try {
                     executeQuickFilter();
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     logger.warning(e, "Quick filter execution failed");
                 }
             }
@@ -1241,13 +1224,12 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
     protected void writeOutputLog(LogEvent event) {
         if (outputLogger == null) {
             JOptionPane.showMessageDialog(this,
-                                          "You haven't provided an output log configuration, this should have been picked up earlier [this message will repeat for each event]");
-        }
-        else {
+                                          "You haven't provided an output log configuration, this should have been picked up earlier [this message " +
+                                          "" + "will repeat for each event]");
+        } else {
             try {
                 outputLogger.write(event);
-            }
-            catch (LoggingMessageSenderException e) {
+            } catch (LoggingMessageSenderException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -1264,7 +1246,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
     /**
      * Binds an import hahdler to this panel, enalbing the time view to control the import of
      * historical data
-     * 
+     *
      * @param importHandler
      */
     public void bind(final ImportController importHandler) {
@@ -1289,7 +1271,8 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         tableModel.removeFilter(timeController.getFilter(), null);
 
         timeModelBinder.attachPropertyListener(timeModel.getSelectionChanged(), new ObservablePropertyListener<Integer>() {
-            @Override public void onPropertyChanged(Integer oldValue, Integer newValue) {
+            @Override
+            public void onPropertyChanged(Integer oldValue, Integer newValue) {
 
                 logger.fine("Time filter selection changed, from '{}' to '{}",
                             Logger.toDateString(timeModel.getSelectionStart().longValue()),
@@ -1299,15 +1282,18 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
 
                 // Spin off a thread to do the heavy lifting
                 WorkerThread exector = new WorkerThread("DataImport") {
-                    @Override protected void onRun() throws Throwable {
+                    @Override
+                    protected void onRun() throws Throwable {
                         importHandler.loadData(timeModel.getSelectionStart().longValue(), timeModel.getSelectionEnd().longValue(), environmentModel);
                         // Only run once
                         stop();
                     }
 
-                    @Override protected void beforeStop() {
+                    @Override
+                    protected void beforeStop() {
                         SwingUtilities.invokeLater(new Runnable() {
-                            @Override public void run() {
+                            @Override
+                            public void run() {
                                 tableModel.refreshFilters(null);
                                 scrollToCenter(table, 0, 0);
                             }
@@ -1321,7 +1307,8 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
 
         // Bind to the time click selector to jump to a particular time
         timeModelBinder.attachPropertyListener(timeModel.getClickedTime(), new ObservablePropertyListener<Long>() {
-            @Override public void onPropertyChanged(Long oldValue, Long newValue) {
+            @Override
+            public void onPropertyChanged(Long oldValue, Long newValue) {
                 // if (newValue != Long.MAX_VALUE) {
                 // if (playing) {
                 // pause();
@@ -1333,7 +1320,8 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
 
         // Bind to the clear selection from the time selector to clear and start playing again
         timeModelBinder.attachPropertyListener(timeModel.getSelectionCleared(), new ObservablePropertyListener<Integer>() {
-            @Override public void onPropertyChanged(Integer oldValue, Integer newValue) {
+            @Override
+            public void onPropertyChanged(Integer oldValue, Integer newValue) {
                 if (environmentModel != null) {
                     environmentModel.getEventController().clear();
                 }
@@ -1349,8 +1337,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
             tableScrollPane.getVerticalScrollBar().removeMouseListener(autoPauser);
             topButton.removeMouseListener(autoPauser);
             bottomButton.removeMouseListener(autoPauser);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.warn(e, "Failed to disable scroll bar listeners");
         }
     }
@@ -1414,8 +1401,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
             dummyLogEventProducerx.produceEventsOnTimer(1, dummyEventsDelayMS, 5);
 
             dummyLogEventProducerx.addLogEventListener(environmentModel);
-        }
-        else {
+        } else {
             dummyLogEventProducerx.produceEventsOnTimer(1, dummyEventsDelayMS, 5);
         }
     }
@@ -1426,8 +1412,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
             demoLogEventProducer = new DemoLogEventProducer();
             demoLogEventProducer.produceEventsOnTimer(1, dummyEventsDelayMS, 5);
             demoLogEventProducer.addLogEventListener(environmentModel);
-        }
-        else {
+        } else {
             demoLogEventProducer.produceEventsOnTimer(1, dummyEventsDelayMS, 5);
         }
     }
@@ -1454,14 +1439,14 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         if (Desktop.isDesktopSupported()) {
             try {
                 Desktop.getDesktop().open(file);
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 logger.warn(e, "Failed to use Desktop to explore path '{}'", file.getAbsolutePath());
             }
         }
     }
 
-    public void close() {}
+    public void close() {
+    }
 
     public boolean isHistoricalView() {
         return historicalView;
@@ -1474,7 +1459,8 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
             SocketClientManager socketClientManager = hubConnectionModel.getSocketClientManager();
             final SocketClient client = socketClientManager.getClient();
             client.addLoggingMessageListener(new LoggingMessageListener() {
-                @Override public void onNewLoggingMessage(LoggingMessage message) {
+                @Override
+                public void onNewLoggingMessage(LoggingMessage message) {
                     if (message instanceof HistoricalIndexResponse) {
                         HistoricalIndexResponse response = (HistoricalIndexResponse) message;
                         timeController.processHistoricalIndex(response);
@@ -1486,11 +1472,11 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
             final long viewEnd = timeView.getViewEndTime();
 
             WorkerThread.execute("Index loader", new Runnable() {
-                @Override public void run() {
+                @Override
+                public void run() {
                     try {
                         client.sendHistoricalIndexRequest(viewStart, viewEnd);
-                    }
-                    catch (Exception e) {
+                    } catch (Exception e) {
 
                     }
                 }

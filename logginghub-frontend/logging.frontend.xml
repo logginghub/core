@@ -1,8 +1,13 @@
 <loggingFrontendConfiguration title="Local Configuration" showHistoryViewer="true" showChartingEditor="true" showHeapSlider="false">
 
-    <environment name="local" showHistoryTab="true">
-    <hub name="local" host="localhost:15000"/>
+    <!--<environment name="local" showHistoryTab="true">-->
+    <!--<hub name="local" host="localhost:15000"/>-->
+    <!--</environment>-->
+
+    <environment name="SKE-EC2" showHistoryTab="true">
+        <hub name="local" host="ec2-52-16-246-134.eu-west-1.compute.amazonaws.com:15000"/>
     </environment>
+
 
     <!--<environment name="ske" showHistoryTab="true">-->
         <!--<hub name="ske" host="54.77.166.227:15000"/>-->

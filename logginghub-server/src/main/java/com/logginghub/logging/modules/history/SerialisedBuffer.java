@@ -1,18 +1,19 @@
 package com.logginghub.logging.modules.history;
 
+import com.logginghub.logging.DefaultLogEvent;
+import com.logginghub.logging.LogEvent;
+import com.logginghub.logging.messages.HistoricalIndexElement;
+import com.logginghub.logging.messages.SerialisationStrategy;
+import com.logginghub.utils.ByteUtils;
+import com.logginghub.utils.Destination;
+import com.logginghub.utils.FormattedRuntimeException;
+import com.logginghub.utils.Pair;
+
 import java.io.IOException;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.logginghub.logging.DefaultLogEvent;
-import com.logginghub.logging.LogEvent;
-import com.logginghub.logging.messages.HistoricalIndexElement;
-import com.logginghub.logging.messages.SerialisationStrategy;
-import com.logginghub.utils.Destination;
-import com.logginghub.utils.FormattedRuntimeException;
-import com.logginghub.utils.Pair;
 
 public class SerialisedBuffer implements EventBuffer {
 
@@ -106,6 +107,17 @@ public class SerialisedBuffer implements EventBuffer {
                 this.count -= count;
             }
         }
+    }
+
+    @Override
+    public int sizeof(DefaultLogEvent t) {
+        ByteBuffer tempBuffer = ByteBuffer.allocate((int) ByteUtils.megabytes(1));
+        try {
+            serialisationStrategy.serialise(tempBuffer, t);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return tempBuffer.position();
     }
 
     private ByteBuffer createNewBuffer() {

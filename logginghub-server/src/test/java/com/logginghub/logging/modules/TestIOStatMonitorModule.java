@@ -1,11 +1,6 @@
 package com.logginghub.logging.modules;
 
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-
-import org.junit.Test;
-
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.modules.configuration.IOStatMonitorConfiguration;
 import com.logginghub.utils.Bucket;
@@ -16,11 +11,15 @@ import com.logginghub.utils.data.DataStructure;
 import com.logginghub.utils.data.DataStructure.Keys;
 import com.logginghub.utils.data.DataStructure.Values;
 import com.logginghub.utils.module.ConfigurableServiceDiscovery;
+import org.junit.Test;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 public class TestIOStatMonitorModule {
 
 	@Test public void test_linux() {
-		if(OSUtils.isNixVariant()) {
+		if(OSUtils.isNixVariant() && !OSUtils.isMac()) {
 //			Logger.setLevel(Logger.trace, IOStatTelemetryGenerator.class);
 
 	        final Bucket<DataStructure> data = new Bucket<DataStructure>();

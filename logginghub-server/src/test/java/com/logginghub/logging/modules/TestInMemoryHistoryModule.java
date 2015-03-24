@@ -23,15 +23,15 @@ public class TestInMemoryHistoryModule {
     private InMemoryHistoryConfiguration configuration = new InMemoryHistoryConfiguration();
     private InMemoryHistoryModule history = new InMemoryHistoryModule();
 
-    @Test public void test_bad_configuration() throws Exception {
+    @Test
+    public void test_bad_configuration() throws Exception {
 
         configuration.setBlockSize("-1");
 
         try {
             history.configure(configuration, new ProxyServiceDiscovery());
             fail();
-        }
-        catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             assertThat(e.getMessage(),
                        is("The blockSize attribute of the inMemoryHistory configuration must be greater than zero - value is currently '-1'"));
         }
@@ -42,8 +42,7 @@ public class TestInMemoryHistoryModule {
         try {
             history.configure(configuration, new ProxyServiceDiscovery());
             fail();
-        }
-        catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             assertThat(e.getMessage(),
                        is("The maximumSize attribute must be larger than the blockSize attribute - current values are '8K' and '10K' respectively"));
         }
@@ -60,13 +59,13 @@ public class TestInMemoryHistoryModule {
         try {
             history.configure(configuration, new ProxyServiceDiscovery());
             fail();
-        }
-        catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             assertThat(e.getMessage(),
                        is(startsWith("The maximumSize (8 PB) is too large compared to the maximum amount of memory available to the JVM (")));
 
             assertThat(e.getMessage(),
-                       is(endsWith("with 50 MB reserved for GC headroom.) Please reduce the maximumSize or increase the JVM heap size using the -Xmx???m option.")));
+                       is(endsWith("with 50 MB reserved for GC headroom.) Please reduce the maximumSize or increase the JVM heap size using the " +
+                                   "-Xmx???m option.")));
 
         }
 
@@ -77,10 +76,10 @@ public class TestInMemoryHistoryModule {
         try {
             history.configure(configuration, new ProxyServiceDiscovery());
             fail();
-        }
-        catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             assertThat(e.getMessage(),
-                       is("The maximumSize attribute (499K) must be larger than 1 MB - otherwise we risk not being able to store multiple blocks containing larger events"));
+                       is("The maximumSize attribute (499K) must be larger than 1 MB - otherwise we risk not being able to store multiple blocks "
+                          + "containing larger events"));
         }
 
         // This is is too little block size
@@ -90,15 +89,15 @@ public class TestInMemoryHistoryModule {
         try {
             history.configure(configuration, new ProxyServiceDiscovery());
             fail();
-        }
-        catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             assertThat(e.getMessage(),
                        is("The blockSize attribute (10K) must be larger than 100 KB - otherwise we risk not being able to store larger events"));
         }
 
     }
 
-    @Test public void test_same_time() throws Exception {
+    @Test
+    public void test_same_time() throws Exception {
 
         history.configure(configuration, new ProxyServiceDiscovery());
 
@@ -135,7 +134,8 @@ public class TestInMemoryHistoryModule {
 
     }
 
-    @Test public void test_index_time_range() throws Exception {
+    @Test
+    public void test_index_time_range() throws Exception {
 
         history.configure(configuration, new ProxyServiceDiscovery());
 
@@ -187,7 +187,8 @@ public class TestInMemoryHistoryModule {
 
     }
 
-    @Test public void test_search_sub_time_range() throws Exception {
+    @Test
+    public void test_search_sub_time_range() throws Exception {
 
         history.configure(configuration, new ProxyServiceDiscovery());
 
@@ -230,7 +231,8 @@ public class TestInMemoryHistoryModule {
 
     }
 
-    @Test public void test_states_empty() throws Exception {
+    @Test
+    public void test_states_empty() throws Exception {
 
         history.configure(configuration, new ProxyServiceDiscovery());
 
@@ -241,11 +243,13 @@ public class TestInMemoryHistoryModule {
 
         final Bucket<LoggingMessage> batches = new Bucket<LoggingMessage>();
         QueueAwareLoggingMessageSender sender = new QueueAwareLoggingMessageSender() {
-            @Override public void send(LoggingMessage message) throws LoggingMessageSenderException {
+            @Override
+            public void send(LoggingMessage message) throws LoggingMessageSenderException {
                 batches.add((HistoricalDataResponse) message);
             }
 
-            @Override public boolean isSendQueueEmpty() {
+            @Override
+            public boolean isSendQueueEmpty() {
                 return true;
             }
         };
@@ -268,11 +272,13 @@ public class TestInMemoryHistoryModule {
 
         batches.clear();
         sender = new QueueAwareLoggingMessageSender() {
-            @Override public void send(LoggingMessage message) throws LoggingMessageSenderException {
+            @Override
+            public void send(LoggingMessage message) throws LoggingMessageSenderException {
                 batches.add((HistoricalDataResponse) message);
             }
 
-            @Override public boolean isSendQueueEmpty() {
+            @Override
+            public boolean isSendQueueEmpty() {
                 return true;
             }
         };
@@ -285,22 +291,31 @@ public class TestInMemoryHistoryModule {
         assertThat(elements.length, is(1));
     }
 
-    @Test public void test_states_fill_first_block() throws Exception {
-        configuration.setMaximumSize("1500B");
-        configuration.setBlockSize("500B");
+    @Test
+    public void test_states_fill_first_block() throws Exception {
+
+        int blockSize = SofSerialisationStrategy.sizeof(LogEventFixture1.event1, false, true) +
+                        SofSerialisationStrategy.sizeof(LogEventFixture1.event2, false, true) +
+                        SofSerialisationStrategy.sizeof(LogEventFixture1.event3, false, true) +
+                        SofSerialisationStrategy.sizeof(LogEventFixture1.event4, false, true) +
+                        SofSerialisationStrategy.sizeof(LogEventFixture1.event5, false, true);
+
+        configuration.setBlockSize("" + blockSize + "B");
+        configuration.setMaximumSize("" + blockSize + "B");
         configuration.setDisableSafetyChecks(true);
         configuration.setStreamingBatchSize(3);
 
         history.configure(configuration, new ProxyServiceDiscovery());
 
         // Send some events in to fill up the first block
-        Iterator<DefaultLogEvent> iterator = LogEventFixture1.getEvents().iterator();
-        while (history.getBlockSequence() == 0) {
-            history.handleNewEvent(iterator.next());
-        }
+        history.handleNewEvent(LogEventFixture1.event1);
+        history.handleNewEvent(LogEventFixture1.event2);
+        history.handleNewEvent(LogEventFixture1.event3);
+        history.handleNewEvent(LogEventFixture1.event4);
+        history.handleNewEvent(LogEventFixture1.event5);
 
-        // We've not done anything fancy to check the sizes of the actual events or blocks, so a lot
-        // of the assertions that follow are just magic numbers that have been double checked
+        assertThat(history.getBlockSequence(), is(0));
+
 
         // Check the methods
         HistoricalDataResponse dataResponse = history.handleDataRequest(new HistoricalDataRequest(0, 10000));
@@ -314,11 +329,13 @@ public class TestInMemoryHistoryModule {
 
         final Bucket<HistoricalDataResponse> batches = new Bucket<HistoricalDataResponse>();
         QueueAwareLoggingMessageSender sender = new QueueAwareLoggingMessageSender() {
-            @Override public void send(LoggingMessage message) throws LoggingMessageSenderException {
+            @Override
+            public void send(LoggingMessage message) throws LoggingMessageSenderException {
                 batches.add((HistoricalDataResponse) message);
             }
 
-            @Override public boolean isSendQueueEmpty() {
+            @Override
+            public boolean isSendQueueEmpty() {
                 return true;
             }
         };
@@ -341,11 +358,12 @@ public class TestInMemoryHistoryModule {
 
     }
 
-    @Test public void test_states_fill_all_blocks() throws Exception {
+    @Test
+    public void test_states_fill_all_blocks() throws Exception {
         // Nasty fixed sizes that only work on windows :/
 
         // TODO : rewrite to work on linux
-        
+
         if (OSUtils.isWindows()) {
             configuration.setMaximumSize("800B");
             configuration.setBlockSize("500B");
@@ -380,11 +398,13 @@ public class TestInMemoryHistoryModule {
 
             final Bucket<HistoricalDataResponse> batches = new Bucket<HistoricalDataResponse>();
             QueueAwareLoggingMessageSender sender = new QueueAwareLoggingMessageSender() {
-                @Override public void send(LoggingMessage message) throws LoggingMessageSenderException {
+                @Override
+                public void send(LoggingMessage message) throws LoggingMessageSenderException {
                     batches.add((HistoricalDataResponse) message);
                 }
 
-                @Override public boolean isSendQueueEmpty() {
+                @Override
+                public boolean isSendQueueEmpty() {
                     return true;
                 }
             };
@@ -413,7 +433,8 @@ public class TestInMemoryHistoryModule {
 
     }
 
-    @Test public void test_event_fills_up_block() throws Exception {
+    @Test
+    public void test_event_fills_up_block() throws Exception {
         configuration.setMaximumSize("800B");
         configuration.setBlockSize("5B");
         configuration.setDisableSafetyChecks(true);
@@ -429,11 +450,13 @@ public class TestInMemoryHistoryModule {
 
         final Bucket<LoggingMessage> batches = new Bucket<LoggingMessage>();
         QueueAwareLoggingMessageSender sender = new QueueAwareLoggingMessageSender() {
-            @Override public void send(LoggingMessage message) throws LoggingMessageSenderException {
+            @Override
+            public void send(LoggingMessage message) throws LoggingMessageSenderException {
                 batches.add((HistoricalDataResponse) message);
             }
 
-            @Override public boolean isSendQueueEmpty() {
+            @Override
+            public boolean isSendQueueEmpty() {
                 return true;
             }
         };
@@ -447,7 +470,8 @@ public class TestInMemoryHistoryModule {
 
     }
 
-    @Test public void test_minus_one_error() {
+    @Test
+    public void test_minus_one_error() {
 
     }
 

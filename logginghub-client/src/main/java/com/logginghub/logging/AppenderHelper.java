@@ -175,6 +175,7 @@ public class AppenderHelper {
 
         try {
             host = InetAddress.getLocalHost();
+            instanceKey.setHost(host.getHostName());
         } catch (UnknownHostException e1) {
             throw new RuntimeException("Failed to get local host", e1);
         }

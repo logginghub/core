@@ -38,7 +38,7 @@ task buildLaunchScripts << {
     ant.replace(file: "build/tmp/dist_temp/frontend-console.bat", token: 'CLASSPATH', value: artifact)
 
     ant.chmod(file: "build/tmp/dist_temp/frontend.sh", perm: "755");
-    ant.chmod(file: "build/tmp/dist_temp/frontend.comman", perm: "755");
+    ant.chmod(file: "build/tmp/dist_temp/frontend.command", perm: "755");
 
 }
 

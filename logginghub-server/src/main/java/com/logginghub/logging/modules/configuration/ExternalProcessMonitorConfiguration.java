@@ -1,12 +1,12 @@
 package com.logginghub.logging.modules.configuration;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
-
 import com.logginghub.logging.modules.ExternalProcessMonitorModule;
 import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.module.Configures;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
 
 @Configures(ExternalProcessMonitorModule.class)
 @XmlAccessorType(XmlAccessType.FIELD) public class ExternalProcessMonitorConfiguration {
@@ -22,8 +22,10 @@ import com.logginghub.utils.module.Configures;
     @XmlAttribute private String valueEnum = "Custom";
     @XmlAttribute private int valueCode = -1;
     @XmlAttribute private boolean logRawEvents = false;
+    @XmlAttribute private boolean logRawEventErrors = false;
     @XmlAttribute private boolean sendTelemetryEvents = true;
     @XmlAttribute private int levelForRawEvents = Logger.info;
+    @XmlAttribute private int levelForRawEventErrors = Logger.warning;
     @XmlAttribute private String channel;
     @XmlAttribute private String destination = null;
 
@@ -66,11 +68,27 @@ import com.logginghub.utils.module.Configures;
     public int getLevelForRawEvents() {
         return levelForRawEvents;
     }
-    
+
+    public int getLevelForRawEventErrors() {
+        return levelForRawEventErrors;
+    }
+
+    public void setLevelForRawEventErrors(int levelForRawEventErrors) {
+        this.levelForRawEventErrors = levelForRawEventErrors;
+    }
+
+    public void setLogRawEventErrors(boolean logRawEventErrors) {
+        this.logRawEventErrors = logRawEventErrors;
+    }
+
     public boolean isLogRawEvents() {
         return logRawEvents;
-    } 
-    
+    }
+
+    public boolean isLogRawEventErrors() {
+        return logRawEventErrors;
+    }
+
     public int getValueCode() {
         return valueCode;
     }

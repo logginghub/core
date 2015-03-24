@@ -1,34 +1,21 @@
 package com.logginghub.logging.frontend.components;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import com.logginghub.utils.ColourUtils;
+import com.logginghub.utils.OSUtils;
+import com.logginghub.utils.logging.Logger;
+import com.logginghub.utils.observable.ObservableProperty;
+import com.logginghub.utils.observable.ObservablePropertyListener;
+import net.miginfocom.swing.MigLayout;
+
+import javax.swing.*;
+import javax.swing.plaf.metal.MetalComboBoxIcon;
+import java.awt.*;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
-
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.SwingUtilities;
-import javax.swing.plaf.metal.MetalComboBoxIcon;
-
-import net.miginfocom.swing.MigLayout;
-
-import com.logginghub.utils.ColourUtils;
-import com.logginghub.utils.logging.Logger;
-import com.logginghub.utils.observable.ObservableProperty;
-import com.logginghub.utils.observable.ObservablePropertyListener;
 
 public class LevelsCheckboxListView extends JPanel {
     private JLabel xlabel;
@@ -60,7 +47,11 @@ public class LevelsCheckboxListView extends JPanel {
     }
 
     public LevelsCheckboxListView() {
-        setLayout(new MigLayout("fill, inset 0, gap 0", "[grow,fill][fill, 18px:18:18px]", "[grow,fill]"));
+        if(OSUtils.isMac()) {
+            setLayout(new MigLayout("fill, inset 0, gap 0", "[grow,fill][fill, 20px:20:20px]", "[grow,fill]"));
+        }else{
+            setLayout(new MigLayout("fill, inset 0, gap 0", "[grow,fill][fill, 18px:18:18px]", "[grow,fill]"));
+        }
 
         xlabel = new JLabel("New label");
         xlabel.setBorder(BorderFactory.createLineBorder(Color.black, 1));

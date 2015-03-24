@@ -1,14 +1,5 @@
 package com.logginghub.logging.utils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.listeners.LogEventListener;
 import com.logginghub.logging.messaging.PatternisedLogEvent;
@@ -16,6 +7,11 @@ import com.logginghub.utils.Is;
 import com.logginghub.utils.StringUtils;
 import com.logginghub.utils.filter.Filter;
 import com.logginghub.utils.logging.Logger;
+
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ValueStripper2 implements LogEventListener {
 
@@ -80,7 +76,8 @@ public class ValueStripper2 implements LogEventListener {
 
     public void setRegex(String regex) {
         this.regex = regex;
-        this.pattern = Pattern.compile(regex);
+//        System.out.println(regex);
+        this.pattern = Pattern.compile(regex, Pattern.DOTALL);
     }
 
     // public void setMatchAnything(boolean matchAnything) {

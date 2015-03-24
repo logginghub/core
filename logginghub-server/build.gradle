@@ -54,6 +54,8 @@ task buildDistribution << {
     classpath.append("wrapper.java.classpath.${counter++}=../lib/wrapper.jar\n")
 
     ant.replace(file: "build/dist_temp/hub/conf/wrapper.conf", token: 'wrapper.java.classpath.1=../lib/*', value: classpath)
+    ant.replace(file: "build/dist_temp/hub/conf/wrapper.conf", token: 'wrapper.logfile=', value: 'wrapper.logfile=../logs/hub.wrapper.log')
+
 }
 
 distZip.dependsOn("buildDistribution")
@@ -68,5 +70,7 @@ task deployDistribution << {
     }
 }
 
-deployDistribution.dependsOn("distZip");
+deployDistribution.dependsOn("distZip")
 uploadArchives.dependsOn("deployDistribution")
+
+build.dependsOn("distZip")

@@ -1,14 +1,17 @@
 package com.logginghub.logging.modules.history;
 
-import java.util.List;
-
 import com.logginghub.logging.DefaultLogEvent;
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.messages.HistoricalIndexElement;
 import com.logginghub.utils.Destination;
 
+import java.util.List;
+
 public interface EventBuffer {
     void addEvent(DefaultLogEvent t);
+
+    int sizeof(DefaultLogEvent t);
+
     int countEvents();
     int countBetween(long start, long end);
     long getWatermark();

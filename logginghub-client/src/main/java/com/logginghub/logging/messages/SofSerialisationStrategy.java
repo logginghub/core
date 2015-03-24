@@ -1,16 +1,9 @@
 package com.logginghub.logging.messages;
 
 import com.logginghub.logging.DefaultLogEvent;
+import com.logginghub.utils.ByteUtils;
 import com.logginghub.utils.Factory;
-import com.logginghub.utils.sof.ByteBufferReaderAbstraction;
-import com.logginghub.utils.sof.ByteBufferSofSerialiser;
-import com.logginghub.utils.sof.ByteBufferWriterAbstraction;
-import com.logginghub.utils.sof.DefaultSofReader;
-import com.logginghub.utils.sof.DefaultSofWriter;
-import com.logginghub.utils.sof.SerialisableObject;
-import com.logginghub.utils.sof.SofConfiguration;
-import com.logginghub.utils.sof.SofException;
-import com.logginghub.utils.sof.SofRuntimeException;
+import com.logginghub.utils.sof.*;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -38,7 +31,8 @@ public class SofSerialisationStrategy<T extends SerialisableObject> implements S
         configuration.setMicroFormat(microEncoding);
 
         setFactory(new Factory<T>() {
-            @Override public T create() {
+            @Override
+            public T create() {
                 return (T) new DefaultLogEvent();
             }
         });
@@ -52,7 +46,8 @@ public class SofSerialisationStrategy<T extends SerialisableObject> implements S
         this.factory = factory;
     }
 
-    @Override public String toString() {
+    @Override
+    public String toString() {
         return "SofSerialisationStrategy [encodeHeader=" + encodeHeader + ", microEncoding=" + microEncoding + "]";
     }
 
@@ -68,16 +63,14 @@ public class SofSerialisationStrategy<T extends SerialisableObject> implements S
         try {
             if (encodeHeader) {
                 Integer typeID = configuration.resolve(event.getClass());
-                if(typeID == null) {
+                if (typeID == null) {
                     throw new SofException("Type not registered '{}'", event.getClass().getName());
                 }
                 serialiser2.write(typeID, event);
-            }
-            else {
+            } else {
                 event.write(currentWriter);
             }
-        }
-        catch (SofException e) {
+        } catch (SofException e) {
             throw new SofRuntimeException(e);
         }
     }
@@ -89,14 +82,12 @@ public class SofSerialisationStrategy<T extends SerialisableObject> implements S
         try {
             if (encodeHeader) {
                 event = ByteBufferSofSerialiser.read(bufferAbstraction, configuration);
-            }
-            else {
+            } else {
                 event = factory.create();
                 DefaultSofReader reader = new DefaultSofReader(bufferAbstraction, configuration);
                 event.read(reader);
             }
-        }
-        catch (SofException e) {
+        } catch (SofException e) {
             throw new SofRuntimeException(e);
         }
 
@@ -106,5 +97,18 @@ public class SofSerialisationStrategy<T extends SerialisableObject> implements S
 
     public SofConfiguration getConfiguration() {
         return configuration;
+    }
+
+    public static <T extends SerialisableObject> int sizeof(T event1, boolean encodeHeader, boolean microEncoding) {
+
+        ByteBuffer tempBuffer = ByteBuffer.allocate((int) ByteUtils.megabytes(1));
+        try {
+            SofSerialisationStrategy<T> strategy = new SofSerialisationStrategy<T>(encodeHeader, microEncoding);
+            strategy.serialise(tempBuffer, event1);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return tempBuffer.position();
+
     }
 }

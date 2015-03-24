@@ -1,23 +1,19 @@
 package com.logginghub.logging.repository.processors;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.is;
+import com.logginghub.utils.FileUtils;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 
-import com.logginghub.logging.repository.processors.BadEventsReport;
-import com.logginghub.logging.repository.processors.ProcessorTester;
-import com.logginghub.utils.FileUtils;
-
+@Ignore
 public class BadEventsReportTest {
 
     private File results;

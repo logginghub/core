@@ -1,23 +1,5 @@
 package com.logginghub.logging.frontend.charting.swing;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.List;
-
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.border.TitledBorder;
-
-import net.miginfocom.swing.MigLayout;
-
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.frontend.charting.NewChartingController;
 import com.logginghub.logging.frontend.charting.model.PatternisedDataModel;
@@ -31,6 +13,14 @@ import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.observable.Binder;
 import com.logginghub.utils.observable.ObservableProperty;
 import com.logginghub.utils.observable.ObservablePropertyListener;
+import net.miginfocom.swing.MigLayout;
+
+import javax.swing.*;
+import javax.swing.border.TitledBorder;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.List;
 
 public class ComprehensivePatternModelEditor extends JPanel implements LogEventListener {
     private static final long serialVersionUID = 1L;
@@ -54,8 +44,11 @@ public class ComprehensivePatternModelEditor extends JPanel implements LogEventL
     private JTextField filter;
 
     public ComprehensivePatternModelEditor() {
-        setLayout(new MigLayout("fill, ins 2", "[grow,fill]", "[400px][300px][300px][bottom]"));
+        setLayout(new BorderLayout());
+        JPanel mainPanel = new JPanel(new MigLayout("fill, ins 2", "[grow,fill]", "[400px][300px][300px][bottom]"));
         setName("ComprehensivePatternModelEditor");
+
+        JScrollPane mainScrollPane = new JScrollPane(mainPanel);
 
         final PatternisedDataSeriesModel extractedData = new PatternisedDataSeriesModel();
 
@@ -76,7 +69,7 @@ public class ComprehensivePatternModelEditor extends JPanel implements LogEventL
         panel.setBorder(new TitledBorder(null, "1. Choose a log event you want to create a pattern from:", TitledBorder.LEADING,
                 TitledBorder.TOP, null, null));
 
-        add(panel, "cell 0 0,grow");
+        mainPanel.add(panel, "cell 0 0,grow");
         panel.setLayout(new MigLayout("fill, ins 2", "[grow,fill]", "[top][grow,fill][bottom]"));
         simpleEventMessageTable = new SimpleEventMessageTable();
         // simpleEventMessageTable.set
@@ -127,7 +120,7 @@ public class ComprehensivePatternModelEditor extends JPanel implements LogEventL
             }
 
         });
-        add(patternEditor, "cell 0 1");
+        mainPanel.add(patternEditor, "cell 0 1");
 
         final ObservablePropertyListener<String> patternUpdateListener = new ObservablePropertyListener<String>() {
             @Override
@@ -150,14 +143,16 @@ public class ComprehensivePatternModelEditor extends JPanel implements LogEventL
                 "3. View the extracted data to make sure it looks good", TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
         patternExtractTable.bind(extractedData);
 
-        add(patternExtractTable, "cell 0 2");
+        mainPanel.add(patternExtractTable, "cell 0 2");
         panel_1.setBorder(new TitledBorder(null, "4. Push the button!", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 
-        add(panel_1, "flowx,cell 0 3");
+        mainPanel.add(panel_1, "flowx,cell 0 3");
         panel_1.setLayout(new BorderLayout(0, 0));
         panel_1.add(addUpdateButton);
         
         addUpdateButton.setName("Add pattern button");
+
+        add(mainScrollPane, BorderLayout.CENTER);
     }
 
     public void bind(final PatternModel existingModel, final NewChartingController controller) {

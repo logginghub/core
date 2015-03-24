@@ -208,11 +208,13 @@ public class SwingFrontEnd extends SmartJFrame implements Closeable {
             eventQueue.push(newEventQueue);
         }
 
-        VMPauseDetectorModule pauseDetector = new VMPauseDetectorModule();
-        pauseDetector.start();
+        if (Boolean.getBoolean("pauseDetector.enabled")) {
+            VMPauseDetectorModule pauseDetector = new VMPauseDetectorModule();
+            pauseDetector.start();
 
-        SwingPauseDetectorModule swingPauseDetector = new SwingPauseDetectorModule();
-        swingPauseDetector.start();
+            SwingPauseDetectorModule swingPauseDetector = new SwingPauseDetectorModule();
+            swingPauseDetector.start();
+        }
 
         // StackCapture stackCapture = new StackCapture();
         // stackCapture.startThreadDumper("AWT-EventQueue-0");
