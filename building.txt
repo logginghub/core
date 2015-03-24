@@ -8,7 +8,7 @@ Now everything has been migrated over to gradle, building is less Heath-Robinson
 
 gradle install distZip uploadArchives
 
-6. git -tag [version number] : tag the release in git
+6. git tag [version number] : tag the release in git
 7. Edit build.gradle and increase the version number
 8. git commit -a -m "Ready for next version"
 9. git push --tags
