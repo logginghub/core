@@ -1,0 +1,135 @@
+<chartingModel>
+<patternModels>
+<patternmodel patternID="0" pattern="vmstat - r={runqueue} b={blocked} swpd={swap} free={free} buff={buffers} cache={cache} si={group6} so={group7} bi={group8} bo={group9} in={group10} cs={contextswitches} us={user} sy={sys} id={idle} wa={waiting} st={stolen}" name="cpu" debug="false" cleanUp="false"/>
+<patternmodel patternID="1" pattern="JettyHTTPAcceptor\{{min}&lt;={idle}&lt;={current}/{max},{queueSize}\}" name="jettyHttp" debug="false" cleanUp="false"/>
+<patternmodel patternID="2" pattern="ping completed in {time} ms : parameters &apos;&apos; : result [group1]" name="pings" debug="false" cleanUp="false"/>
+<patternmodel patternID="3" pattern="loginWithCredentials completed in {time} ms : [data]" name="loginWithCredentials" debug="false" cleanUp="false"/>
+<patternmodel patternID="4" pattern="updateEntityValue completed in {time} ms : parameters [data]" name="updateEntityValue" debug="false" cleanUp="false"/>
+<patternmodel patternID="5" pattern="netstat : []
+[]{totalPackets} total packets received[]
+[]{segmentsRetransmited} segments retransmited[]
+[]{predicatedAcks} predicted ack[]" name="netstat" debug="false" cleanUp="false"/>
+<patternmodel patternID="6" pattern="PerformTask for \[Task={taskId}\] \[ServiceSessionId={sessionId}\] \[Engine=[engine]\] completed in {nanos}ns ({time}ms)" name="task" debug="false" cleanUp="false"/>
+</patternModels>
+<streamModels>
+
+</streamModels>
+<aggregationModels>
+
+</aggregationModels>
+<pages>
+<pagemodel name="Performance">
+<chartingModels>
+<linechartmodel title="Idle CPU by Host" layout="" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="Idle CPU Percentage" onlyShowValuesAbove="NaN" warningThreshold="1000.0" severeThreshold="1.0" yAxisLock="100.0" dataPoints="150" forceYZero="true" showLegend="true" sideLegend="true" smoothed="false">
+<matchers>
+<chartseriesmodel patternID="0" labelIndex="14" groupBy="null" type="Mean" interval="1000" eventParts="Source Host" generateEmptyTicks="false">
+<filters>
+
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+<linechartmodel title="HTTP Threads" layout="cell 0 1" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="true" smoothed="false">
+<matchers>
+<chartseriesmodel patternID="1" labelIndex="2" groupBy="" type="Mean" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+
+</filters>
+</chartseriesmodel>
+<chartseriesmodel patternID="1" labelIndex="4" groupBy="" type="Mean" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+
+</filters>
+</chartseriesmodel>
+<chartseriesmodel patternID="1" labelIndex="3" groupBy="" type="Mean" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+<linechartmodel title="Stolen Time" layout="cell 1 0" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="true" smoothed="false">
+<matchers>
+<chartseriesmodel patternID="0" labelIndex="16" groupBy="" type="Mean" interval="1000" eventParts="Source Host" generateEmptyTicks="false">
+<filters>
+
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+<linechartmodel title="Pings" layout="cell 1 1" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" smoothed="false">
+<matchers>
+<chartseriesmodel patternID="2" labelIndex="0" groupBy="" type="Count" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+</chartingModels>
+<pieChartModels>
+
+</pieChartModels>
+</pagemodel>
+<pagemodel name="Appserver">
+<chartingModels>
+<linechartmodel title="Pings" layout="cell 0 2, spanx 2" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" smoothed="false">
+<matchers>
+<chartseriesmodel patternID="2" labelIndex="0" groupBy="" type="Count" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+<linechartmodel title="Login with credentials" layout="cell 0 0" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" smoothed="false">
+<matchers>
+<chartseriesmodel patternID="3" labelIndex="0" groupBy="" type="Count" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+<linechartmodel title="Update entity value" layout="cell 0 1" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" smoothed="false">
+<matchers>
+<chartseriesmodel patternID="4" labelIndex="0" groupBy="" type="Count" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+<linechartmodel title="Update entity value (times)" layout="" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" smoothed="false">
+<matchers>
+<chartseriesmodel patternID="4" labelIndex="0" groupBy="" type="Mean" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+<linechartmodel title="Login with credentials (time)" layout="cell 1 0" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" smoothed="false">
+<matchers>
+<chartseriesmodel patternID="3" labelIndex="0" groupBy="" type="Mean" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+</chartingModels>
+<pieChartModels>
+
+</pieChartModels>
+</pagemodel>
+<pagemodel name="New page">
+<chartingModels>
+
+</chartingModels>
+<pieChartModels>
+
+</pieChartModels>
+</pagemodel>
+</pages>
+</chartingModel>

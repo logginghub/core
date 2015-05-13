@@ -388,35 +388,27 @@ public class StringUtils {
         }
         return between;
     }
-    
+
     public static String betweenNonGreedy(String string, String start, String end) {
         int startIndex = string.indexOf(start);
         int searchFrom = startIndex + start.length();
-
         String between;
-        // Check to see if we've gone off the end of the string
-        if (searchFrom == string.length()) {
-            // Oops
+        if(searchFrom == string.length()) {
             between = "";
-        }
-        else {
-            int endIndex = string.indexOf(end, startIndex);
-            if (endIndex != -1) {
-                int startPoint = startIndex + start.length();
-                int endPoint = endIndex;
-
-                if (startPoint > endPoint) {
-                    // We've kind of overlapped, there cant be anything in between
+        } else {
+            int endIndex = string.indexOf(end, searchFrom);
+            if(endIndex != -1) {
+                int startPoint = searchFrom;
+                if(startPoint > endIndex) {
                     between = null;
+                } else {
+                    between = string.substring(searchFrom, endIndex);
                 }
-                else {
-                    between = string.substring(startIndex + start.length(), endIndex);
-                }
-            }
-            else {
+            } else {
                 between = null;
             }
         }
+
         return between;
     }
 

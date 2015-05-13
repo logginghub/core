@@ -13,4 +13,5 @@ include "logginghub-client"
 include "logginghub-server"
 include "logginghub-frontend"
 include "logginghub-integrationtests"
+include "logginghub-sandbox"
 

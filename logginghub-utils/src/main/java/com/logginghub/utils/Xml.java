@@ -1,14 +1,10 @@
 package com.logginghub.utils;
 
+import com.logginghub.utils.logging.Logger;
+
 import java.io.File;
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
-import java.util.Stack;
-
-import com.logginghub.utils.logging.Logger;
+import java.util.*;
 
 public class Xml {
 
@@ -317,8 +313,8 @@ public class Xml {
                 }
                 else {
 
-                    String fullElement = StringUtils.before(nextToken, ">");
-                    String tagName = fullElement.split(" ")[0].trim();
+                    String fullElement = StringUtils.before(nextToken, ">").trim();
+                    String tagName = fullElement.split("\\s")[0].trim();
 
                     logger.trace("Found tag name '{}'", tagName);
 
@@ -350,7 +346,7 @@ public class Xml {
                         
 //                        String attributes = StringUtils.between(fullElement, tagName, "/").trim();
                         logger.trace("Parsing attributes '{}'", attributes);
-                        entry.getAttributes().parse(attributes);
+                         entry.getAttributes().parse(attributes);
                         logger.trace("Attributes are '{}'", attributes);
 
                         // Someone went to the length of putting a self closing
@@ -392,7 +388,8 @@ public class Xml {
                         entry.setTag(tagName);
                         entry.setTagData(nextToken);
 
-                        if (fullElement.contains(" ")) {
+                        // Is there anything else in the tag?
+                        if (fullElement.trim().length() > tagName.trim().length()) {
                             String attributes = StringUtils.after(fullElement, tagName).trim();
                             entry.getAttributes().parse(attributes);
                             logger.trace("Attributes are '{}'", attributes);

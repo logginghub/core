@@ -1,12 +1,9 @@
 package com.logginghub.utils;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-
 import org.junit.Test;
 
-import com.logginghub.utils.Tracer;
-import com.logginghub.utils.Xml;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 public class TestXml {
  
@@ -19,8 +16,7 @@ public class TestXml {
 
 
 
-    @Test public void test_quoted_slash_in_attributes() { 
-//        Logger.setLevel(Xml.class, Logger.trace);
+    @Test public void test_quoted_slash_in_attributes() {
         Xml xml = new Xml("<outer><inner value=\"/path/path/path/\"/></outer>");
         assertThat(xml.getRoot().getTagName(), is("outer"));
         assertThat(xml.getRoot().getChildren().get(0).getTagName(), is("inner"));
@@ -59,6 +55,25 @@ public class TestXml {
         assertThat(xml.getRoot().getNode("inner").getAttribute("element"), is("value"));
     }
 
+    @Test public void test_newlines2() {
+        Xml xml = new Xml("\n<\ninner\nelement\n=\n'value with spaces'\n element2='another value'\n /\n>\n");
+        assertThat(xml.getRoot().getTagName(), is("inner"));
+        assertThat(xml.getRoot().getAttribute("element"), is("value with spaces"));
+        assertThat(xml.getRoot().getAttribute("element2"), is("another value"));
+    }
+
+    @Test public void test_newlines3() {
+        Xml xml = new Xml("\n<\ninner\nelement\n=\n'value'\n\n>\n<\n/\ninner\n>\n");
+        assertThat(xml.getRoot().getTagName(), is("inner"));
+        assertThat(xml.getRoot().getAttribute("element"), is("value"));
+    }
+
+    @Test public void test_newlines4() {
+        Xml xml = new Xml("\n<\nouter\n>\nThis is a message\non two lines\n<\ninner\nelement\n=\n'value'\n/\n>\n<\n/outer\n>");
+        assertThat(xml.getRoot().getTagName(), is("outer"));
+        assertThat(xml.getRoot().getElementData(), is("This is a message\non two lines"));
+        assertThat(xml.getRoot().getNode("inner").getAttribute("element"), is("value"));
+    }
 
     @Test public void testXml2() {
 

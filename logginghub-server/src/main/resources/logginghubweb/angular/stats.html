@@ -1,0 +1,20 @@
+<div class='container-fluid' ng-controller="statsController">
+
+
+    <table class="">
+        <thead>
+        <tr>
+            <th>Year</th>
+            <th>Events</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr ng-repeat="year in data.years">
+            <td><a ui-sref="yearstats({year: year.year})">{{year.year}}</a></td>
+            <td>{{year.events}}</td>
+
+        </tr>
+        </tbody>
+    </table>
+
+</div>

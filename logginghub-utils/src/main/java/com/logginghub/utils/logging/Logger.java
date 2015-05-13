@@ -16,14 +16,7 @@ import com.logginghub.utils.WorkerThread;
 import java.io.File;
 import java.text.DateFormat;
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -314,6 +307,15 @@ public class Logger {
         return new Object() {
             @Override public String toString() {
                 DateFormat dateThenTimeWithMillis = DateFormatFactory.getDateThenTimeWithMillis(DateFormatFactory.utc);
+                return dateThenTimeWithMillis.format(new Date(date));
+            }
+        };
+    }
+
+    public static Object toDateString(final long date, final TimeZone timezone) {
+        return new Object() {
+            @Override public String toString() {
+                DateFormat dateThenTimeWithMillis = DateFormatFactory.getDateThenTimeWithMillis(timezone);
                 return dateThenTimeWithMillis.format(new Date(date));
             }
         };

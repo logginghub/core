@@ -1,0 +1,29 @@
+<div class='container-fluid' ng-controller="hourstatsController">
+
+    <canvas id="line"
+            class="chart chart-line"
+            data="chartData"
+            labels="labels"
+            legend="true"
+            series="series"
+            options="options"
+            click="onClick">
+    </canvas>
+
+    <table class="">
+        <thead>
+        <tr>
+            <th>Year</th>
+            <th>Events</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr ng-repeat="minute in data.minutes">
+            <td><a ui-sref="minutestats({year: minute.year, month: minute.month, day: minute.day, hour: minute.hour, minute: minute.minute})">
+                {{minute.year}}/{{minute.month}}/{{minute.day}} {{minute.hour | pad:2}}:{{minute.minute | pad:2}}</a></td>
+            <td>{{minute.events}}</td>
+        </tr>
+        </tbody>
+    </table>
+
+</div>

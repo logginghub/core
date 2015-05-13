@@ -1,23 +1,45 @@
 package com.logginghub.utils;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import org.junit.Test;
 
 import java.util.List;
 
-import org.junit.Test;
-
-import com.logginghub.utils.StringUtilsTokeniser;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 public class TestStringUtilsTokeniser {
 
     private StringUtilsTokeniser emptyTokeniser = new StringUtilsTokeniser("");
     private StringUtilsTokeniser singleWordTokeniser = new StringUtilsTokeniser("singleWordLine");
+
     private StringUtilsTokeniser st = new StringUtilsTokeniser("This is our test string with 'some bits' in quotes and some bits repeated some bits repeated");
+
+    private StringUtilsTokeniser stWithOtherChars = new StringUtilsTokeniser("This\nis\tour\rtest\r\nstring \t with \n 'some bits' \n in\nquotes\nand\nsome \n bits \t repeated some bits repeated");
     
-    @Test public void test_quotes() {
+    @Test public void test_other_chars() {
         
-        assertThat(st.nextWord(), is("This"));        
+        assertThat(stWithOtherChars.nextWord(), is("This"));
+        assertThat(stWithOtherChars.nextWord(), is("is"));
+        assertThat(stWithOtherChars.nextWord(), is("our"));
+        assertThat(stWithOtherChars.nextWord(), is("test"));
+        assertThat(stWithOtherChars.nextWord(), is("string"));
+        assertThat(stWithOtherChars.nextWord(), is("with"));
+        assertThat(stWithOtherChars.nextWord(), is("'some bits'"));
+        assertThat(stWithOtherChars.nextWord(), is("in"));
+        assertThat(stWithOtherChars.nextWord(), is("quotes"));
+        assertThat(stWithOtherChars.nextWord(), is("and"));
+        assertThat(stWithOtherChars.nextWord(), is("some"));
+        assertThat(stWithOtherChars.nextWord(), is("bits"));
+        assertThat(stWithOtherChars.nextWord(), is("repeated"));
+        assertThat(stWithOtherChars.nextWord(), is("some"));
+        assertThat(stWithOtherChars.nextWord(), is("bits"));
+        assertThat(stWithOtherChars.nextWord(), is("repeated"));
+        
+    }
+
+    @Test public void test_quotes() {
+
+        assertThat(st.nextWord(), is("This"));
         assertThat(st.nextWord(), is("is"));
         assertThat(st.nextWord(), is("our"));
         assertThat(st.nextWord(), is("test"));
@@ -25,9 +47,10 @@ public class TestStringUtilsTokeniser {
         assertThat(st.nextWord(), is("with"));
         assertThat(st.nextWord(), is("'some bits'"));
         assertThat(st.nextWord(), is("in"));
-        
+
     }
-    
+
+
     @Test public void testPeekNextWord() {
         assertThat(st.peekNextWord(), is("This"));
         assertThat(st.peekNextWord(), is("This"));
@@ -40,12 +63,14 @@ public class TestStringUtilsTokeniser {
     @Test public void testSkipWord() {
         st.skipWord();
         assertThat(st.peekNextWord(), is("is"));
+
+        stWithOtherChars.skipWord();
+        assertThat(stWithOtherChars.peekNextWord(), is("is"));
         
         singleWordTokeniser.skipWord();
         assertThat(singleWordTokeniser.peekNextWord(), is(""));
         assertThat(singleWordTokeniser.hasMore(), is(false));
-        
-        
+
         emptyTokeniser.skipWord();
         assertThat(emptyTokeniser.peekNextWord(), is(""));
         assertThat(emptyTokeniser.hasMore(), is(false));

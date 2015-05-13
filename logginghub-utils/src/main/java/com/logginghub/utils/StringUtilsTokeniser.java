@@ -1,10 +1,6 @@
 package com.logginghub.utils;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.Stack;
+import java.util.*;
 
 public class StringUtilsTokeniser {
 
@@ -15,7 +11,8 @@ public class StringUtilsTokeniser {
         this.string = string;
     }
 
-    @Override public String toString() {
+    @Override
+    public String toString() {
         return string.substring(pointer, string.length());
     }
 
@@ -23,10 +20,10 @@ public class StringUtilsTokeniser {
         return pointer < string.length();
 
     }
-    
+
     public int getPointer() {
         return pointer;
-    }    
+    }
 
     public String upToAndIncluding(String search) {
         int index = string.indexOf(search, pointer);
@@ -64,7 +61,7 @@ public class StringUtilsTokeniser {
      * Return the next bit of the string up to the first instance of the character provided, but
      * ignore it if the value is inside quotes. If the tokeniser hits the end of the string, it'll
      * return whatever it found, regardless of if the search character was found.
-     * 
+     *
      * @param search
      * @return
      */
@@ -79,7 +76,7 @@ public class StringUtilsTokeniser {
      * Return the next bit of the string up to the first instance of the character provided, but
      * ignore it if the value is inside quotes. If the tokeniser hits the end of the string, it'll
      * return whatever it found, regardless of if the search character was found.
-     * 
+     *
      * @param search
      * @return
      */
@@ -99,28 +96,24 @@ public class StringUtilsTokeniser {
                 if (quoteStack.size() == 0) {
                     // First entry
                     quoteStack.push(c);
-                }
-                else {
+                } else {
                     if (quoteStack.peek() == c) {
                         // Assume a closing quote as they are matched
                         quoteStack.pop();
-                    }
-                    else {
+                    } else {
                         // Different quote style, push it
                         quoteStack.push(c);
                     }
                 }
 
                 builder.append(c);
-            }
-            else {
+            } else {
                 if (c == search && quoteStack.isEmpty()) {
                     done = true;
                     if (discardDelim) {
                         searchPointer++;
                     }
-                }
-                else {
+                } else {
                     builder.append(c);
                 }
             }
@@ -137,6 +130,58 @@ public class StringUtilsTokeniser {
         pointer = searchPointer;
         return builder.toString();
     }
+
+    public String upToOutsideQuotes(Set<Character> allowedQuoteChars, boolean discardDelim) {
+
+        boolean done = pointer >= string.length();
+
+        StringBuilder builder = new StringBuilder();
+        int searchPointer = pointer;
+
+        Stack<Character> quoteStack = new Stack<Character>();
+
+        while (!done) {
+            char c = string.charAt(searchPointer);
+            if (allowedQuoteChars.contains(c)) {
+
+                if (quoteStack.size() == 0) {
+                    // First entry
+                    quoteStack.push(c);
+                } else {
+                    if (quoteStack.peek() == c) {
+                        // Assume a closing quote as they are matched
+                        quoteStack.pop();
+                    } else {
+                        // Different quote style, push it
+                        quoteStack.push(c);
+                    }
+                }
+
+                builder.append(c);
+            } else {
+                if (isWhitespace(c) && quoteStack.isEmpty()) {
+                    done = true;
+                    if (discardDelim) {
+                        searchPointer++;
+                    }
+                } else {
+                    builder.append(c);
+                }
+            }
+
+            if (!done) {
+                searchPointer++;
+            }
+
+            if (searchPointer == string.length()) {
+                done = true;
+            }
+        }
+
+        pointer = searchPointer;
+        return builder.toString();
+    }
+
 
     public String nextQuotedWordWithQuotesRemoved(char delim, char allowedQuote) {
         Set<Character> quotes = new HashSet<Character>();
@@ -159,8 +204,7 @@ public class StringUtilsTokeniser {
     public char nextChar() {
         if (pointer < string.length()) {
             return string.charAt(pointer++);
-        }
-        else {
+        } else {
             throw new IllegalArgumentException("Out of characters");
         }
     }
@@ -179,54 +223,99 @@ public class StringUtilsTokeniser {
     }
 
     public String peekNextWord() {
-        String nextWord;
-        if (hasMore()) {
-            int index = string.indexOf(' ', pointer);
-            if (index == -1) {
-                nextWord = string.substring(pointer, string.length());
-            }
-            else {
-                nextWord = string.substring(pointer, index);
-            }
-            return nextWord;
-        }
-        else {
-            return "";
-        }
-
+        int pointerSnapshot = pointer;
+        String nextWord = nextWord();
+        pointer = pointerSnapshot;
+        return nextWord;
     }
 
     public void skipWord() {
-        int index = string.indexOf(' ', pointer);
-        if (index == -1) {
-            pointer = string.length();
-        }
-        else {
-            pointer = index + 1;
-        }
+        nextWord();
     }
 
     public String nextWord() {
-        String nextWord;
+        //        String nextWord;
+        StringBuilder nextWord = new StringBuilder();
 
-        if (string.charAt(pointer) == '\'' || string.charAt(pointer) == '\"') {
-            nextWord = nextQuotedWord();
-            
-            // Move passed the space
-            pointer++;
-        }
-        else {
-            int index = string.indexOf(' ', pointer);
-            if (index == -1) {
-                nextWord = string.substring(pointer, string.length());
-                pointer = string.length();
+        if (hasMore()) {
+
+
+            if (string.charAt(pointer) == '\'' || string.charAt(pointer) == '\"') {
+                nextWord.append(nextQuotedWord());
+
+                // Move passed the space
+                pointer++;
+            } else {
+
+                boolean done = false;
+                while (!done) {
+                    char c = string.charAt(pointer);
+
+                    if (isWhitespace(c)) {
+                        done = true;
+                    } else {
+                        nextWord.append(c);
+                    }
+
+                    pointer++;
+                    if (!hasMore()) {
+                        done = true;
+                    }
+                }
+
+                //            int index = string.indexOf(' ', pointer);
+                //            if (index == -1) {
+                //                nextWord = string.substring(pointer, string.length());
+                //                pointer = string.length();
+                //            }
+                //            else {
+                //                nextWord = string.substring(pointer, index);
+                //                pointer = index + 1;
+                //            }
             }
-            else {
-                nextWord = string.substring(pointer, index);
-                pointer = index + 1;
+
+            // Skip any remaining non-character elements
+            if (hasMore()) {
+                skipNonCharacterElements();
             }
         }
-        return nextWord;
+
+        return nextWord.toString();
+
+    }
+
+    public boolean isWhitespace(char c) {
+        boolean isWhitespace;
+
+        switch (c) {
+            case '\t':
+            case ' ':
+            case '\n':
+            case '\r':
+                isWhitespace = true;
+                break;
+            default:
+                isWhitespace = false;
+                break;
+        }
+        return isWhitespace;
+    }
+
+    public void skipNonCharacterElements() {
+        boolean done = false;
+        while (!done) {
+            char c = string.charAt(pointer);
+
+            if (isWhitespace(c)) {
+                pointer++;
+            } else {
+                done = true;
+            }
+
+            if (!hasMore()) {
+                done = true;
+            }
+        }
 
     }
 
@@ -305,17 +394,14 @@ public class StringUtilsTokeniser {
                 if (!insideNumber) {
                     // Ignore leading whitespace
                     pointer++;
-                }
-                else {
+                } else {
                     done = true;
                 }
-            }
-            else if (Character.isDigit(c)) {
+            } else if (Character.isDigit(c)) {
                 insideNumber = true;
                 builder.append(c);
                 pointer++;
-            }
-            else {
+            } else {
                 done = true;
             }
 
@@ -327,8 +413,7 @@ public class StringUtilsTokeniser {
         int result;
         if (builder.length() > 0) {
             result = Integer.parseInt(builder.toString());
-        }
-        else {
+        } else {
             throw new IllegalArgumentException("No integer was found at start of the string '" + peekRemaining());
         }
 
@@ -374,8 +459,7 @@ public class StringUtilsTokeniser {
 
             if (characterType == startingType) {
                 okToAdd = true;
-            }
-            else {
+            } else {
                 // Allow dots in numbers
                 // TODO : other regions might not like this...
                 if (startingType == CharacterType.numeric && c == '.') {
@@ -403,8 +487,7 @@ public class StringUtilsTokeniser {
                 if (pointer == string.length()) {
                     done = true;
                 }
-            }
-            else {
+            } else {
                 done = true;
             }
         }
@@ -439,11 +522,9 @@ public class StringUtilsTokeniser {
                 default:
                     if (Character.isDigit(peekChar)) {
                         characterType = CharacterType.numeric;
-                    }
-                    else if (Character.isLetter(peekChar) || Character.isDigit(peekChar)) {
+                    } else if (Character.isLetter(peekChar) || Character.isDigit(peekChar)) {
                         characterType = CharacterType.alphaNumeric;
-                    }
-                    else {
+                    } else {
                         characterType = CharacterType.other;
                     }
             }
@@ -466,8 +547,7 @@ public class StringUtilsTokeniser {
                     result.add(current.toString());
                     current = new StringBuilder();
                 }
-            }
-            else {
+            } else {
                 current.append(nextChar);
             }
         }

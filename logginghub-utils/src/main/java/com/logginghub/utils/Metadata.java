@@ -333,8 +333,9 @@ public class Metadata extends HashMap<Object, Object> implements SerialisableObj
         StringUtilsTokeniser tokeniser = StringUtils.tokenise(attributes);
 
         while (tokeniser.hasMore()) {
-            String key = tokeniser.upTo("=");
+            String key = tokeniser.upTo("=").trim();
             tokeniser.skip();
+            tokeniser.skipNonCharacterElements();
 
             char c = tokeniser.peekChar();
 
@@ -343,11 +344,11 @@ public class Metadata extends HashMap<Object, Object> implements SerialisableObj
             if (c == '"') {
                 Set<Character> set = new HashSet<Character>();
                 set.add('"');
-                data = tokeniser.upToOutsideQuotes(' ', set, false);
+                data = tokeniser.upToOutsideQuotes(set, false);
             } else if (c == '\'') {
                 Set<Character> set = new HashSet<Character>();
                 set.add('\'');
-                data = tokeniser.upToOutsideQuotes(' ', set, false);
+                data = tokeniser.upToOutsideQuotes(set, false);
             } else {
                 data = tokeniser.upToOutsideQuotes(' ');
             }

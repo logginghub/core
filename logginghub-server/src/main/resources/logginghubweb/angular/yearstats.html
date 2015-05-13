@@ -1,0 +1,28 @@
+<div class='container-fluid' ng-controller="yearstatsController">
+
+    <canvas id="line"
+            class="chart chart-line"
+            data="chartData"
+            labels="labels"
+            legend="true"
+            series="series"
+            options="options"
+            click="onClick">
+    </canvas>
+
+    <table class="">
+        <thead>
+        <tr>
+            <th>Year</th>
+            <th>Events</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr ng-repeat="month in data.months">
+            <td><a ui-sref="monthstats({year: month.year, month: month.month})">{{month.year}}/{{month.month | pad: 2}}</a></td>
+            <td>{{month.events}}</td>
+        </tr>
+        </tbody>
+    </table>
+
+</div>

@@ -1,0 +1,33 @@
+<div class='container-fluid' ng-controller="monthstatsController">
+
+    <a ng-click="previousMonth()">Previous month</a>
+    <a ng-click="nextMonth()">Next month</a>
+
+    <canvas id="line"
+            class="chart chart-line"
+            data="chartData"
+            labels="labels"
+            legend="true"
+            series="series"
+            options="options"
+            click="onClick">
+    </canvas>
+
+    <table class="">
+        <thead>
+        <tr>
+            <th>Year</th>
+            <th>Events</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr ng-repeat="day in data.days">
+            <td><a ui-sref="daystats({year: day.year, month: day.month, day: day.day})">{{day.year}}/{{day.month | pad:2}}/{{day.day | pad:2}}</a></td>
+            <td>{{day.events}}</td>
+        </tr>
+        </tbody>
+    </table>
+
+
+</div>
+
