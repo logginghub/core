@@ -144,6 +144,44 @@ public class WebFrontendController implements WebSocketSupport {
             itemObject.add("year", new JsonPrimitive(day.getKey().year));
             itemObject.add("events", new JsonPrimitive(day.getCount()));
 
+            SinglePassStatisticsDoublePrecision[] statsArray = day.getNumericStats();
+            for (SinglePassStatisticsDoublePrecision stats : statsArray) {
+                if (stats != null) {
+
+                    JsonObject statsObject = new JsonObject();
+                    JsonArray percentilesArray = new JsonArray();
+
+                    stats.doCalculations();
+
+                    statsObject.add("count", new JsonPrimitive(stats.getCount()));
+                    statsObject.add("mean", new JsonPrimitive(stats.getMean()));
+                    statsObject.add("min", new JsonPrimitive(stats.getMinimum()));
+                    statsObject.add("max", new JsonPrimitive(stats.getMaximum()));
+
+                    double[] percentiles = stats.getPercentiles();
+                    percentilesArray.add(new JsonPrimitive(percentiles[0]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[10]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[20]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[30]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[40]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[50]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[60]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[70]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[80]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[90]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[100]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[95]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[98]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[99]));
+
+                    statsObject.add("percentiles", percentilesArray);
+
+                    // TODO: should be an array for multiple numeric values in the pattern
+                    itemObject.add("patternStats", statsObject);
+
+                }
+            }
+
             array.add(itemObject);
         }
 
@@ -182,7 +220,6 @@ public class WebFrontendController implements WebSocketSupport {
             itemObject.add("year", new JsonPrimitive(hour.getKey().year));
             itemObject.add("events", new JsonPrimitive(hour.getCount()));
 
-
             SinglePassStatisticsDoublePrecision[] statsArray = hour.getNumericStats();
             for (SinglePassStatisticsDoublePrecision stats : statsArray) {
                 if (stats != null) {
@@ -219,7 +256,6 @@ public class WebFrontendController implements WebSocketSupport {
                     itemObject.add("patternStats", statsObject);
 
                 }
-
             }
 
             array.add(itemObject);
@@ -261,8 +297,6 @@ public class WebFrontendController implements WebSocketSupport {
         object.add("variableFrequencies", allFrequenciesArray);
 
 
-
-
         object.add("variableStats", allStatsArray);
 
         return object.toString();
@@ -302,6 +336,44 @@ public class WebFrontendController implements WebSocketSupport {
             itemObject.add("month", new JsonPrimitive(minute.getKey().month));
             itemObject.add("year", new JsonPrimitive(minute.getKey().year));
             itemObject.add("events", new JsonPrimitive(minute.getCount()));
+
+            SinglePassStatisticsDoublePrecision[] statsArray = minute.getNumericStats();
+            for (SinglePassStatisticsDoublePrecision stats : statsArray) {
+                if (stats != null) {
+
+                    JsonObject statsObject = new JsonObject();
+                    JsonArray percentilesArray = new JsonArray();
+
+                    stats.doCalculations();
+
+                    statsObject.add("count", new JsonPrimitive(stats.getCount()));
+                    statsObject.add("mean", new JsonPrimitive(stats.getMean()));
+                    statsObject.add("min", new JsonPrimitive(stats.getMinimum()));
+                    statsObject.add("max", new JsonPrimitive(stats.getMaximum()));
+
+                    double[] percentiles = stats.getPercentiles();
+                    percentilesArray.add(new JsonPrimitive(percentiles[0]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[10]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[20]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[30]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[40]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[50]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[60]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[70]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[80]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[90]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[100]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[95]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[98]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[99]));
+
+                    statsObject.add("percentiles", percentilesArray);
+
+                    // TODO: should be an array for multiple numeric values in the pattern
+                    itemObject.add("patternStats", statsObject);
+
+                }
+            }
 
             array.add(itemObject);
         }
@@ -348,6 +420,44 @@ public class WebFrontendController implements WebSocketSupport {
             itemObject.add("year", new JsonPrimitive(second.getKey().year));
             itemObject.add("events", new JsonPrimitive(second.getCount()));
 
+            SinglePassStatisticsDoublePrecision[] statsArray = second.getNumericStats();
+            for (SinglePassStatisticsDoublePrecision stats : statsArray) {
+                if (stats != null) {
+
+                    JsonObject statsObject = new JsonObject();
+                    JsonArray percentilesArray = new JsonArray();
+
+                    stats.doCalculations();
+
+                    statsObject.add("count", new JsonPrimitive(stats.getCount()));
+                    statsObject.add("mean", new JsonPrimitive(stats.getMean()));
+                    statsObject.add("min", new JsonPrimitive(stats.getMinimum()));
+                    statsObject.add("max", new JsonPrimitive(stats.getMaximum()));
+
+                    double[] percentiles = stats.getPercentiles();
+                    percentilesArray.add(new JsonPrimitive(percentiles[0]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[10]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[20]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[30]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[40]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[50]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[60]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[70]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[80]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[90]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[100]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[95]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[98]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[99]));
+
+                    statsObject.add("percentiles", percentilesArray);
+
+                    // TODO: should be an array for multiple numeric values in the pattern
+                    itemObject.add("patternStats", statsObject);
+
+                }
+            }
+
             array.add(itemObject);
         }
 
@@ -375,29 +485,22 @@ public class WebFrontendController implements WebSocketSupport {
         DataController.SecondData secondData = minuteData.getSubPeriodData()
                                                          .get(DataController.PeriodKey.second(year, month, day, hour, minute, second));
 
+        if (secondData != null) {
+            List<PatternisedLogEvent> data = secondData.getData();
+            Collections.sort(data, new Comparator<PatternisedLogEvent>() {
+                @Override
+                public int compare(PatternisedLogEvent o1, PatternisedLogEvent o2) {
+                    return CompareUtils.compare(o1.getTime(), o2.getTime());
+                }
+            });
 
-        List<PatternisedLogEvent> data = secondData.getData();
-        Collections.sort(data, new Comparator<PatternisedLogEvent>() {
-            @Override
-            public int compare(PatternisedLogEvent o1, PatternisedLogEvent o2) {
-                return CompareUtils.compare(o1.getTime(), o2.getTime());
+            Gson gson = new Gson();
+            for (PatternisedLogEvent event : data) {
+
+                JsonElement element = gson.toJsonTree(event);
+
+                array.add(element);
             }
-        });
-
-        Gson gson = new Gson();
-        for (PatternisedLogEvent event : data) {
-
-            JsonElement element = gson.toJsonTree(event);
-
-
-            //            hourObject.add("second", new JsonPrimitive(second.getKey().second));
-            //            hourObject.add("minute", new JsonPrimitive(second.getKey().minute));
-            //            hourObject.add("hour", new JsonPrimitive(second.getKey().hour));
-            //            hourObject.add("day", new JsonPrimitive(second.getKey().dayOfMonth));
-            //            hourObject.add("month", new JsonPrimitive(second.getKey().month));
-            //            hourObject.add("year", new JsonPrimitive(second.getKey().year));
-
-            array.add(element);
         }
 
         object.add("events", array);
