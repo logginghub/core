@@ -579,7 +579,7 @@ $scope.labels = ["January", "February", "March", "April", "May", "June", "July"]
 
        var hour = timeSplit[0];
        var minute = timeSplit[1];
-       var second = timeSplit[1];
+       var second = timeSplit[2];
 
        $state.go('secondstats' ,{year: year, month: month, day: day, hour: hour, minute: minute, second: second});
      }

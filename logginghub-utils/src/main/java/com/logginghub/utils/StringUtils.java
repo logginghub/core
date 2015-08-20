@@ -1,5 +1,7 @@
 package com.logginghub.utils;
 
+import com.logginghub.utils.logging.Logger;
+
 import java.io.File;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -27,7 +29,7 @@ public class StringUtils {
 
     /**
      * Converts 'foo' to 'Foo'
-     * 
+     *
      * @param string
      * @return
      */
@@ -99,8 +101,7 @@ public class StringUtils {
 
         if (fieldsToInclude == null || (fieldsToInclude.length == 0 && collection.size() > 0)) {
             fields = ReflectionUtils.getFieldNames(collection.iterator().next().getClass());
-        }
-        else {
+        } else {
             fields = ArrayUtils.toList(fieldsToInclude);
         }
 
@@ -214,8 +215,7 @@ public class StringUtils {
 
         if (fieldValue instanceof byte[]) {
             toString = toHex((byte[]) fieldValue);
-        }
-        else {
+        } else {
             toString = fieldValue.toString();
         }
 
@@ -229,37 +229,36 @@ public class StringUtils {
     public static String padLeft(String s, int n) {
         return paddingString(s, n, ' ', true);
     }
-    
+
     public static String padCenter(String s, int n, char c) {
         if (s == null) {
             return s;
         }
-        
-        int add = n - s.length(); 
+
+        int add = n - s.length();
         if (add <= 0) {
             return s;
         }
-        
+
         int addLeft = add / 2;
         int addRight = add - addLeft;
-        
+
         StringBuffer str = new StringBuffer(s);
-        
+
         char[] ch = new char[addLeft];
-        Arrays.fill(ch, c);        
+        Arrays.fill(ch, c);
         str.insert(0, ch);
-        
+
         ch = new char[addRight];
-        Arrays.fill(ch, c);        
+        Arrays.fill(ch, c);
         str.append(ch);
-            
+
         return str.toString();
     }
 
     /**
-     * Pads a String <code>s</code> to take up <code>n</code> characters, padding with char
-     * <code>c</code> on the left (<code>true</code>) or on the right (<code>false</code>). Returns
-     * <code>null</code> if passed a <code>null</code> String.
+     * Pads a String <code>s</code> to take up <code>n</code> characters, padding with char <code>c</code> on the left (<code>true</code>) or on the
+     * right (<code>false</code>). Returns <code>null</code> if passed a <code>null</code> String.
      **/
     public static String paddingString(String s, int n, char c, boolean paddingLeft) {
         if (s == null) {
@@ -275,8 +274,7 @@ public class StringUtils {
         Arrays.fill(ch, c);
         if (paddingLeft) {
             str.insert(0, ch);
-        }
-        else {
+        } else {
             str.append(ch);
         }
         return str.toString();
@@ -296,10 +294,14 @@ public class StringUtils {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < input.length(); i++) {
             char c = input.charAt(i);
-            if (c >= 'a' && c <= 'm') c += 13;
-            else if (c >= 'n' && c <= 'z') c -= 13;
-            else if (c >= 'A' && c <= 'M') c += 13;
-            else if (c >= 'A' && c <= 'Z') c -= 13;
+            if (c >= 'a' && c <= 'm')
+                c += 13;
+            else if (c >= 'n' && c <= 'z')
+                c -= 13;
+            else if (c >= 'A' && c <= 'M')
+                c += 13;
+            else if (c >= 'A' && c <= 'Z')
+                c -= 13;
             sb.append(c);
         }
 
@@ -318,20 +320,15 @@ public class StringUtils {
 
         if (bytes > pb) {
             formatted = String.format("%s PB", instance.format(bytes / pb));
-        }
-        else if (bytes > tb) {
+        } else if (bytes > tb) {
             formatted = String.format("%s TB", instance.format(bytes / tb));
-        }
-        else if (bytes > gb) {
+        } else if (bytes > gb) {
             formatted = String.format("%s GB", instance.format(bytes / gb));
-        }
-        else if (bytes > mb) {
+        } else if (bytes > mb) {
             formatted = String.format("%s MB", instance.format(bytes / mb));
-        }
-        else if (bytes > kb) {
+        } else if (bytes > kb) {
             formatted = String.format("%s KB", instance.format(bytes / kb));
-        }
-        else {
+        } else {
             formatted = String.format("%s bytes", instance.format(bytes));
         }
 
@@ -342,8 +339,7 @@ public class StringUtils {
         int index = string.indexOf(sub);
         if (index == -1) {
             return string;
-        }
-        else {
+        } else {
             return string.substring(0, index);
         }
     }
@@ -352,8 +348,7 @@ public class StringUtils {
         int index = string.lastIndexOf(sub);
         if (index == -1) {
             return "";
-        }
-        else {
+        } else {
             return string.substring(0, index);
         }
     }
@@ -367,8 +362,7 @@ public class StringUtils {
         if (searchFrom == string.length()) {
             // Oops
             between = "";
-        }
-        else {
+        } else {
             int endIndex = string.lastIndexOf(end);
             if (endIndex != -1) {
                 int startPoint = startIndex + start.length();
@@ -377,12 +371,10 @@ public class StringUtils {
                 if (startPoint > endPoint) {
                     // We've kind of overlapped, there cant be anything in between
                     between = null;
-                }
-                else {
+                } else {
                     between = string.substring(startIndex + start.length(), endIndex);
                 }
-            }
-            else {
+            } else {
                 between = null;
             }
         }
@@ -393,13 +385,13 @@ public class StringUtils {
         int startIndex = string.indexOf(start);
         int searchFrom = startIndex + start.length();
         String between;
-        if(searchFrom == string.length()) {
+        if (searchFrom == string.length()) {
             between = "";
         } else {
             int endIndex = string.indexOf(end, searchFrom);
-            if(endIndex != -1) {
+            if (endIndex != -1) {
                 int startPoint = searchFrom;
-                if(startPoint > endIndex) {
+                if (startPoint > endIndex) {
                     between = null;
                 } else {
                     between = string.substring(searchFrom, endIndex);
@@ -416,11 +408,10 @@ public class StringUtils {
         int length = string.length();
         if (length == 0) {
             return string;
-        }
-        else if ((string.charAt(0) == '\'' && string.charAt(length - 1) == '\'') || (string.charAt(0) == '\"' && string.charAt(length - 1) == '\"')) {
+        } else if ((string.charAt(0) == '\'' && string.charAt(length - 1) == '\'') || (string.charAt(0) == '\"' && string.charAt(length - 1) ==
+                                                                                                                   '\"')) {
             return string.substring(1, length - 1);
-        }
-        else {
+        } else {
             return string;
         }
 
@@ -469,33 +460,131 @@ public class StringUtils {
 
     public static String format(String message, Object... objects) {
         int objectIndex = 0;
+
         StringBuilder formatted = new StringBuilder();
+
+        StringBuilder params = new StringBuilder();
+        boolean insideCurlyBraces = false;
+        boolean isEscaped = false;
+
         for (int i = 0; i < message.length(); i++) {
             char c = message.charAt(i);
             if (c == '{') {
-                if (i < message.length() - 1 && message.charAt(i + 1) == '}') {
-                    if (objectIndex < objects.length) {
-                        formatted.append(objects[objectIndex]);
-                        objectIndex++;
-                        i++;
-                    }
-                    else {
-                        // No object in this position, its just a pair of braces
-                        formatted.append(c);
-                    }
+                if (isEscaped) {
+                    isEscaped = false;
+                    formatted.append(c);
+                } else {
+                    insideCurlyBraces = true;
                 }
-                else {
-                    // No closing brace, its just a brace
+            } else if (c == '}') {
+                if (insideCurlyBraces) {
+                    insideCurlyBraces = false;
+
+                    String param = params.toString().trim();
+
+                    boolean isNumeric = false;
+                    boolean isDate = false;
+                    int width = -1;
+                    boolean leftJustified = false;
+
+                    if (param.trim().length() > 0) {
+
+                        if (param.startsWith("-")) {
+                            leftJustified = true;
+                            param = param.substring(1).trim();
+                        }
+
+                        if (param.endsWith("T")) {
+                            isDate = true;
+                            param = param.substring(0, param.length() - 1).trim();
+                        } else if (param.endsWith("N")) {
+                            isNumeric = true;
+                            param = param.substring(0, param.length() - 1).trim();
+                        }
+
+                        if (param.length() > 0) {
+                            width = Integer.parseInt(param.trim());
+                        }
+                    }
+
+                    if (objectIndex < objects.length) {
+                        Object object = objects[objectIndex];
+                        String objectString = object.toString();
+
+                        if (isDate) {
+                            objectString = Logger.toDateString(Long.parseLong(objectString)).toString();
+                        } else if (isNumeric) {
+                            if (objectString.contains(".")) {
+                                objectString = NumberFormat.getInstance().format(Double.parseDouble(objectString));
+                            } else {
+                                objectString = NumberFormat.getInstance().format(Long.parseLong(objectString));
+                            }
+                        }
+
+                        if (width != -1) {
+                            if (objectString.length() < width) {
+
+                                int padding = width - objectString.length();
+                                if (leftJustified) {
+                                    formatted.append(objectString);
+                                    for (int j = 0; j < padding; j++) {
+                                        formatted.append(" ");
+                                    }
+                                } else {
+                                    for (int j = 0; j < padding; j++) {
+                                        formatted.append(" ");
+                                    }
+
+                                    formatted.append(objectString);
+                                }
+                            } else {
+                                formatted.append(objectString.substring(0, width));
+                            }
+                        } else {
+                            formatted.append(objectString);
+                        }
+
+                        objectIndex++;
+                    } else {
+                        // No object in this position, its just a pair of braces
+                        formatted.append("{").append(params).append("}");
+                    }
+
+                    params = new StringBuilder();
+                } else {
+                    // Just a closing curly brace
+                    formatted.append(c);
+                }
+            } else if (c == '%' && i + 1 < message.length() && message.charAt(i + 1) == 'n') {
+                formatted.append(newline);
+                i++;
+            } else if (c == '\\') {
+                if(isEscaped) {
+                    // Escaped escape
+                    formatted.append(c);
+                    isEscaped = false;
+                }else {
+                    isEscaped = true;
+                }
+            } else {
+                if (insideCurlyBraces) {
+                    params.append(c);
+                } else {
+
+                    if(isEscaped) {
+                        // This wasn't a curly brace escape, it must have been a slash
+                        formatted.append("\\");
+                        isEscaped = false;
+                    }
+
                     formatted.append(c);
                 }
             }
-            else if (c == '%' && i + 1 < message.length() && message.charAt(i + 1) == 'n') {
-                formatted.append(newline);
-                i++;
-            }
-            else {
-                formatted.append(c);
-            }
+        }
+
+        // Edge case for unterminated curly brace
+        if (insideCurlyBraces) {
+            formatted.append("{").append(params);
         }
 
         return formatted.toString();
@@ -522,7 +611,8 @@ public class StringUtils {
         DecimalFormatSymbols currentLocaleSymbols = new DecimalFormatSymbols();
         char localeMinusSign = currentLocaleSymbols.getMinusSign();
 
-        if (!Character.isDigit(str.charAt(0)) && str.charAt(0) != localeMinusSign) return false;
+        if (!Character.isDigit(str.charAt(0)) && str.charAt(0) != localeMinusSign)
+            return false;
 
         boolean isDecimalSeparatorFound = false;
         char localeDecimalSeparator = currentLocaleSymbols.getDecimalSeparator();
@@ -585,7 +675,8 @@ public class StringUtils {
             return this;
         }
 
-        @Override public String toString() {
+        @Override
+        public String toString() {
             return builder.toString();
         }
 
@@ -621,8 +712,7 @@ public class StringUtils {
         public StringUtilsBuilder append(Object object) {
             if (object != null) {
                 builder.append(object.toString());
-            }
-            else {
+            } else {
                 builder.append("null");
             }
             return this;
@@ -657,7 +747,7 @@ public class StringUtils {
         public void appendLine() {
             newline();
         }
-        
+
         public void reset() {
             this.builder = new StringBuilder();
         }
@@ -700,7 +790,7 @@ public class StringUtils {
 
     /**
      * Parses a size string (12, 34M, 34Gb) etc into the number of bytes
-     * 
+     *
      * @param size
      * @return
      */
@@ -762,8 +852,7 @@ public class StringUtils {
             char c = input.charAt(i);
             if (Character.isDigit(c) || c == decimalSeparator || c == groupingSeparator) {
                 builder.append(c);
-            }
-            else {
+            } else {
                 break;
             }
         }
@@ -781,8 +870,7 @@ public class StringUtils {
             char c = input.charAt(i);
             if (Character.isDigit(c) || c == decimalSeparator || c == groupingSeparator) {
                 builder.append(c);
-            }
-            else {
+            } else {
                 break;
             }
         }
@@ -796,8 +884,7 @@ public class StringUtils {
             char c = input.charAt(i);
             if (Character.isDigit(c)) {
                 builder.append(c);
-            }
-            else {
+            } else {
                 break;
             }
         }
@@ -817,8 +904,7 @@ public class StringUtils {
     public static String removeFromStart(String string, String substring) {
         if (string.startsWith(substring)) {
             return string.substring(substring.length(), string.length());
-        }
-        else {
+        } else {
             return string;
         }
     }
@@ -907,16 +993,13 @@ public class StringUtils {
     public static Number parseNumeric(String value) {
         try {
             return Long.parseLong(value);
-        }
-        catch (NumberFormatException nfe) {
+        } catch (NumberFormatException nfe) {
             try {
                 return Double.parseDouble(value);
-            }
-            catch (NumberFormatException nfe2) {
+            } catch (NumberFormatException nfe2) {
                 try {
                     return NumberFormat.getInstance().parse(value);
-                }
-                catch (ParseException e) {
+                } catch (ParseException e) {
                     return null;
                 }
             }
@@ -930,7 +1013,7 @@ public class StringUtils {
 
     /**
      * Take a number of chars from the start and end and return the middle string
-     * 
+     *
      * @param string
      * @param i
      * @return
@@ -943,8 +1026,7 @@ public class StringUtils {
         int index = string.lastIndexOf(substring);
         if (index == -1) {
             return null;
-        }
-        else {
+        } else {
             return new Pair<String, String>(string.substring(0, index), string.substring(index + 1, string.length()));
         }
     }
@@ -954,8 +1036,7 @@ public class StringUtils {
         try {
             Double.parseDouble(value);
             isNumeric = true;
-        }
-        catch (NumberFormatException e) {
+        } catch (NumberFormatException e) {
             isNumeric = false;
         }
 
@@ -965,11 +1046,9 @@ public class StringUtils {
     public static String unquote(String value) {
         if (value.startsWith("\"") && value.endsWith("\"")) {
             return pinch(value, 1);
-        }
-        else if (value.startsWith("'") && value.endsWith("'")) {
+        } else if (value.startsWith("'") && value.endsWith("'")) {
             return pinch(value, 1);
-        }
-        else {
+        } else {
             return value;
         }
 
@@ -1031,8 +1110,7 @@ public class StringUtils {
             index = sourceApplication.indexOf(startString, index);
             if (index == -1) {
                 done = true;
-            }
-            else {
+            } else {
                 int endIndex = sourceApplication.indexOf(endString, index);
                 String variable = sourceApplication.substring(index + startString.length(), endIndex);
 
@@ -1041,8 +1119,7 @@ public class StringUtils {
                 replacementLine.append(sourceApplication.substring(lastIndex, index));
                 if (replacement == null) {
                     replacementLine.append("${").append(variable).append("}");
-                }
-                else {
+                } else {
                     replacementLine.append(replacement);
                 }
                 index = endIndex + 1;
@@ -1078,8 +1155,7 @@ public class StringUtils {
         for (int i = 0; i < string.length(); i++) {
             if (string.charAt(i) == c) {
                 count++;
-            }
-            else {
+            } else {
                 break;
             }
         }
@@ -1129,7 +1205,7 @@ public class StringUtils {
         Matcher matcher = pattern.matcher(input);
 
         String[] groups = null;
-        if (matcher.matches()) {            
+        if (matcher.matches()) {
             groups = new String[matcher.groupCount()];
             int groupCount = matcher.groupCount();
             for (int i = 0; i < groupCount; i++) {
@@ -1141,7 +1217,7 @@ public class StringUtils {
         return groups;
     }
 
-    
+
     public static boolean matches(String input, String regexFormat, Object... params) {
         String regex = StringUtils.format(regexFormat, params);
         Pattern pattern = Pattern.compile(regex);
@@ -1211,8 +1287,5 @@ public class StringUtils {
         return pattern.substring(0, pattern.length() - min);
     }
 
-    
-
-    
 
 }

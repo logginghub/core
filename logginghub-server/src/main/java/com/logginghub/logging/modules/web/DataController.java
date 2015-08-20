@@ -472,7 +472,7 @@ public class DataController {
                     outputFilename += "." + Integer.toString(i);
                 }
 
-                File sourceFolder = new File("/Users/james/development/divmax/logs/");
+                File sourceFolder = new File("/Users/james/development/divmax/logs/21May");
                 File inputFile = new File(sourceFolder, inputFilename);
                 File outputFile = new File(sourceFolder, outputFilename);
 
