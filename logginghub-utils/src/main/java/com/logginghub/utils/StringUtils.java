@@ -459,6 +459,11 @@ public class StringUtils {
     }
 
     public static String format(String message, Object... objects) {
+        // Quick exit for the simple case
+        if(objects == null || objects.length ==0) {
+            return message;
+        }
+
         int objectIndex = 0;
 
         StringBuilder formatted = new StringBuilder();
@@ -486,11 +491,17 @@ public class StringUtils {
                     boolean isDate = false;
                     int width = -1;
                     boolean leftJustified = false;
+                    char paddingChar = ' ';
 
                     if (param.trim().length() > 0) {
 
                         if (param.startsWith("-")) {
                             leftJustified = true;
+                            param = param.substring(1).trim();
+                        }
+
+                        if (param.startsWith("0")) {
+                            paddingChar = '0';
                             param = param.substring(1).trim();
                         }
 
@@ -509,7 +520,12 @@ public class StringUtils {
 
                     if (objectIndex < objects.length) {
                         Object object = objects[objectIndex];
-                        String objectString = object.toString();
+                        String objectString;
+                        if (object != null) {
+                            objectString = object.toString();
+                        } else {
+                            objectString = "null";
+                        }
 
                         if (isDate) {
                             objectString = Logger.toDateString(Long.parseLong(objectString)).toString();
@@ -528,11 +544,11 @@ public class StringUtils {
                                 if (leftJustified) {
                                     formatted.append(objectString);
                                     for (int j = 0; j < padding; j++) {
-                                        formatted.append(" ");
+                                        formatted.append(paddingChar);
                                     }
                                 } else {
                                     for (int j = 0; j < padding; j++) {
-                                        formatted.append(" ");
+                                        formatted.append(paddingChar);
                                     }
 
                                     formatted.append(objectString);
@@ -559,11 +575,11 @@ public class StringUtils {
                 formatted.append(newline);
                 i++;
             } else if (c == '\\') {
-                if(isEscaped) {
+                if (isEscaped) {
                     // Escaped escape
                     formatted.append(c);
                     isEscaped = false;
-                }else {
+                } else {
                     isEscaped = true;
                 }
             } else {
@@ -571,7 +587,7 @@ public class StringUtils {
                     params.append(c);
                 } else {
 
-                    if(isEscaped) {
+                    if (isEscaped) {
                         // This wasn't a curly brace escape, it must have been a slash
                         formatted.append("\\");
                         isEscaped = false;

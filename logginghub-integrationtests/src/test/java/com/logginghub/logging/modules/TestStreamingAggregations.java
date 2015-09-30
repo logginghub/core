@@ -68,7 +68,7 @@ public class TestStreamingAggregations extends BaseHub {
         aggregationTemplate.setCaptureLabelIndex(0);
         aggregationTemplate.setGroupBy("{event.sourceHost}");
         aggregationTemplate.setInterval(1000);
-        aggregationTemplate.setPatternID(patternTemplate.getPatternID());
+        aggregationTemplate.setPatternID(patternTemplate.getPatternId());
         aggregationTemplate.setType(AggregationType.TotalSum);
 
         assertThat(patternManagementAPI.createAggregation(aggregationTemplate).isSuccessful(), is(true));

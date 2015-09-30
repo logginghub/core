@@ -214,7 +214,7 @@ public class EditorScreen<T> implements Screen {
     // result.getExternalReason(), ESC);
     // }
     // else {
-    // status = StringUtils.format("Pattern created (id {})", result.getValue().getPatternID());
+    // status = StringUtils.format("Pattern created (id {})", result.getValue().getPatternId());
     // }
     //
     // return success;

@@ -117,7 +117,7 @@ public class AggregationsViewPanel extends JPanel implements Asynchronous, Desti
                 if(result.isSuccessful()) {
                     List<Pattern> patterns = result.getValue();
                     for (Pattern pattern : patterns) {
-                        if(pattern.getPatternID() == patternID) {
+                        if(pattern.getPatternId() == patternID) {
                             foundPattern = pattern;
                             break;
                         }

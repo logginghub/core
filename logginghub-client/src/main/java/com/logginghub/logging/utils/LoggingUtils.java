@@ -272,6 +272,7 @@ public class LoggingUtils {
 
     public static LoggingHubStream logToHub2(final String sourceApplication, String host, int port) {
         LoggingHubStream stream = new LoggingHubStream();
+        stream.setLevelFilter(com.logginghub.utils.logging.Logger.stats);
         stream.setHost(host + ":"  + port);
         stream.setSourceApplication(sourceApplication);
         com.logginghub.utils.logging.Logger.root().addStream(stream);

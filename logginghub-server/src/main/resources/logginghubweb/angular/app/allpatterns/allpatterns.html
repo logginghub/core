@@ -1,0 +1,56 @@
+<div ng-controller="AllPatternsController as vm">
+    <h1>All Patterns</h1>
+
+    <div>{{vm.error}}</div>
+    <!--<div>{{controller.patterns}}</div>-->
+
+    <!--<div>{{vm.data}}</div>-->
+
+
+    <!--<section id="directives">-->
+        <!--<div class="row">-->
+                <!--<div class="panel panel-default">-->
+                    <!--<div class="panel-heading">All Patterns</div>-->
+                    <!--<div class="panel-body">-->
+                        <!--<div class="chart-container">-->
+
+                            <canvas id="line"
+                                    class="chart chart-line ng-isolate-scope"
+                                    chart-data="vm.data"
+                                    chart-labels="vm.labels"
+                                    chart-legend="true"
+                                    chart-click="vm.onClick"
+                                    chart-hover="vm.onHover"
+                                    chart-series="vm.series"
+                                    chart-options="vm.options"
+                                    style="float:left; width: 5230px; height: 261px;"></canvas>
+
+                        <!--</div>-->
+                    <!--</div>-->
+            <!--</div>-->
+        <!--</div>-->
+    <!--</section>-->
+
+    <section class="">
+        <div class="container">
+            <table>
+                <thead>
+                <tr>
+                    <th>Time</th>
+                    <th ng-repeat="label in vm.patterns.names">{{label}}</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="time in vm.patterns.times">
+                    <td>{{time.time}}</td>
+                    <td ng-repeat="value in time.values track by $index">{{value}}</td>
+                </tr>
+
+                </tbody>
+            </table>
+
+        </div>
+    </section>
+
+    <!--<pre>{{controller}}</pre>-->
+</div>

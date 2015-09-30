@@ -456,7 +456,7 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
     //                com.logginghub.utils.observable.ObservableList<ChartSeriesModel> matcherModels = lineChartModel.getMatcherModels();
     //                for (ChartSeriesModel csm : matcherModels) {
     //
-    //                    int pattern = csm.getPatternID().get();
+    //                    int pattern = csm.getPatternId().get();
     //                    String eventParts = csm.getEventParts().get();
     //                    int interval = csm.getInterval().get();
     //                    int labelIndex = csm.getLabelIndex().get();

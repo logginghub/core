@@ -1,24 +1,18 @@
 package com.logginghub.analytics.charting;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-
+import com.logginghub.analytics.AggregatedDataKey;
+import com.logginghub.analytics.LineFormatController;
+import com.logginghub.analytics.OHLCValue;
+import com.logginghub.analytics.demo.DataFunction;
+import com.logginghub.analytics.model.AggregatedData;
+import com.logginghub.analytics.model.GeneralAggregatedData;
+import com.logginghub.analytics.model.TimeSeriesData;
+import com.logginghub.utils.ColourUtils;
+import com.logginghub.utils.FileUtils;
+import com.logginghub.utils.IntegerFrequencyCount;
+import com.logginghub.utils.MutableIntegerValue;
+import com.logginghub.utils.Pair;
+import com.logginghub.utils.StandardDateFormat;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.ChartUtilities;
 import org.jfree.chart.JFreeChart;
@@ -38,19 +32,21 @@ import org.jfree.data.xy.XYDataItem;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.ui.RectangleEdge;
 
-import com.logginghub.analytics.AggregatedDataKey;
-import com.logginghub.analytics.LineFormatController;
-import com.logginghub.analytics.OHLCValue;
-import com.logginghub.analytics.demo.DataFunction;
-import com.logginghub.analytics.model.AggregatedData;
-import com.logginghub.analytics.model.GeneralAggregatedData;
-import com.logginghub.analytics.model.TimeSeriesData;
-import com.logginghub.utils.ColourUtils;
-import com.logginghub.utils.FileUtils;
-import com.logginghub.utils.IntegerFrequencyCount;
-import com.logginghub.utils.MutableIntegerValue;
-import com.logginghub.utils.Pair;
-import com.logginghub.utils.StandardDateFormat;
+import javax.swing.*;
+import java.awt.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Bar that takes care of itself. You just give it [series, value] values and it does the rest.
@@ -217,7 +213,7 @@ public class BarChartPanel extends JPanel implements ChartPanelInterface {
     public void addSeries(String category, IntegerFrequencyCount frequencyCount) {
         List<MutableIntegerValue> sortedValues = frequencyCount.getSortedValues();
         for (MutableIntegerValue value : sortedValues) {
-            this.categoryDataset.addValue(value.value, category, value.key);
+            this.categoryDataset.addValue(value.value, category, value.key.toString());
         }
     }
 

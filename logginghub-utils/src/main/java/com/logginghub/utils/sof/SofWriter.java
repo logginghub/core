@@ -1,6 +1,7 @@
 package com.logginghub.utils.sof;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.Date;
 
 public interface SofWriter {
@@ -52,6 +53,8 @@ public interface SofWriter {
     void write(int field, SerialisableObject o) throws SofException;
 
     void write(int field, SerialisableObject[] subObjectArray, Class<? extends SerialisableObject> uniformClass) throws SofException;
+
+    void write(int field, Collection<? extends SerialisableObject> subObjectArray, Class<? extends SerialisableObject> uniformClass) throws SofException;
 
     void write(int field, SerialisableObject[] subObjectArray) throws SofException;
 

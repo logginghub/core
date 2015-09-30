@@ -12,7 +12,6 @@ import org.junit.rules.ExpectedException;
 
 import com.logginghub.logging.api.patterns.Pattern;
 import com.logginghub.logging.messaging.PatternisedLogEvent;
-import com.logginghub.logging.utils.AggregatedPatternParser;
 import com.logginghub.logging.utils.AggregatedPatternParser.Node;
 
 public class TestAggregatedPatternParser {
@@ -28,7 +27,7 @@ public class TestAggregatedPatternParser {
         pattern.setDebug(false);
         pattern.setName("pattern1");
         pattern.setPattern("This {is} a {pattern} with {some} labels");
-        pattern.setPatternID(1);
+        pattern.setPatternId(1);
     }
     
     @Test public void test_parse_success_1() throws Exception {

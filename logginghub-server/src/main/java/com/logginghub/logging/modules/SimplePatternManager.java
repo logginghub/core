@@ -54,9 +54,9 @@ public class SimplePatternManager implements PatternManagerService {
 
         if (result.isSuccessful()) {
             Pattern model = new Pattern(name, pattern);
-            model.setPatternID(nextPatternID.getAndIncrement());
+            model.setPatternId(nextPatternID.getAndIncrement());
 
-            logger.fine("Creating pattern : id={} name='{}' pattern='{}'", model.getPatternID(), name, pattern);
+            logger.fine("Creating pattern : id={} name='{}' pattern='{}'", model.getPatternId(), name, pattern);
 
             patternModels.add(model);
 
@@ -92,7 +92,7 @@ public class SimplePatternManager implements PatternManagerService {
 
         Pattern found = null;
         for (Pattern pattern : patternModels) {
-            if (pattern.getPatternID() == patternID) {
+            if (pattern.getPatternId() == patternID) {
                 found = pattern;
                 break;
             }

@@ -28,7 +28,7 @@ public class AggregationsViewTable extends ExtensibleTable<Aggregation> {
         }
         
         @Override public String toString() {
-            return StringUtils.format("[{}] {}", pattern.getPatternID(), pattern.getName());             
+            return StringUtils.format("[{}] {}", pattern.getPatternId(), pattern.getName());
         }
     }
     

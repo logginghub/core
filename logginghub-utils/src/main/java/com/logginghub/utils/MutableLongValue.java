@@ -6,11 +6,11 @@ package com.logginghub.utils;
  * @author James
  * 
  */
-public class MutableLongValue implements Comparable<MutableLongValue> {
-    public String key;
+public class MutableLongValue<KeyType> implements Comparable<MutableLongValue> {
+    public KeyType key;
     public long value;
 
-    public MutableLongValue(String key, long initialValue) {
+    public MutableLongValue(KeyType key, long initialValue) {
         this.key = key;
         this.value = initialValue;
     }

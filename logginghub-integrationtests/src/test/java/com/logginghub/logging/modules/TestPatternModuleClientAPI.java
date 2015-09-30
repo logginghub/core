@@ -39,14 +39,14 @@ public class TestPatternModuleClientAPI extends BaseHub {
         Result<Pattern> createPatternResult = patternManagementAPI.createPattern(template);
 
         assertThat(createPatternResult.isSuccessful(), is(true));
-        assertThat(createPatternResult.getValue().getPatternID(), is(0));
+        assertThat(createPatternResult.getValue().getPatternId(), is(0));
         assertThat(createPatternResult.getValue().getName(), is("pattern1"));
         assertThat(createPatternResult.getValue().getPattern(), is("Pattern"));
 
         patterns = patternManagementAPI.getPatterns();
         assertThat(patterns.isSuccessful(), is(true));
         assertThat(patterns.getValue().size(), is(1));
-        assertThat(patterns.getValue().get(0).getPatternID(), is(0));
+        assertThat(patterns.getValue().get(0).getPatternId(), is(0));
         assertThat(patterns.getValue().get(0).getName(), is("pattern1"));
         assertThat(patterns.getValue().get(0).getPattern(), is("Pattern"));
 

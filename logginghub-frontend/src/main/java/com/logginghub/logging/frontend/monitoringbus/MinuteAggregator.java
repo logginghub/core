@@ -1,12 +1,5 @@
 package com.logginghub.logging.frontend.monitoringbus;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
-
 import com.logginghub.utils.CompareUtils;
 import com.logginghub.utils.FactoryMap;
 import com.logginghub.utils.HTMLBuilder;
@@ -15,6 +8,13 @@ import com.logginghub.utils.MutableIntegerValue;
 import com.logginghub.utils.SinglePassStatisticsDoublePrecision;
 import com.logginghub.utils.TimeUtils;
 import com.logginghub.utils.logging.Logger;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 
 public class MinuteAggregator {
 
@@ -57,8 +57,8 @@ public class MinuteAggregator {
         perSeconds.addAll(values);
         Collections.sort(perSeconds, new Comparator<MutableIntegerValue>() {
             public int compare(MutableIntegerValue o1, MutableIntegerValue o2) {
-                long a = Long.parseLong(o1.key);
-                long b = Long.parseLong(o2.key);
+                long a = Long.parseLong(o1.key.toString());
+                long b = Long.parseLong(o2.key.toString());
                 return CompareUtils.compare(a, b);
             }
         });
@@ -81,7 +81,7 @@ public class MinuteAggregator {
             int[] minuteData = new int[60];
 
             for (MutableIntegerValue value : perSeconds) {
-                long a = Long.parseLong(value.key);
+                long a = Long.parseLong(value.key.toString());
                 if (a >= start && a < end) {
 
                     int index = (int) ((a - start) / 1000);

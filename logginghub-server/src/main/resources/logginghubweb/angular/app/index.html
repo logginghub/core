@@ -1,0 +1,60 @@
+<!doctype html>
+<html ng-app="loggingHub">
+<head>
+
+    <link rel="stylesheet" href="external/bootstrap.min.css">
+    <link rel="stylesheet" href="external/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="styles/styles.css">
+    <link rel="stylesheet" href="external/angular-chart.css">
+
+    <script src="external/angular.min.js"></script>
+    <script src="external/angular-resource.min.js"></script>
+    <script src="external/moment.min.js"></script>
+    <script src="external/angular-ui-router.min.js"></script>
+    <script src="external/ui-bootstrap-tpls-0.12.0.min.js"></script>
+    <script src="external/jquery.min.js"></script>
+    <script src="external/bootstrap.min.js"></script>
+    <script src="external/underscore-min.js"></script>
+    <script src="external/Chart.min.js"></script>
+    <script src="external/angular-chart.js"></script>
+
+    <script src="logging.js"></script>
+    <script src="logginghub.js"></script>
+
+    <script src="patterns/patterns.controller.js"></script>
+    <script src="pattern/pattern.controller.js"></script>
+    <script src="allpatterns/allpatterns.controller.js"></script>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1">
+    <title>Logging Hub</title>
+</head>
+
+<body class="container noselect">
+
+<nav class="navbar navbar-default">
+
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="#">Logging Hub</a>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav">
+                <li><a ui-sref="home">Home</a></li>
+                <li><a ui-sref="allpatterns">All Patterns</a></li>
+                <li><a ui-sref="patterns">Patterns</a></li>
+                <li><a ui-sref="stats">Stats</a></li>
+            </ul>
+
+        </div>
+    </div>
+</nav>
+
+<div class="row">
+    <div class="span12">
+        <div class="well" ui-view></div>
+    </div>
+</div>
+
+</body>
+</html>

@@ -25,7 +25,7 @@ public class TestAggregatorCore {
         PatternManagerModule patternManager = new PatternManagerModule();
         Pattern pattern = new Pattern();
         pattern.setPattern("");
-        pattern.setPatternID(2);
+        pattern.setPatternId(2);
         patternManager.addPattern(pattern);
         aggregatorCore = new AggregatorCore(patternManager);
     }

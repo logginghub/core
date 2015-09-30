@@ -1,9 +1,9 @@
 package com.logginghub.utils.sof;
 
+import com.logginghub.utils.ExpandingByteBuffer;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
-
-import com.logginghub.utils.ExpandingByteBuffer;
 
 public class ExpandingByteBufferWriterAbstraction implements WriterAbstraction {
 
@@ -79,4 +79,8 @@ public class ExpandingByteBufferWriterAbstraction implements WriterAbstraction {
         buffer.put(value, position, length);
     }
 
+    @Override
+    public String toString() {
+        return buffer.toString();
+    }
 }

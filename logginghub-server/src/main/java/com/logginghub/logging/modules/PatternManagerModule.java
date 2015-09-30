@@ -1,10 +1,7 @@
 package com.logginghub.logging.modules;
 
-import java.io.File;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.logginghub.logging.api.patterns.Aggregation;
 import com.logginghub.logging.api.patterns.AggregationListRequest;
 import com.logginghub.logging.api.patterns.AggregationListResponse;
@@ -32,13 +29,17 @@ import com.logginghub.utils.module.Provides;
 import com.logginghub.utils.module.ServiceDiscovery;
 import com.logginghub.utils.sof.SerialisableObject;
 
+import java.io.File;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+
 @Provides(PatternisedLogEvent.class) public class PatternManagerModule implements Module<PatternManagerConfiguration>, PatternManagerService {
 
     private static final Logger logger = Logger.getLoggerFor(PatternManagerModule.class);
 
     private PatternManagerConfiguration configuration;
 
-    private AtomicInteger nextPatternID = new AtomicInteger(0);
+    private AtomicInteger nextPatternId = new AtomicInteger(0);
     private AtomicInteger nextAggregationID = new AtomicInteger(0);
 
     private File dataFile;
@@ -74,10 +75,10 @@ import com.logginghub.utils.sof.SerialisableObject;
                 if (dataWrapper != null) {
                     
                     for (Pattern patternModel : dataWrapper.patternModels) {
-                        nextPatternID.set(Math.max(nextPatternID.get(), patternModel.getPatternID()));
+                        nextPatternId.set(Math.max(nextPatternId.get(), patternModel.getPatternId()));
                     }
                     
-                    nextPatternID.incrementAndGet();
+                    nextPatternId.incrementAndGet();
                     
                     for (Aggregation aggregation : dataWrapper.aggregationModels) {
                         nextAggregationID.set(Math.max(nextAggregationID.get(), aggregation.getAggregationID()));
@@ -94,7 +95,7 @@ import com.logginghub.utils.sof.SerialisableObject;
         serverSubscriptionsService = discovery.findService(ServerSubscriptionsService.class);
 
         configured = true;
-        logger.fine("Next pattern ID will be '{}'", nextPatternID);
+        logger.fine("Next pattern ID will be '{}'", nextPatternId);
     }
 
     public Result<ObservableList<Pattern>> getPatterns() {
@@ -136,9 +137,9 @@ import com.logginghub.utils.sof.SerialisableObject;
 
         if (result.isSuccessful()) {
             Pattern model = new Pattern(name, pattern);
-            model.setPatternID(nextPatternID.getAndIncrement());
+            model.setPatternId(nextPatternId.getAndIncrement());
 
-            logger.fine("Creating pattern : id={} name='{}' pattern='{}'", model.getPatternID(), name, pattern);
+            logger.fine("Creating pattern : id={} name='{}' pattern='{}'", model.getPatternId(), name, pattern);
 
             dataWrapper.patternModels.add(model);
 
@@ -151,7 +152,8 @@ import com.logginghub.utils.sof.SerialisableObject;
     }
 
     private void saveData() {
-        Gson gson = new Gson();
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
         String json2 = gson.toJson(dataWrapper);
         FileUtils.write(json2, dataFile);
     }
@@ -194,7 +196,7 @@ import com.logginghub.utils.sof.SerialisableObject;
                         Result<Pattern> createPattern = createPattern(name, pattern);
 
                         if (createPattern.isSuccessful()) {
-                            mapMessage.put("patternID", Integer.toString(createPattern.getValue().getPatternID()));
+                            mapMessage.put("patternID", Integer.toString(createPattern.getValue().getPatternId()));
                         }
 
                         ResponseMessage responseWrapper = new ResponseMessage(channelMessage.getCorrelationID(), mapMessage);
@@ -309,7 +311,7 @@ import com.logginghub.utils.sof.SerialisableObject;
         Pattern found = null;
         List<Pattern> patternModels = dataWrapper.patternModels;
         for (Pattern pattern : patternModels) {
-            if (pattern.getPatternID() == patternID) {
+            if (pattern.getPatternId() == patternID) {
                 found = pattern;
                 break;
             }

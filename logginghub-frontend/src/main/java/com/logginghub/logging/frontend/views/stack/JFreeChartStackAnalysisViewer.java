@@ -93,7 +93,7 @@ public class JFreeChartStackAnalysisViewer extends StackAnalyser {
                 int count = 0;
                 for (MutableIntegerValue mutableIntegerValue : sortedResults) {
                     categoryDataset.setValue(mutableIntegerValue.value, "In method", mutableIntegerValue.key == null ? "null"
-                                                                                                                    : mutableIntegerValue.key);
+                                                                                                                    : mutableIntegerValue.key.toString());
                     count++;
                     if(count == 10){
                         break;

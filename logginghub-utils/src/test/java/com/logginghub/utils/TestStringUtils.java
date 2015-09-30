@@ -146,6 +146,9 @@ public class TestStringUtils {
 
     @Test
     public void testFormatPadding() {
+
+        assertThat(StringUtils.format("{05}", "10"), is("00010"));
+
         assertThat(StringUtils.format("\\{5}\\d{}", 1), is("{5}\\d1"));
         assertThat(StringUtils.format("\\{5}{}", 1), is("{5}1"));
         assertThat(StringUtils.format("{}\\d\\{4}_\\d\\{2}_\\d\\{2}_\\d\\{6}{}", "hub.", ".log"), is("hub.\\d{4}_\\d{2}_\\d{2}_\\d{6}.log"));
@@ -189,6 +192,9 @@ public class TestStringUtils {
 
     @Test
     public void testFormat() {
+
+        assertThat(StringUtils.format("adf{5asdfwer}"), is("adf{5asdfwer}"));
+
         assertThat(StringUtils.format("a{}c", "b"), is("abc"));
         assertThat(StringUtils.format("{}", 10), is("10"));
         assertThat(StringUtils.format("{"), is("{"));

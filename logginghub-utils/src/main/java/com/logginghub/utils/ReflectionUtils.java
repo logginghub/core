@@ -1,5 +1,7 @@
 package com.logginghub.utils;
 
+import com.logginghub.utils.observable.ObservableProperty;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -7,8 +9,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.logginghub.utils.observable.ObservableProperty;
 
 public class ReflectionUtils {
     /**
@@ -306,7 +306,7 @@ public class ReflectionUtils {
                                                   e);
         }
         catch (IllegalAccessException e) {
-            throw FormattedRuntimeException.build("Failed to instantiate instance of class {} due to access exception, is the default constructor public?",
+            throw FormattedRuntimeException.build("Failed to instantiate instance of class {} due to access exception, is the class public and default constructor public?",
                                                   clazz.getName(),
                                                   e);
         }

@@ -21,6 +21,12 @@ public class PatternModel extends Observable {
     private ObservableProperty<Boolean> debug = createBooleanProperty("debug", false);
     private ObservableProperty<Boolean> cleanUp = createBooleanProperty("cleanUp", false);
 
+    public PatternModel(int patternId, String name, String pattern) {
+        getPatternID().set(patternId);
+        getName().set(name);
+        getPattern().set(pattern);
+    }
+
     public PatternModel(String name, String pattern) {
         getName().set(name);
         getPattern().set(pattern);

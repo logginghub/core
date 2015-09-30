@@ -1,10 +1,17 @@
 package com.logginghub.logging.modules.web;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 import com.logginghub.analytics.model.LongFrequencyCount;
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.api.patterns.Aggregation;
 import com.logginghub.logging.api.patterns.Pattern;
+import com.logginghub.logging.datafiles.SummaryBuilder;
+import com.logginghub.logging.datafiles.SummaryTimeElement;
 import com.logginghub.logging.interfaces.ChannelMessagingService;
 import com.logginghub.logging.messages.AggregationType;
 import com.logginghub.logging.messages.ChannelMessage;
@@ -14,14 +21,36 @@ import com.logginghub.logging.messaging.PatternisedLogEvent;
 import com.logginghub.logging.messaging.SubscriptionController;
 import com.logginghub.logging.modules.PatternManagerService;
 import com.logginghub.logging.utils.ObservableList;
-import com.logginghub.utils.*;
+import com.logginghub.utils.CompareUtils;
+import com.logginghub.utils.Destination;
+import com.logginghub.utils.JSONWriter;
+import com.logginghub.utils.KeyedFactory;
+import com.logginghub.utils.MutableLongValue;
+import com.logginghub.utils.Result;
+import com.logginghub.utils.SinglePassStatisticsDoublePrecision;
+import com.logginghub.utils.TimeUtils;
+import com.logginghub.utils.WorkerThread;
 import com.logginghub.utils.logging.Logger;
+import com.logginghub.utils.module.ServiceDiscovery;
 import com.logginghub.utils.observable.Counterparts;
-import com.logginghub.web.*;
+import com.logginghub.web.Param;
+import com.logginghub.web.RequestContext;
+import com.logginghub.web.WebController;
+import com.logginghub.web.WebSocketHelper;
+import com.logginghub.web.WebSocketListener;
+import com.logginghub.web.WebSocketSupport;
 import org.eclipse.jetty.websocket.WebSocket.Connection;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.Future;
 
 @WebController(staticFiles = "/logginghubweb/")
@@ -32,28 +61,24 @@ public class WebFrontendController implements WebSocketSupport {
 
     // private Map<String, List<Connection>> subscriptions = new HashMap<String,
     // List<Connection>>();
-
+    private Counterparts<String, Destination<ChannelMessage>> hubSubscriptionCounterparts = new Counterparts<String, Destination<ChannelMessage>>();
+    private Counterparts<Connection, Destination<String>> subscriptionCounterparts = new Counterparts<Connection, Destination<String>>();
+    private WebSocketHelper webSocketHelper;
+    private PatternManagerService patternManager;
+    private ChannelMessagingService channelMessaging;
     private SubscriptionController<Destination<String>, String> subscriptions = new SubscriptionController<Destination<String>, String>() {
-        @Override
-        protected Future<Boolean> handleLastSubscription(String channel) {
-            return removeHubSubscription(channel);
-        }
-
         @Override
         protected Future<Boolean> handleFirstSubscription(String channel) {
             return createHubSubscription(channel);
         }
+
+        @Override
+        protected Future<Boolean> handleLastSubscription(String channel) {
+            return removeHubSubscription(channel);
+        }
     };
-
-    private Counterparts<String, Destination<ChannelMessage>> hubSubscriptionCounterparts = new Counterparts<String, Destination<ChannelMessage>>();
-
-    private Counterparts<Connection, Destination<String>> subscriptionCounterparts = new Counterparts<Connection, Destination<String>>();
-
-    private WebSocketHelper webSocketHelper;
-    private PatternManagerService patternManager;
-    private ChannelMessagingService channelMessaging;
-
     private DataController dataController = new DataController();
+    private ServiceDiscovery serviceDiscovery;
 
     public WebFrontendController() {
         WorkerThread.execute("Test data reader", new Runnable() {
@@ -64,130 +89,114 @@ public class WebFrontendController implements WebSocketSupport {
         });
     }
 
-    public String stats() {
-        JsonObject object = new JsonObject();
-
-        JsonArray array = new JsonArray();
-
-        List<DataController.YearlyData> years = dataController.getYears();
-        for (DataController.YearlyData year : years) {
-
-            JsonObject itemObject = new JsonObject();
-
-            itemObject.add("year", new JsonPrimitive(year.getKey().year));
-            itemObject.add("events", new JsonPrimitive(year.getCount()));
-
-            array.add(itemObject);
+    private void broadcastAndRemoveFailures(List<Connection> list, String message) {
+        List<Connection> failures = new ArrayList<Connection>();
+        for (Connection connection : list) {
+            try {
+                logger.fine("Sending to connection '{}' : {}", connection, message);
+                connection.sendMessage(message);
+            } catch (IOException e) {
+                logger.fine("Connection send failed, removing subscription");
+                failures.add(connection);
+            }
         }
 
-        object.add("years", array);
-
-        return object.toString();
+        list.removeAll(failures);
     }
 
-    public String yearstats(@Param(name = "year") int year) {
-        JsonObject object = new JsonObject();
+    public void broadcastEvent(LogEvent event) {
+        String channel = "events";
 
-        JsonArray array = new JsonArray();
+        if (subscriptions.hasSubscriptions(channel)) {
+            // TODO :use gson?
+            JsonObject eventJSON = toJSON(event);
 
-        DataController.YearlyData yearlyData = dataController.getYear(year);
-        Collection<DataController.MonthlyData> values = yearlyData.getSubPeriodData().values();
-        List<DataController.MonthlyData> sorted = new ArrayList<DataController.MonthlyData>(values);
-        Collections.sort(sorted, new Comparator<DataController.MonthlyData>() {
-            @Override
-            public int compare(DataController.MonthlyData o1, DataController.MonthlyData o2) {
-                return CompareUtils.compare(o1.getKey(), o2.getKey());
-            }
-        });
+            JsonObject broadcastJSON = new JsonObject();
+            broadcastJSON.addProperty("channel", channel);
+            broadcastJSON.addProperty("value", eventJSON.toString());
 
-        for (DataController.MonthlyData month : sorted) {
+            String json = broadcastJSON.toString();
 
-            JsonObject itemObject = new JsonObject();
-
-            itemObject.add("month", new JsonPrimitive(month.getKey().month));
-            itemObject.add("year", new JsonPrimitive(month.getKey().year));
-            itemObject.add("events", new JsonPrimitive(month.getCount()));
-
-            array.add(itemObject);
+            subscriptions.dispatch(Channels.toArray(channel), json);
         }
-
-        object.add("months", array);
-
-        return object.toString();
     }
 
-    public String monthstats(@Param(name = "year") int year, @Param(name = "month") int month) {
-        JsonObject object = new JsonObject();
+    private JsonObject toJSON(LogEvent event) {
+        JsonObject eventJSON = new JsonObject();
+        eventJSON.addProperty("channel", event.getChannel());
+        eventJSON.addProperty("formattedException", event.getFormattedException());
+        eventJSON.addProperty("level", event.getLevel());
+        eventJSON.addProperty("levelDescription", event.getLevelDescription());
+        eventJSON.addProperty("time", event.getOriginTime());
+        eventJSON.addProperty("loggerName", event.getLoggerName());
+        eventJSON.addProperty("message", event.getMessage());
+        eventJSON.addProperty("pid", event.getPid());
+        eventJSON.addProperty("sequenceNumber", event.getSequenceNumber());
+        eventJSON.addProperty("sourceAddress", event.getSourceAddress());
+        eventJSON.addProperty("sourceApplication", event.getSourceApplication());
+        eventJSON.addProperty("sourceClassName", event.getSourceClassName());
+        eventJSON.addProperty("sourceHost", event.getSourceHost());
+        eventJSON.addProperty("sourceMethodName", event.getSourceMethodName());
+        eventJSON.addProperty("threadName", event.getThreadName());
+        return eventJSON;
+    }
 
-        JsonArray array = new JsonArray();
+    public String createAggregation(@Param(name = "pattern") int pattern,
+                                    @Param(name = "label") int label,
+                                    @Param(name = "interval") String intervalString,
+                                    @Param(name = "type") String type,
+                                    @Param(name = "groupBy") String groupBy) {
+        logger.info("Create aggregation : pattern='{}' interval='{}' type='{}'", pattern, intervalString, type);
+        Result<Aggregation> aggregationModel = patternManager.createAggregation(pattern,
+                                                                                label,
+                                                                                TimeUtils.parseInterval(intervalString),
+                                                                                AggregationType.valueOf(type),
+                                                                                groupBy);
+        return toJSON(aggregationModel);
+    }
 
-        DataController.YearlyData yearlyData = dataController.getYear(year);
-        DataController.PeriodKey key = DataController.PeriodKey.month(year, month);
+    private String toJSON(Object object) {
+        Gson gson = new Gson();
+        String json = gson.toJson(object);
+        System.out.println(json);
+        return json;
+    }
 
-        DataController.MonthlyData subPeriodData = yearlyData.getSubPeriodData().get(key);
+    protected Future<Boolean> createHubSubscription(String channel) {
 
-        Collection<DataController.DailyData> values = subPeriodData.getSubPeriodData().values();
-        List<DataController.DailyData> sorted = new ArrayList<DataController.DailyData>(values);
-        Collections.sort(sorted, new Comparator<DataController.DailyData>() {
+        logger.info("Creating subscription to hub channel '{}'", channel);
+
+        Destination<ChannelMessage> destination = new Destination<ChannelMessage>() {
             @Override
-            public int compare(DataController.DailyData o1, DataController.DailyData o2) {
-                return CompareUtils.compare(o1.getKey(), o2.getKey());
+            public void send(ChannelMessage t) {
+                dispatchHubChannelMessage(t);
             }
-        });
+        };
 
-        for (DataController.DailyData day : sorted) {
+        hubSubscriptionCounterparts.put(channel, destination);
+        channelMessaging.subscribe(channel, destination);
 
-            JsonObject itemObject = new JsonObject();
+        return null;
 
-            itemObject.add("day", new JsonPrimitive(day.getKey().dayOfMonth));
-            itemObject.add("month", new JsonPrimitive(day.getKey().month));
-            itemObject.add("year", new JsonPrimitive(day.getKey().year));
-            itemObject.add("events", new JsonPrimitive(day.getCount()));
+    }
 
-            SinglePassStatisticsDoublePrecision[] statsArray = day.getNumericStats();
-            for (SinglePassStatisticsDoublePrecision stats : statsArray) {
-                if (stats != null) {
+    protected void dispatchHubChannelMessage(ChannelMessage t) {
 
-                    JsonObject statsObject = new JsonObject();
-                    JsonArray percentilesArray = new JsonArray();
-
-                    stats.doCalculations();
-
-                    statsObject.add("count", new JsonPrimitive(stats.getCount()));
-                    statsObject.add("mean", new JsonPrimitive(stats.getMean()));
-                    statsObject.add("min", new JsonPrimitive(stats.getMinimum()));
-                    statsObject.add("max", new JsonPrimitive(stats.getMaximum()));
-
-                    double[] percentiles = stats.getPercentiles();
-                    percentilesArray.add(new JsonPrimitive(percentiles[0]));
-                    percentilesArray.add(new JsonPrimitive(percentiles[10]));
-                    percentilesArray.add(new JsonPrimitive(percentiles[20]));
-                    percentilesArray.add(new JsonPrimitive(percentiles[30]));
-                    percentilesArray.add(new JsonPrimitive(percentiles[40]));
-                    percentilesArray.add(new JsonPrimitive(percentiles[50]));
-                    percentilesArray.add(new JsonPrimitive(percentiles[60]));
-                    percentilesArray.add(new JsonPrimitive(percentiles[70]));
-                    percentilesArray.add(new JsonPrimitive(percentiles[80]));
-                    percentilesArray.add(new JsonPrimitive(percentiles[90]));
-                    percentilesArray.add(new JsonPrimitive(percentiles[100]));
-                    percentilesArray.add(new JsonPrimitive(percentiles[95]));
-                    percentilesArray.add(new JsonPrimitive(percentiles[98]));
-                    percentilesArray.add(new JsonPrimitive(percentiles[99]));
-
-                    statsObject.add("percentiles", percentilesArray);
-
-                    // TODO: should be an array for multiple numeric values in the pattern
-                    itemObject.add("patternStats", statsObject);
-
-                }
-            }
-
-            array.add(itemObject);
+        NonArrayChannelMessage message = NonArrayChannelMessage.fromChannelMessage(t);
+        String channel = message.getChannel();
+        if (subscriptions.hasSubscriptions(channel)) {
+            Gson gson = new Gson();
+            String json = gson.toJson(message);
+            logger.fine("Dispatching json to websocket connections for channel '{}' : data '{}'", channel, json);
+            subscriptions.dispatch(Channels.toArray(channel), json);
         }
 
-        object.add("days", array);
+    }
 
-        return object.toString();
+    public String createPattern(@Param(name = "name") String name, @Param(name = "pattern") String pattern) {
+        logger.info("Create pattern name '{}' pattern '{}'", name, pattern);
+        Result<Pattern> patternModel = patternManager.createPattern(name, pattern);
+        return toJSON(patternModel);
     }
 
     public String daystats(@Param(name = "year") int year, @Param(name = "month") int month, @Param(name = "day") int day) {
@@ -278,7 +287,7 @@ public class WebFrontendController implements WebSocketSupport {
                 for (MutableLongValue sortedValue : sortedValues) {
 
                     JsonObject frequencyObject = new JsonObject();
-                    frequencyObject.add("value", new JsonPrimitive(sortedValue.key));
+                    frequencyObject.add("value", new JsonPrimitive(sortedValue.key.toString()));
                     frequencyObject.add("count", new JsonPrimitive(sortedValue.value));
 
                     frequencyArray.add(frequencyObject);
@@ -295,12 +304,103 @@ public class WebFrontendController implements WebSocketSupport {
         }
 
         object.add("variableFrequencies", allFrequenciesArray);
-
-
         object.add("variableStats", allStatsArray);
 
         return object.toString();
     }
+
+    public String getAggregations() {
+        logger.info("Getting aggregations");
+        Result<ObservableList<Aggregation>> aggregations = patternManager.getAggregations();
+        return toJSON(aggregations);
+    }
+
+    public String getAllPatterns() {
+
+        final List<SummaryTimeElement> elements = new ArrayList<SummaryTimeElement>();
+        SummaryBuilder.replay(new File("/Users/james/development/git/marketstreamer/marketstreamer-core/mso-trading/tmp",
+                                       "bats.aggregatedsummary.binary.log"), new Destination<SummaryTimeElement>() {
+            @Override
+            public void send(SummaryTimeElement summaryTimeElement) {
+                elements.add(summaryTimeElement);
+            }
+        });
+
+        // Sort the patterns by their Id
+        ObservableList<Pattern> patternsSortedById = patternManager.getPatterns().getValue();
+        Collections.sort(patternsSortedById, new Comparator<Pattern>() {
+            @Override
+            public int compare(Pattern o1, Pattern o2) {
+                return Integer.compare(o1.getPatternId(), o2.getPatternId());
+            }
+        });
+
+        // Put the names into an array for table headings
+        JsonArray patternNames = new JsonArray();
+        patternNames.add(new JsonPrimitive("Total"));
+        for (Pattern pattern : patternsSortedById) {
+            patternNames.add(new JsonPrimitive(pattern.getName()));
+        }
+
+        // Build the time elements
+        JsonArray timeArray = new JsonArray();
+        for (SummaryTimeElement element : elements) {
+
+            JsonArray patternValuesTemp = new JsonArray();
+
+            long total = 0;
+            for (Pattern pattern : patternsSortedById) {
+                int patternId = pattern.getPatternId();
+                long countForPattern = element.getCountForPattern(patternId);
+                total += countForPattern;
+                patternValuesTemp.add(new JsonPrimitive(countForPattern));
+            }
+
+            JsonArray patternValues = new JsonArray();
+            patternValues.add(new JsonPrimitive(total));
+            patternValues.addAll(patternValuesTemp);
+
+            JsonObject timeElement = new JsonObject();
+            timeElement.add("time", new JsonPrimitive(Logger.toTimeString(element.getTime()).toString()));
+            timeElement.add("values", patternValues);
+
+            timeArray.add(timeElement);
+        }
+
+        // Put this all together
+        JsonObject object = new JsonObject();
+        object.add("names", patternNames);
+        object.add("times", timeArray);
+
+        return object.toString();
+    }
+
+    public String getPatterns() {
+        logger.info("Getting patterns");
+        Result<ObservableList<Pattern>> patterns = patternManager.getPatterns();
+        return toJSON(patterns);
+    }
+
+    //    public Object handle(String url) {
+    //        logger.info("Handling url '{}'", url);
+    //
+    //        String[] split = url.split("/");
+    //
+    //        String service = split[0];
+    //
+    //        String classname = "com.logging.modules." + StringUtils.capitalise(service);
+    //
+    //        try {
+    //            Object instance = serviceDiscovery.findService(Class.forName(classname));
+    //
+    //
+    //
+    //        } catch (ClassNotFoundException e) {
+    //            return e.getMessage();
+    //        }
+    //
+    //        return "Hello";
+    //    }
 
     public String hourstats(@Param(name = "year") int year,
                             @Param(name = "month") int month,
@@ -381,6 +481,38 @@ public class WebFrontendController implements WebSocketSupport {
         object.add("minutes", array);
 
         return object.toString();
+    }
+
+    public String logon(Map<String, String[]> parameters) {
+        String userName = parameters.get("userName")[0];
+        String password = parameters.get("password")[0];
+
+        logger.info("Logon attempted for userName '{}'", userName);
+
+        JSONWriter writer = new JSONWriter();
+        writer.startElement();
+
+        Result<AuthenticationResult> result = authenticate(userName, password);
+        if (result.getState() == Result.State.Successful) {
+            String sessionID = UUID.randomUUID().toString();
+            sessions.put(sessionID, result.getValue());
+            writer.writeProperty("success", true);
+            writer.writeProperty("sessionID", sessionID);
+            writer.writeProperty("userName", userName);
+
+            RequestContext.getRequestContext().addCookie("sessionID", sessionID);
+        } else {
+            writer.writeProperty("success", false);
+            writer.writeProperty("reason", result.getExternalReason());
+        }
+
+        writer.endElement();
+        return writer.toString();
+    }
+
+    private Result<AuthenticationResult> authenticate(String userName, String password) {
+        Result<AuthenticationResult> result = new Result<AuthenticationResult>(new AuthenticationResult(userName));
+        return result;
     }
 
     public String minutestats(@Param(name = "year") int year,
@@ -466,6 +598,87 @@ public class WebFrontendController implements WebSocketSupport {
         return object.toString();
     }
 
+    public String monthstats(@Param(name = "year") int year, @Param(name = "month") int month) {
+        JsonObject object = new JsonObject();
+
+        JsonArray array = new JsonArray();
+
+        DataController.YearlyData yearlyData = dataController.getYear(year);
+        DataController.PeriodKey key = DataController.PeriodKey.month(year, month);
+
+        DataController.MonthlyData subPeriodData = yearlyData.getSubPeriodData().get(key);
+
+        Collection<DataController.DailyData> values = subPeriodData.getSubPeriodData().values();
+        List<DataController.DailyData> sorted = new ArrayList<DataController.DailyData>(values);
+        Collections.sort(sorted, new Comparator<DataController.DailyData>() {
+            @Override
+            public int compare(DataController.DailyData o1, DataController.DailyData o2) {
+                return CompareUtils.compare(o1.getKey(), o2.getKey());
+            }
+        });
+
+        for (DataController.DailyData day : sorted) {
+
+            JsonObject itemObject = new JsonObject();
+
+            itemObject.add("day", new JsonPrimitive(day.getKey().dayOfMonth));
+            itemObject.add("month", new JsonPrimitive(day.getKey().month));
+            itemObject.add("year", new JsonPrimitive(day.getKey().year));
+            itemObject.add("events", new JsonPrimitive(day.getCount()));
+
+            SinglePassStatisticsDoublePrecision[] statsArray = day.getNumericStats();
+            for (SinglePassStatisticsDoublePrecision stats : statsArray) {
+                if (stats != null) {
+
+                    JsonObject statsObject = new JsonObject();
+                    JsonArray percentilesArray = new JsonArray();
+
+                    stats.doCalculations();
+
+                    statsObject.add("count", new JsonPrimitive(stats.getCount()));
+                    statsObject.add("mean", new JsonPrimitive(stats.getMean()));
+                    statsObject.add("min", new JsonPrimitive(stats.getMinimum()));
+                    statsObject.add("max", new JsonPrimitive(stats.getMaximum()));
+
+                    double[] percentiles = stats.getPercentiles();
+                    percentilesArray.add(new JsonPrimitive(percentiles[0]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[10]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[20]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[30]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[40]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[50]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[60]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[70]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[80]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[90]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[100]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[95]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[98]));
+                    percentilesArray.add(new JsonPrimitive(percentiles[99]));
+
+                    statsObject.add("percentiles", percentilesArray);
+
+                    // TODO: should be an array for multiple numeric values in the pattern
+                    itemObject.add("patternStats", statsObject);
+
+                }
+            }
+
+            array.add(itemObject);
+        }
+
+        object.add("days", array);
+
+        return object.toString();
+    }
+
+    protected Future<Boolean> removeHubSubscription(String channel) {
+        logger.info("Removing subscription to hub channel '{}'", channel);
+        Destination<ChannelMessage> destination = hubSubscriptionCounterparts.remove(channel);
+        channelMessaging.unsubscribe(channel, destination);
+        return null;
+    }
+
     public String secondstats(@Param(name = "year") int year,
                               @Param(name = "month") int month,
                               @Param(name = "day") int day,
@@ -508,102 +721,30 @@ public class WebFrontendController implements WebSocketSupport {
         return object.toString();
     }
 
-
-    public String logon(Map<String, String[]> parameters) {
-        String userName = parameters.get("userName")[0];
-        String password = parameters.get("password")[0];
-
-        logger.info("Logon attempted for userName '{}'", userName);
-
-        JSONWriter writer = new JSONWriter();
-        writer.startElement();
-
-        Result<AuthenticationResult> result = authenticate(userName, password);
-        if (result.getState() == Result.State.Successful) {
-            String sessionID = UUID.randomUUID().toString();
-            sessions.put(sessionID, result.getValue());
-            writer.writeProperty("success", true);
-            writer.writeProperty("sessionID", sessionID);
-            writer.writeProperty("userName", userName);
-
-            RequestContext.getRequestContext().addCookie("sessionID", sessionID);
-        } else {
-            writer.writeProperty("success", false);
-            writer.writeProperty("reason", result.getExternalReason());
-        }
-
-        writer.endElement();
-        return writer.toString();
+    public void setChannelMessaging(ChannelMessagingService channelMessaging) {
+        this.channelMessaging = channelMessaging;
     }
 
-    protected Future<Boolean> createHubSubscription(String channel) {
-
-        logger.info("Creating subscription to hub channel '{}'", channel);
-
-        Destination<ChannelMessage> destination = new Destination<ChannelMessage>() {
-            @Override
-            public void send(ChannelMessage t) {
-                dispatchHubChannelMessage(t);
-            }
-        };
-
-        hubSubscriptionCounterparts.put(channel, destination);
-        channelMessaging.subscribe(channel, destination);
-
-        return null;
-
+    public void setPatternManager(PatternManagerService patternManager) {
+        this.patternManager = patternManager;
     }
 
-    protected Future<Boolean> removeHubSubscription(String channel) {
-        logger.info("Removing subscription to hub channel '{}'", channel);
-        Destination<ChannelMessage> destination = hubSubscriptionCounterparts.remove(channel);
-        channelMessaging.unsubscribe(channel, destination);
-        return null;
+    public void setServiceDiscovery(ServiceDiscovery serviceDiscovery) {
+        this.serviceDiscovery = serviceDiscovery;
     }
 
-    public String getPatterns() {
-        logger.info("Getting patterns");
-        Result<ObservableList<Pattern>> patterns = patternManager.getPatterns();
-        return toJSON(patterns);
-    }
-
-    public String getAggregations() {
-        logger.info("Getting aggregations");
-        Result<ObservableList<Aggregation>> aggregations = patternManager.getAggregations();
-        return toJSON(aggregations);
-    }
-
-    public String createAggregation(@Param(name = "pattern") int pattern,
-                                    @Param(name = "label") int label,
-                                    @Param(name = "interval") String intervalString,
-                                    @Param(name = "type") String type,
-                                    @Param(name = "groupBy") String groupBy) {
-        logger.info("Create aggregation : pattern='{}' interval='{}' type='{}'", pattern, intervalString, type);
-        Result<Aggregation> aggregationModel = patternManager.createAggregation(pattern,
-                                                                                label,
-                                                                                TimeUtils.parseInterval(intervalString),
-                                                                                AggregationType.valueOf(type),
-                                                                                groupBy);
-        return toJSON(aggregationModel);
-    }
-
-    public String createPattern(@Param(name = "name") String name, @Param(name = "pattern") String pattern) {
-        logger.info("Create pattern name '{}' pattern '{}'", name, pattern);
-        Result<Pattern> patternModel = patternManager.createPattern(name, pattern);
-        return toJSON(patternModel);
-    }
-
-    private String toJSON(Object object) {
-        Gson gson = new Gson();
-        String json = gson.toJson(object);
-        System.out.println(json);
-        return json;
-    }
-
-    private Result<AuthenticationResult> authenticate(String userName, String password) {
-        Result<AuthenticationResult> result = new Result<AuthenticationResult>(new AuthenticationResult(userName));
-        return result;
-    }
+    // private List<Connection> getSubscriptions(String channel) {
+    // List<Connection> list;
+    // synchronized (subscriptions) {
+    // list = subscriptions.get(channel);
+    // if (list == null) {
+    // list = new CopyOnWriteArrayList<Connection>();
+    // subscriptions.put(channel, list);
+    // }
+    // }
+    // return list;
+    //
+    // }
 
     @Override
     public void setWebSocketHelper(WebSocketHelper helper) {
@@ -612,6 +753,11 @@ public class WebFrontendController implements WebSocketSupport {
         webSocketHelper.addListener(new WebSocketListener() {
             @Override
             public void onClosed(Connection connection, int closeCode, String message) {
+
+            }
+
+            @Override
+            public void onOpen(Connection connection) {
 
             }
 
@@ -681,97 +827,58 @@ public class WebFrontendController implements WebSocketSupport {
                     }
                 }
             }
-
-            @Override
-            public void onOpen(Connection connection) {
-
-            }
         });
     }
 
-    public void broadcastEvent(LogEvent event) {
-        String channel = "events";
+    public String stats() {
+        JsonObject object = new JsonObject();
 
-        if (subscriptions.hasSubscriptions(channel)) {
-            // TODO :use gson?
-            JsonObject eventJSON = toJSON(event);
+        JsonArray array = new JsonArray();
 
-            JsonObject broadcastJSON = new JsonObject();
-            broadcastJSON.addProperty("channel", channel);
-            broadcastJSON.addProperty("value", eventJSON.toString());
+        List<DataController.YearlyData> years = dataController.getYears();
+        for (DataController.YearlyData year : years) {
 
-            String json = broadcastJSON.toString();
+            JsonObject itemObject = new JsonObject();
 
-            subscriptions.dispatch(Channels.toArray(channel), json);
+            itemObject.add("year", new JsonPrimitive(year.getKey().year));
+            itemObject.add("events", new JsonPrimitive(year.getCount()));
+
+            array.add(itemObject);
         }
+
+        object.add("years", array);
+
+        return object.toString();
     }
 
-    private JsonObject toJSON(LogEvent event) {
-        JsonObject eventJSON = new JsonObject();
-        eventJSON.addProperty("channel", event.getChannel());
-        eventJSON.addProperty("formattedException", event.getFormattedException());
-        eventJSON.addProperty("level", event.getLevel());
-        eventJSON.addProperty("levelDescription", event.getLevelDescription());
-        eventJSON.addProperty("time", event.getOriginTime());
-        eventJSON.addProperty("loggerName", event.getLoggerName());
-        eventJSON.addProperty("message", event.getMessage());
-        eventJSON.addProperty("pid", event.getPid());
-        eventJSON.addProperty("sequenceNumber", event.getSequenceNumber());
-        eventJSON.addProperty("sourceAddress", event.getSourceAddress());
-        eventJSON.addProperty("sourceApplication", event.getSourceApplication());
-        eventJSON.addProperty("sourceClassName", event.getSourceClassName());
-        eventJSON.addProperty("sourceHost", event.getSourceHost());
-        eventJSON.addProperty("sourceMethodName", event.getSourceMethodName());
-        eventJSON.addProperty("threadName", event.getThreadName());
-        return eventJSON;
-    }
+    public String yearstats(@Param(name = "year") int year) {
+        JsonObject object = new JsonObject();
 
-    private void broadcastAndRemoveFailures(List<Connection> list, String message) {
-        List<Connection> failures = new ArrayList<Connection>();
-        for (Connection connection : list) {
-            try {
-                logger.fine("Sending to connection '{}' : {}", connection, message);
-                connection.sendMessage(message);
-            } catch (IOException e) {
-                logger.fine("Connection send failed, removing subscription");
-                failures.add(connection);
+        JsonArray array = new JsonArray();
+
+        DataController.YearlyData yearlyData = dataController.getYear(year);
+        Collection<DataController.MonthlyData> values = yearlyData.getSubPeriodData().values();
+        List<DataController.MonthlyData> sorted = new ArrayList<DataController.MonthlyData>(values);
+        Collections.sort(sorted, new Comparator<DataController.MonthlyData>() {
+            @Override
+            public int compare(DataController.MonthlyData o1, DataController.MonthlyData o2) {
+                return CompareUtils.compare(o1.getKey(), o2.getKey());
             }
+        });
+
+        for (DataController.MonthlyData month : sorted) {
+
+            JsonObject itemObject = new JsonObject();
+
+            itemObject.add("month", new JsonPrimitive(month.getKey().month));
+            itemObject.add("year", new JsonPrimitive(month.getKey().year));
+            itemObject.add("events", new JsonPrimitive(month.getCount()));
+
+            array.add(itemObject);
         }
 
-        list.removeAll(failures);
-    }
+        object.add("months", array);
 
-    // private List<Connection> getSubscriptions(String channel) {
-    // List<Connection> list;
-    // synchronized (subscriptions) {
-    // list = subscriptions.get(channel);
-    // if (list == null) {
-    // list = new CopyOnWriteArrayList<Connection>();
-    // subscriptions.put(channel, list);
-    // }
-    // }
-    // return list;
-    //
-    // }
-
-    public void setPatternManager(PatternManagerService patternManager) {
-        this.patternManager = patternManager;
-    }
-
-    public void setChannelMessaging(ChannelMessagingService channelMessaging) {
-        this.channelMessaging = channelMessaging;
-    }
-
-    protected void dispatchHubChannelMessage(ChannelMessage t) {
-
-        NonArrayChannelMessage message = NonArrayChannelMessage.fromChannelMessage(t);
-        String channel = message.getChannel();
-        if (subscriptions.hasSubscriptions(channel)) {
-            Gson gson = new Gson();
-            String json = gson.toJson(message);
-            logger.fine("Dispatching json to websocket connections for channel '{}' : data '{}'", channel, json);
-            subscriptions.dispatch(Channels.toArray(channel), json);
-        }
-
+        return object.toString();
     }
 }

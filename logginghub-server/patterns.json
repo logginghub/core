@@ -1,1 +1,53 @@
-{"aggregationModels":[{"aggregationID":0,"patternID":0,"captureLabelIndex":6,"type":"Mean","interval":1000,"groupBy":""},{"aggregationID":1,"patternID":0,"captureLabelIndex":6,"type":"LastValue","interval":1000,"groupBy":"{event.sourceHost}"}],"patternModels":[{"patternID":0,"pattern":"Sigar OS - mfp={memoryfree} mup={memoryused} mt={memorytotal} mu={memoryused} neti={networkin} neto={networkout} cpu={cpu-used} us={cpu-user} sy={cpu-sys} id={cpu-idle} wa={cpu-waiting}","name":"sigar_os","debug":false,"cleanup":false}]}
+{
+    "aggregationModels": [
+        {"aggregationID": 0, "patternId": 0, "captureLabelIndex": 6, "type": "Mean", "interval": 1000, "groupBy": ""},
+        {"aggregationID": 1, "patternId": 0, "captureLabelIndex": 6, "type": "LastValue", "interval": 1000, "groupBy": "{event.sourceHost}"}
+    ],
+    "patternModels": [
+        {
+            "patternId": 0,
+            "name": "onAddOrder",
+            "pattern": "onAddOrder processed successfully in {time} ms : timestamp = '[timestamp]', daySpecificOrderId = '[orderId]', isBuy = '[isBuy]', sharesBeingAddedToBook = '[shares]', symbol = '[symbol]', price = '[price]'"
+        },
+        {
+            "patternId": 1,
+            "name": "onLevel1Price",
+            "pattern": "onLevel1Price instrumentId='[symbol]' bid='[bid]' ask='[ask]' bidQuantity='[bidQuantity]', askQuantity='[askQuantity]', bidOrders='[bidOrders]', askOrders='[askOrders]'"
+        },
+        {
+            "patternId": 2,
+            "name": "onOrderCancelled",
+            "pattern": "onOrderCancelled processed successfully in {time} ms : timestamp = '[timestamp]', daySpecificOrderId = '[orderId]', sharesBeingCancelled = '[shares]'"
+        },
+        {
+            "patternId": 3,
+            "name": "onOrderExecuted",
+            "pattern": "onOrderExecuted processed successfully in {time} ms : timestamp = '[timestamp]', daySpecificOrderId = '[orderId]', sharesBeingExecuted = '[shares]', executionId = '[executionId]', executionFlags = '[flags]'"
+        },
+        {
+            "patternId": 4,
+            "name": "onTradeExecuted",
+            "pattern": "onTradeExecuted : timestamp = '[timestamp]', obfuscatedOrderId = '[obfuscatedOrderId]', isBuy = '[isBuy]', sharesBeingExecuted = '[shares]', symbol = '[symbol]', price = '[price]', dayUniqueExecutionId = '[executionId]', tradeFlags = '[tradeFlags]'"
+        },
+        {
+            "patternId": 5,
+            "name": "onSymbolClear",
+            "pattern": "onSymbolClear : timestamp = '[timestamp]', symbol = '[symbol]'"
+        },
+        {
+            "patternId": 6,
+            "name": "onStatistics",
+            "pattern": "onStatistics : timestamp = '[timestamp]', symbol = '[symbol]', price = '[price]', statisticType = '[statisticType]', priceDetermination = '[priceDetermination]'"
+        },
+        {
+            "patternId": 7,
+            "name": "onTradingStatus",
+            "pattern": "onTradingStatus : timestamp = '[timestamp]', symbol = '[symbol]', status = '[status]', reserved = '[reserved]'"
+        },
+        {
+            "patternId": 8,
+            "name": "onAuctionUpdate",
+            "pattern": "onAuctionUpdate : timestamp = '[timestamp]', symbol = '[symbol]', auctionType = '[auctionType]', referencePrice = '[referencePrice]', buyShares= '[buyShares]', sellShares = '[sellShares]', indicativePrice = '[indicativePrice]'"
+        }
+    ]
+}

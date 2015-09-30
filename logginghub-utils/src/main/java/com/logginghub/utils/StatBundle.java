@@ -1,13 +1,13 @@
 package com.logginghub.utils;
 
+import com.logginghub.utils.logging.LogEvent;
+import com.logginghub.utils.logging.Logger;
+
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Timer;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
-
-import com.logginghub.utils.logging.LogEvent;
-import com.logginghub.utils.logging.Logger;
 
 public class StatBundle {
 

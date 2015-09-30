@@ -1,17 +1,17 @@
 <chartingModel>
 <patternModels>
-<patternmodel patternID="-1" pattern="Request: {ID} was made through [Portal] portal by: [Customer] to: [Salesperson] Of Unit: [Unit] at: [Time] and ended with status: [Status].
+<patternmodel patternId="-1" pattern="Request: {ID} was made through [Portal] portal by: [Customer] to: [Salesperson] Of Unit: [Unit] at: [Time] and ended with status: [Status].
 This was a [Product] Request for Currency Pair: [CCYPair] for amount: {Amount} Euros.
 The Current Global Hit Ratio is: {HR}%" name="Data" debug="false" cleanUp="false"/>
-<patternmodel patternID="-1" pattern="Request: {ID} was made through [Portal] portal by: [Customer] to: [Salesperson] Of [Unit] at: [Time] and ended with status: Completed.
+<patternmodel patternId="-1" pattern="Request: {ID} was made through [Portal] portal by: [Customer] to: [Salesperson] Of [Unit] at: [Time] and ended with status: Completed.
 This was a [Product] Request for Currency Pair: [CCYPair] for amount: {Amount} Euros.
 The Current Global Hit Ratio is: {HR}%" name="TurnoverNew" debug="false" cleanUp="false"/>
-<patternmodel patternID="-1" pattern="[ID] of unit: [UNIT] has a current Hit Ratio of:{Ratio}%" name="HR" debug="false" cleanUp="false"/>
-<patternmodel patternID="-1" pattern="{group0} made by: [customer] has no HR Person or Unit associated with it. Please Investigate" name="Erroneous" debug="false" cleanUp="false"/>
-<patternmodel patternID="-1" pattern="Request: {ID} was made through [Portal] portal by: [Customer] to: [Salesperson] Of Unit: [Unit] at: [Time] and ended with status: [Status].
+<patternmodel patternId="-1" pattern="[ID] of unit: [UNIT] has a current Hit Ratio of:{Ratio}%" name="HR" debug="false" cleanUp="false"/>
+<patternmodel patternId="-1" pattern="{group0} made by: [customer] has no HR Person or Unit associated with it. Please Investigate" name="Erroneous" debug="false" cleanUp="false"/>
+<patternmodel patternId="-1" pattern="Request: {ID} was made through [Portal] portal by: [Customer] to: [Salesperson] Of Unit: [Unit] at: [Time] and ended with status: [Status].
 This was a [Product] Request for Currency Pair: [CCYPair] for amount: {Amount} Euros.
 The Current Global Hit Ratio is: {HR}%" name="Data2" debug="false" cleanUp="false"/>
-<patternmodel patternID="-1" pattern="Customer: [ID] with Unit: [unit] has a current Hit Ratio of:{Ratio}%" name="CustomerInfo" debug="false" cleanUp="false"/>
+<patternmodel patternId="-1" pattern="Customer: [ID] with Unit: [unit] has a current Hit Ratio of:{Ratio}%" name="CustomerInfo" debug="false" cleanUp="false"/>
 </patternModels>
 <streamModels>
  

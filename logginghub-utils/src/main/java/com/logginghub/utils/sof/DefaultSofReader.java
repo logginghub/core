@@ -4,6 +4,7 @@ import com.logginghub.utils.data.SerialisedObject;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.Date;
 
 public class DefaultSofReader implements SofReader {
@@ -489,6 +490,33 @@ public class DefaultSofReader implements SofReader {
             throw new SofException(e);
         }
 
+    }
+
+    @Override
+    public <T extends SerialisableObject> Collection<T> readObjectCollection(int field, Class<T> clazz) throws SofException {
+        try {
+            skipToField(field);
+
+            int type = SofSerialiser.readInt(reader);
+
+            if (type == DefaultSofWriter.TYPE_NULL_USER_TYPE) {
+                return null;
+            }
+            else {
+
+                if (type != DefaultSofWriter.TYPE_UNIFORM_OBJECT_COLLECTION) {
+                    throw new SofException("Field type mismatch - call was for uniform SerialisedObject[] ('{}'), but encoded type was '{}'",
+                                           DefaultSofWriter.TYPE_UNIFORM_OBJECT_ARRAY,
+                                           type);
+                }
+
+                Collection<T> array = TypeCodex.readUniformObjectCollection(reader, clazz, configuration);
+                return array;
+            }
+        }
+        catch (IOException e) {
+            throw new SofException(e);
+        }
     }
 
     public short readShort(int field) throws SofException {

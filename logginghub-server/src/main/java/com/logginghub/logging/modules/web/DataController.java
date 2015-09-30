@@ -2,6 +2,7 @@ package com.logginghub.logging.modules.web;
 
 import com.logginghub.analytics.model.LongFrequencyCount;
 import com.logginghub.logging.messaging.PatternisedLogEvent;
+import com.logginghub.logging.modules.web.RailsLogReader.Entry;
 import com.logginghub.utils.MemorySnapshot;
 import com.logginghub.utils.SinglePassStatisticsDoublePrecision;
 import com.logginghub.utils.Visitor;
@@ -457,6 +458,10 @@ public class DataController {
     }
 
     public void loadData() {
+//        loadDivMaxRubyOnRailsLogFile();
+    }
+
+    private void loadDivMaxRubyOnRailsLogFile() {
         try {
 
             WorkerThread workerThread = MemorySnapshot.runMonitor();
@@ -479,9 +484,9 @@ public class DataController {
                 BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile));
                 RailsLogReader reader = new RailsLogReader();
 
-                reader.read(inputFile, new Visitor<RailsLogReader.Entry>() {
+                reader.read(inputFile, new Visitor<Entry>() {
                     @Override
-                    public void visit(RailsLogReader.Entry entry) {
+                    public void visit(Entry entry) {
                         PatternisedLogEvent event = new PatternisedLogEvent(Logger.info, entry.time, 0, 0, "Rails");
 
                         event.setVariables(new String[]{entry.method, entry.codeNumber, entry.statusText, entry.ip, entry.url, "" + entry.duration});

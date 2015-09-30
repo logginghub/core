@@ -1,14 +1,14 @@
 package com.logginghub.analytics.model;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.logginghub.utils.CollectionUtils;
 import com.logginghub.utils.FactoryMapDecorator;
 import com.logginghub.utils.Metadata;
 import com.logginghub.utils.MutableLongValue;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Counts events up into buckets. Events are keyed by a string, and the counter
@@ -36,7 +36,7 @@ public class LongFrequencyCount {
 
     public LongFrequencyCount(List<MutableLongValue> data) {
         for (MutableLongValue MutableLongValue : data) {
-            count(MutableLongValue.key, MutableLongValue.value);
+            count(MutableLongValue.key.toString(), MutableLongValue.value);
         }
     }
 
@@ -73,13 +73,13 @@ public class LongFrequencyCount {
         for(int i = 0; i < greatestOf.size(); i++) {
             MutableLongValue value = greatestOf.get(i);
             if(i < top) { 
-                fc.data.put(value.key, value);
+                fc.data.put(value.key.toString(), value);
             }else{
                 other.value += value.value;
             }
         }
         
-        fc.data.put(other.key, other);
+        fc.data.put(other.key.toString(), other);
         
         return fc;
     }

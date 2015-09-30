@@ -13,7 +13,7 @@ import com.logginghub.utils.sof.SofWriter;
  */
 public class Pattern implements SerialisableObject {
 
-    private int patternID = -1;
+    private int patternId = -1;
     private String pattern = "";
     private String name = "";
     private boolean debug = false;
@@ -26,18 +26,18 @@ public class Pattern implements SerialisableObject {
 
     public Pattern() {}
 
-    public Pattern(int patternID, String name, String pattern) {
+    public Pattern(int patternId, String name, String pattern) {
         this.name = name;
-        this.patternID = patternID;
+        this.patternId = patternId;
         this.pattern = pattern;
     }
 
-    public int getPatternID() {
-        return patternID;
+    public int getPatternId() {
+        return patternId;
     }
 
-    public void setPatternID(int patternID) {
-        this.patternID = patternID;
+    public void setPatternId(int patternId) {
+        this.patternId = patternId;
     }
 
     public String getPattern() {
@@ -79,7 +79,7 @@ public class Pattern implements SerialisableObject {
         result = prime * result + (debug ? 1231 : 1237);
         result = prime * result + ((name == null) ? 0 : name.hashCode());
         result = prime * result + ((pattern == null) ? 0 : pattern.hashCode());
-        result = prime * result + patternID;
+        result = prime * result + patternId;
         return result;
     }
 
@@ -116,18 +116,18 @@ public class Pattern implements SerialisableObject {
         else if (!pattern.equals(other.pattern)) {
             return false;
         }
-        if (patternID != other.patternID) {
+        if (patternId != other.patternId) {
             return false;
         }
         return true;
     }
 
     @Override public String toString() {
-        return "PatternModel [patternID=" + patternID + ", pattern=" + pattern + ", name=" + name + ", debug=" + debug + ", cleanup=" + cleanup + "]";
+        return "PatternModel [patternId=" + patternId + ", pattern=" + pattern + ", name=" + name + ", debug=" + debug + ", cleanup=" + cleanup + "]";
     }
 
     @Override public void read(SofReader reader) throws SofException {
-        this.patternID = reader.readInt(0);
+        this.patternId = reader.readInt(0);
         this.name = reader.readString(1);
         this.pattern = reader.readString(2);
         this.debug = reader.readBoolean(3);
@@ -135,7 +135,7 @@ public class Pattern implements SerialisableObject {
     }
 
     @Override public void write(SofWriter writer) throws SofException {
-        writer.write(0, patternID);
+        writer.write(0, patternId);
         writer.write(1, name);
         writer.write(2, pattern);
         writer.write(3, debug);

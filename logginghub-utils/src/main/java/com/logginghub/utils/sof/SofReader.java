@@ -1,6 +1,7 @@
 package com.logginghub.utils.sof;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.Date;
 
 public interface SofReader {
@@ -49,6 +50,8 @@ public interface SofReader {
     Double readDoubleObject(int i) throws SofException;
 
     SerialisableObject[] readObjectArray(int i, Class<? extends SerialisableObject> clazz) throws SofException;
+
+    <T extends SerialisableObject> Collection<T> readObjectCollection(int i, Class<T> clazz) throws SofException;
     
     SerialisableObject[] readObjectArray(int i) throws SofException;
 

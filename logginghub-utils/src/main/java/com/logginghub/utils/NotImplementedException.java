@@ -11,6 +11,10 @@ public class NotImplementedException extends RuntimeException {
         super(message, cause);
     }
 
+    public NotImplementedException(String message, Object... params) {
+        super(StringUtils.format(message, params));
+    }
+
     public NotImplementedException(String message) {
         super(message);
     }

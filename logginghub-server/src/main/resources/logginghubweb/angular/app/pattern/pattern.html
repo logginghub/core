@@ -1,0 +1,18 @@
+<div ng-controller="PatternController as controller">
+    <h1>Pattern</h1>
+    <div>{{controller.error}}</div>
+    <!--<div>{{controller}}</div>-->
+    <!--<div>{{controller.patterns}}</div>-->
+
+    <table>
+        <thead><th>Pattern Id</th><th>Name</th><th>Pattern</th></thead>
+        <tbody>
+        <tr ng-repeat="pattern in controller.patterns">
+            <td><a ui-sref='pattern?patternId={{pattern.patternId}}'>{{pattern.patternId}}</a></td>
+            <td><a ui-sref='pattern?patternId={{pattern.patternId}}'>{{pattern.name}}</a></td>
+            <td>{{pattern.pattern}}</td>
+        </tr>
+        </tbody>
+    </table>
+
+</div>

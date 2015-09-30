@@ -6,7 +6,7 @@ import java.io.InputStream;
 
 public final class CountingInputStream extends FilterInputStream {
 
-    private long currentCount;
+    private volatile long currentCount;
     private long mark = -1;
 
     public CountingInputStream(InputStream decorated) {

@@ -125,7 +125,7 @@ public class CreatePatternScreen implements Screen {
             status = StringUtils.format("{}[31;1m createPattern request failed : {}{}[0m", ESC, result.getExternalReason(), ESC);
         }
         else {
-            status = StringUtils.format("Pattern created (id {})", result.getValue().getPatternID());
+            status = StringUtils.format("Pattern created (id {})", result.getValue().getPatternId());
         }
 
         return success;

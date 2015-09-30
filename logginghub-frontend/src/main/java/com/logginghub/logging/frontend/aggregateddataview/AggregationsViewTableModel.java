@@ -39,7 +39,7 @@ public class AggregationsViewTableModel extends ExtensibleTableModel<Aggregation
 
         switch (columnIndex) {
             case COLUMN_PATTERN_ID:
-                itemAtRow.setPatternID(((PatternComboWrapper) aValue).getPattern().getPatternID());
+                itemAtRow.setPatternID(((PatternComboWrapper) aValue).getPattern().getPatternId());
                 break;
             case COLUMN_CAPTURE_LABEL_INDEX:
                 itemAtRow.setCaptureLabelIndex((Integer) aValue);

@@ -175,7 +175,7 @@ public class NewChartingModel extends Observable {
                         pattern.setDebug(patternModel.getDebug().get());
                         pattern.setName(patternModel.getName().get());
                         pattern.setPattern(patternModel.getPattern().get());
-                        pattern.setPatternID(patternModel.getPatternID().get());
+                        pattern.setPatternId(patternModel.getPatternID().get());
 
                         break;
                     }

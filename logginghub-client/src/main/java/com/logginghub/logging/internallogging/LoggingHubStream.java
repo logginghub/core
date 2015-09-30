@@ -37,6 +37,7 @@ public class LoggingHubStream implements LoggerStream, StandardAppenderFeatures 
     private AppenderHelper appenderHelper;
 
     private String propertiesPrefix = "logginghub";
+    private int levelFilter = Logger.stats;
 
     public LoggingHubStream() {
         this("");
@@ -90,6 +91,14 @@ public class LoggingHubStream implements LoggerStream, StandardAppenderFeatures 
 
     public void removeConnectionPoint(InetSocketAddress inetSocketAddress) {
         appenderHelper.removeConnectionPoint(inetSocketAddress);
+    }
+
+    public void setLevelFilter(int levelFilter) {
+        this.levelFilter = levelFilter;
+    }
+
+    public int getLevelFilter() {
+        return levelFilter;
     }
 
     public void setSourceApplication(String sourceApplication) {
@@ -398,25 +407,31 @@ public class LoggingHubStream implements LoggerStream, StandardAppenderFeatures 
 
 
     @Override public void onNewLogEvent(final com.logginghub.utils.logging.LogEvent vlevent) {
-        if (appenderHelper.isGatheringCallerDetails()) {
-            // Forces lazy gathering of caller details
+        if(vlevent.getLevel() >= levelFilter) {
+            if (appenderHelper.isGatheringCallerDetails()) {
+                // Forces lazy gathering of caller details
+            }
+
+            appenderHelper.append(new AppenderHelperEventConvertor() {
+                public EventSnapshot createSnapshot() {
+                    return new EventSnapshot() {
+                        public LogEvent rebuildEvent() {
+                            return createLogEvent();
+                        }
+                    };
+                }
+
+                public LogEvent createLogEvent() {
+                    VLLogEvent event = new VLLogEvent(vlevent,
+                                                      appenderHelper.getPid(),
+                                                      appenderHelper.getSourceApplication(),
+                                                      appenderHelper.getSourceAddress(),
+                                                      appenderHelper.getSourceHost());
+                    event.setChannel(appenderHelper.getChannel());
+                    return event;
+                }
+            });
         }
-
-        appenderHelper.append(new AppenderHelperEventConvertor() {
-            public EventSnapshot createSnapshot() {
-                return new EventSnapshot() {
-                    public LogEvent rebuildEvent() {
-                        return createLogEvent();
-                    }
-                };
-            }
-
-            public LogEvent createLogEvent() {
-                VLLogEvent event = new VLLogEvent(vlevent, appenderHelper.getPid(), appenderHelper.getSourceApplication(), appenderHelper.getSourceAddress(), appenderHelper.getSourceHost());
-                event.setChannel(appenderHelper.getChannel());
-                return event;
-            }
-        });
     }
 
     public void setHostOverride(String hostOverride) {

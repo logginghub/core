@@ -43,6 +43,8 @@ public class WebFrontendModule implements Module<WebFrontendConfiguration> {
     
     @Override public void configure(WebFrontendConfiguration configuration, ServiceDiscovery discovery) {
         this.configuration = configuration;
+
+        controller.setServiceDiscovery(discovery);
         
         PatternManagerService patternManager = discovery.findService(PatternManagerService.class);
         controller.setPatternManager(patternManager);

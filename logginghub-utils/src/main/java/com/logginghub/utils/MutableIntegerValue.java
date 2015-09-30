@@ -7,10 +7,10 @@ package com.logginghub.utils;
  * 
  */
 public class MutableIntegerValue implements Comparable<MutableIntegerValue> {
-    public String key;
+    public Object key;
     public int value;
 
-    public MutableIntegerValue(String key, int initialValue) {
+    public MutableIntegerValue(Object key, int initialValue) {
         this.key = key;
         this.value = initialValue;
     }

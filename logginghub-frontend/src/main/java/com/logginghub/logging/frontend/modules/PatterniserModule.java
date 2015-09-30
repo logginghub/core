@@ -72,7 +72,7 @@ public class PatterniserModule implements PatternManagementService, PatternisedE
     @Override public Pattern getPatternByID(int patternID) {
         Pattern foundPattern = null;
         for (Pattern pattern : patternCollection.getPatternList()) {
-            if (pattern.getPatternID() == patternID) {
+            if (pattern.getPatternId() == patternID) {
                 foundPattern = pattern;
                 break;
             }

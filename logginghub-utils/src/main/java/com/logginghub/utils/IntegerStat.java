@@ -3,8 +3,8 @@ package com.logginghub.utils;
 public class IntegerStat implements Stat {
 
     private String name;
-    private int value;
-    private int lastValue = -1;
+    private volatile int value;
+    private volatile int lastValue = -1;
 
     // Incremental stats are important if they are greater than zero - for
     // example the number of new events in the hub. Non-incremental stats are

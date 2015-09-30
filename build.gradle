@@ -52,17 +52,17 @@ subprojects {
 //
 // jshaw - workaround to fix the intellij resource copying bug
 //
-    task copyTestResources(type: Copy) {
-        from "${projectDir}/src/test/resources"
-        into "${buildDir}/classes/test"
-    }
-    processTestResources.dependsOn copyTestResources
-
-    task copyMainResources(type: Copy) {
-        from "${projectDir}/src/main/resources"
-        into "${buildDir}/classes/main"
-    }
-    processResources.dependsOn copyMainResources
+//    task copyTestResources(type: Copy) {
+//        from "${projectDir}/src/test/resources"
+//        into "${buildDir}/classes/test"
+//    }
+//    processTestResources.dependsOn copyTestResources
+//
+//    task copyMainResources(type: Copy) {
+//        from "${projectDir}/src/main/resources"
+//        into "${buildDir}/classes/main"
+//    }
+//    processResources.dependsOn copyMainResources
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -4,7 +4,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.MessageFormat;
 import java.util.Date;
-import java.util.logging.Level;
 
 public class SingleLineStreamFormatter implements LogEventFormatter {
     String formatString = "%s | %7s | %20.20s | %-30.30s | %10.10s | %s";
@@ -89,7 +88,7 @@ public class SingleLineStreamFormatter implements LogEventFormatter {
             context = "";
         }
 
-        sb.append(String.format(formatString, text, Level.parse("" + record.getLevel()), name, source + "." + method, context, message));
+        sb.append(String.format(formatString, text, Logger.getLevelName(record.getLevel(), false).toUpperCase(), name, source + "." + method, context, message));
 
         sb.append(lineSeparator);
 

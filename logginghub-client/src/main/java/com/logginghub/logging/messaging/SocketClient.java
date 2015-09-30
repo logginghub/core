@@ -990,8 +990,8 @@ public class SocketClient extends AbstractLoggingMessageSource implements Loggin
                         Pattern pattern = new Pattern();
                         pattern.setPattern(resultMap.get("pattern"));
                         pattern.setName(resultMap.get("name"));
-                        pattern.setPatternID(resultMap.getInt("patternID"));
-                        template.setPatternID(pattern.getPatternID());
+                        pattern.setPatternId(resultMap.getInt("patternID"));
+                        template.setPatternId(pattern.getPatternId());
 
                         listener.onSuccessful(pattern);
                     } else {

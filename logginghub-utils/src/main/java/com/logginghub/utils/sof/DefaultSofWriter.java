@@ -5,6 +5,7 @@ import com.logginghub.utils.logging.Logger;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.Date;
 
 public class DefaultSofWriter implements SofWriter {
@@ -41,6 +42,7 @@ public class DefaultSofWriter implements SofWriter {
     public static final int TYPE_BIGDECIMAL_OBJECT = -22;
     public final static int TYPE_UNIFORM_OBJECT_ARRAY = -23;
     public final static int TYPE_NON_UNIFORM_OBJECT_ARRAY = -24;
+    public final static int TYPE_UNIFORM_OBJECT_COLLECTION = -25;
 
     private static final Logger logger = Logger.getLoggerFor(DefaultSofWriter.class);
 
@@ -574,7 +576,38 @@ public class DefaultSofWriter implements SofWriter {
 
             try {
                 writeFieldHeaderAlways(field, TYPE_UNIFORM_OBJECT_ARRAY);
-                TypeCodex.writeUniformObjectArray(writer, clazz, serialisableObjectArray, configuration);
+                TypeCodex.writeUniformObjectCollection(writer, clazz, serialisableObjectArray, configuration);
+            }
+            catch (IOException e) {
+                throw new SofException(e);
+            }
+        }
+    }
+
+    @Override
+    public void write(int field,
+                      Collection<? extends SerialisableObject> serialisableObjectArray,
+                      Class<? extends SerialisableObject> clazz) throws SofException {
+        if (field <= lastIndex) {
+            throw new SofException("Out of order field index - you tried to write index '{}' but the last index was '{}'",
+                                   field,
+                                   writer.getPosition(),
+                                   lastIndex);
+        }
+
+        if (serialisableObjectArray == null) {
+            try {
+                writeFieldHeaderAlways(field, TYPE_NULL_USER_TYPE);
+            }
+            catch (IOException e) {
+                throw new SofException(e);
+            }
+        }
+        else {
+
+            try {
+                writeFieldHeaderAlways(field, TYPE_UNIFORM_OBJECT_COLLECTION);
+                TypeCodex.writeUniformObjectCollection(writer, clazz, serialisableObjectArray, configuration);
             }
             catch (IOException e) {
                 throw new SofException(e);

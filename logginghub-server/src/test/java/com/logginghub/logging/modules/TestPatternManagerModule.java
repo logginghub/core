@@ -61,12 +61,12 @@ public class TestPatternManagerModule {
         Result<Pattern> resultB = module.createPattern("b", "patternB");
 
         assertThat(resultA.isSuccessful(), is(true));
-        assertThat(resultA.getValue().getPatternID(), is(0));
+        assertThat(resultA.getValue().getPatternId(), is(0));
         assertThat(resultA.getValue().getName(), is("a"));
         assertThat(resultA.getValue().getPattern(), is("patternA"));
 
         assertThat(resultB.isSuccessful(), is(true));
-        assertThat(resultB.getValue().getPatternID(), is(1));
+        assertThat(resultB.getValue().getPatternId(), is(1));
         assertThat(resultB.getValue().getName(), is("b"));
         assertThat(resultB.getValue().getPattern(), is("patternB"));
 
@@ -77,7 +77,7 @@ public class TestPatternManagerModule {
         Result<Pattern> resultB = module.createPattern("a", "patternB");
 
         assertThat(resultA.isSuccessful(), is(true));
-        assertThat(resultA.getValue().getPatternID(), is(0));
+        assertThat(resultA.getValue().getPatternId(), is(0));
         assertThat(resultA.getValue().getName(), is("a"));
         assertThat(resultA.getValue().getPattern(), is("patternA"));
 
@@ -92,7 +92,7 @@ public class TestPatternManagerModule {
         Result<Pattern> resultB = module.createPattern("b", "patternA");
 
         assertThat(resultA.isSuccessful(), is(true));
-        assertThat(resultA.getValue().getPatternID(), is(0));
+        assertThat(resultA.getValue().getPatternId(), is(0));
         assertThat(resultA.getValue().getName(), is("a"));
         assertThat(resultA.getValue().getPattern(), is("patternA"));
 
@@ -107,7 +107,7 @@ public class TestPatternManagerModule {
 
         Result<Pattern> patternResult = module.createPattern("a", "patternA");
         assertThat(patternResult.isSuccessful(), is(true));
-        assertThat(patternResult.getValue().getPatternID(), is(0));
+        assertThat(patternResult.getValue().getPatternId(), is(0));
         assertThat(patternResult.getValue().getName(), is("a"));
         assertThat(patternResult.getValue().getPattern(), is("patternA"));
 
@@ -125,13 +125,13 @@ public class TestPatternManagerModule {
         Result<ObservableList<Pattern>> result = module.getPatterns();
         assertThat(result.isSuccessful(), is(true));
         assertThat(result.getValue().size(), is(1));
-        assertThat(result.getValue().get(0).getPatternID(), is(0));
+        assertThat(result.getValue().get(0).getPatternId(), is(0));
         assertThat(result.getValue().get(0).getName(), is("a"));
         assertThat(result.getValue().get(0).getPattern(), is("patternA"));
 
         Result<Pattern> resultB = module.createPattern("b", "patternB");
         assertThat(resultB.isSuccessful(), is(true));
-        assertThat(resultB.getValue().getPatternID(), is(1));
+        assertThat(resultB.getValue().getPatternId(), is(1));
         assertThat(resultB.getValue().getName(), is("b"));
         assertThat(resultB.getValue().getPattern(), is("patternB"));
 
