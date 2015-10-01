@@ -1,35 +1,14 @@
 package com.logginghub.messaging;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-
-import java.lang.reflect.InvocationTargetException;
-import java.net.InetSocketAddress;
-import java.util.concurrent.TimeUnit;
-
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
-import com.logginghub.messaging.AsycNotification;
-import com.logginghub.messaging.AsycNotificationAdaptor;
-import com.logginghub.messaging.Level1AsyncClient;
-import com.logginghub.messaging.Level1AsyncServer;
-import com.logginghub.messaging.Level2AsyncClient;
-import com.logginghub.messaging.Level2AsyncServer;
-import com.logginghub.messaging.Level3AsyncClient;
-import com.logginghub.messaging.Level3AsyncServer;
-import com.logginghub.messaging.MessageBucket;
-import com.logginghub.messaging.Notification;
-import com.logginghub.messaging.ResponseListener;
-import com.logginghub.messaging.ServiceListener;
 import com.logginghub.messaging.directives.ResponseMessage;
+import com.logginghub.messaging.fixture.HelloListener;
+import com.logginghub.messaging.fixture.HelloProvider;
+import com.logginghub.messaging.fixture.HelloService;
 import com.logginghub.messaging.netty.RequestContext;
 import com.logginghub.messaging.netty.RequestContextServerMessageListener;
 import com.logginghub.messaging.netty.ServerConnectionListener;
 import com.logginghub.messaging.netty.ServerHandler;
+import com.logginghub.messaging2.encoding.AllTypesDummyObject;
 import com.logginghub.utils.Bucket;
 import com.logginghub.utils.NetUtils;
 import com.logginghub.utils.OneWayExchanger;
@@ -37,10 +16,19 @@ import com.logginghub.utils.ReusableLatch;
 import com.logginghub.utils.ThreadUtils;
 import com.logginghub.utils.Timeout;
 import com.logginghub.utils.logging.Logger;
-import com.logginghub.messaging.fixture.HelloListener;
-import com.logginghub.messaging.fixture.HelloProvider;
-import com.logginghub.messaging.fixture.HelloService;
-import com.logginghub.messaging2.encoding.AllTypesDummyObject;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+
+import java.lang.reflect.InvocationTargetException;
+import java.net.InetSocketAddress;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 @Ignore // TODO : dies during maven test run
 public class TestNonBlocking {
@@ -631,8 +619,7 @@ public class TestNonBlocking {
         server.close();
     }
 
-    @Test public void test_client_to_server_service() throws IllegalArgumentException, SecurityException, ClassNotFoundException, InstantiationException, IllegalAccessException,
-                    InvocationTargetException, NoSuchMethodException, InterruptedException {
+    @Test public void test_client_to_server_service() throws IllegalArgumentException, SecurityException, ClassNotFoundException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, InterruptedException, TimeoutException {
 
         Level3AsyncClient client = new Level3AsyncClient("Client");
         Level3AsyncServer server = new Level3AsyncServer("Server");
