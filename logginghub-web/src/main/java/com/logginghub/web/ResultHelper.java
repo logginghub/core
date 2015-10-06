@@ -1,11 +1,11 @@
 package com.logginghub.web;
 
-import java.io.IOException;
-
-import javax.servlet.http.HttpServletResponse;
-
+import com.google.gson.JsonElement;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 public class ResultHelper {
 
@@ -48,6 +48,12 @@ public class ResultHelper {
                     message = "An exception occured : " + throwable.getClass().getName() + " : " + throwable.getMessage();
                 }
                 response.getOutputStream().write(message.getBytes());
+                response.flushBuffer();
+            }else if(result instanceof JsonElement) {
+                if (response.getContentType() == null) {
+                    response.setContentType("text/json");
+                }
+                response.getOutputStream().write(result.toString().getBytes());
                 response.flushBuffer();
             }
             else {

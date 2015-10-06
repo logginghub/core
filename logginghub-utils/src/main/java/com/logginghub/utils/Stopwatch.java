@@ -1,8 +1,8 @@
 package com.logginghub.utils;
 
-import java.text.NumberFormat;
-
 import com.logginghub.utils.TimeUtils.TimeDetails;
+
+import java.text.NumberFormat;
 
 public class Stopwatch {
     private long startNanos = -1;
@@ -33,6 +33,11 @@ public class Stopwatch {
         return toString();
     }
 
+    public String stopAndFormatInterval() {
+        stop();
+        return toStringInterval();
+    }
+
     public Stopwatch(String description) {
         this.description = description;
     }
@@ -47,6 +52,10 @@ public class Stopwatch {
 
     public String toString() {
         return description + " complete in " + getDurationMillis() + " ms";
+    }
+
+    public String toStringInterval() {
+        return description + " complete in " + TimeUtils.formatIntervalMilliseconds(getDurationMillis()) + " ms";
     }
 
     public void start() {
@@ -101,6 +110,10 @@ public class Stopwatch {
     
     public void stopAndDump() {
         System.out.println(stopAndFormat());
+    }
+
+    public void stopAndDumpInterval() {
+        System.out.println(stopAndFormatInterval());
     }
 
     public static Stopwatch start(String format, Object... args) {

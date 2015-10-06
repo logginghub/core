@@ -1,13 +1,5 @@
 package com.logginghub.web.resolvers;
 
-import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import com.logginghub.utils.StringUtils;
 import com.logginghub.utils.logging.Logger;
 import com.logginghub.web.Param;
@@ -15,6 +7,13 @@ import com.logginghub.web.Resolution;
 import com.logginghub.web.Resolver;
 import com.logginghub.web.ResponseHints;
 import com.logginghub.web.ResultHelper;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.util.Map;
 
 public class GetReflectionResolver implements Resolver {
 
@@ -134,6 +133,8 @@ public class GetReflectionResolver implements Resolver {
 
                     if (parameterTypes[index] == Integer.TYPE) {
                         parameterValues[index] = Integer.valueOf(parameter);
+                    }else if (parameterTypes[index] == Boolean.TYPE) {
+                        parameterValues[index] = Boolean.valueOf(parameter);
                     }
                     else {
                         parameterValues[index] = parameter;

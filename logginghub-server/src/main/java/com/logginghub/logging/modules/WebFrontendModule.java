@@ -25,6 +25,7 @@ public class WebFrontendModule implements Module<WebFrontendConfiguration> {
 
         try {
             jetty = JettyLauncher.launchNonBlocking(controller, configuration.getPort());
+            logger.info("Web interface available on http://localhost:{}/angular/app/index.html", configuration.getPort());
         }
         catch (Exception e) {
             logger.warn(e, "Failed to start embedded jetty server - web front end not started.");

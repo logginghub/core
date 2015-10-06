@@ -60,9 +60,28 @@ loggingHubModule.config(function ($stateProvider, $urlRouterProvider) {
             url: "/allpatterns", templateUrl: "allpatterns/allpatterns.html"
         })
 
-
         .state('pattern', {
             url: "/pattern?patternId", templateUrl: "pattern/pattern.html"
+        })
+
+        .state('calendar', {
+            url: "/calendar", templateUrl: "calendar/calendar.html"
+        })
+
+        .state('daily', {
+            url: "/daily/:year/:month/:day", templateUrl: "calendar/daily.html"
+        })
+
+        .state('hourly', {
+            url: "/hourly/:year/:month/:day/:hour", templateUrl: "calendar/hourly.html"
+        })
+
+        .state('minutely', {
+            url: "/minutely/:year/:month/:day/:hour/:minute", templateUrl: "calendar/minutely.html"
+        })
+
+        .state('secondly', {
+            url: "/secondly/:year/:month/:day/:hour/:minute/:second", templateUrl: "calendar/secondly.html"
         })
 
         .state('stats', {

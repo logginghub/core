@@ -1,0 +1,28 @@
+<div class="daily calendar" ng-controller="DailyController as vm">
+    <h1>Daily</h1>
+
+    <div class="table noselect">
+
+        <div class="row headings">
+        </div>
+
+        <div class="row" ng-repeat="segment in vm.day.segments">
+
+            <div class="day cell"
+                 ng-repeat="hour in segment.hours"
+                 ng-class="{today: hour.isNow, selected: hour.isSelected}"
+                 ng-click="vm.select(hour)">
+
+                <div class="hour">{{hour.hour}}</div>
+
+                <div class="total">{{hour.total | number: 0}}</div>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+    <div>{{vm}}</div>
+</div>

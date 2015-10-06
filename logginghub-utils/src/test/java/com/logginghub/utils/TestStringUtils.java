@@ -193,7 +193,10 @@ public class TestStringUtils {
     @Test
     public void testFormat() {
 
+
         assertThat(StringUtils.format("adf{5asdfwer}"), is("adf{5asdfwer}"));
+
+        assertThat(StringUtils.format("a \\{ {} \\} ", "b"), is("a { b } "));
 
         assertThat(StringUtils.format("a{}c", "b"), is("abc"));
         assertThat(StringUtils.format("{}", 10), is("10"));

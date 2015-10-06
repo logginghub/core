@@ -1,0 +1,27 @@
+<div class="daily calendar" ng-controller="SecondlyController as vm">
+    <h1>Secondly</h1>
+
+    <div class="table noselect">
+
+        <div class="row headings">
+        </div>
+
+        <div class="row" ng-repeat="segment in vm.second.segments">
+            <div class="day cell"
+                 ng-repeat="millisecond in segment.milliseconds"
+                 ng-class="{today: millisecond.isNow, selected: millisecond.isSelected}"
+                 ng-click="vm.select(millisecond)"
+                 ng-style="{'background-color':millisecond.colour, 'color':millisecond.textcolour}">
+
+                <div class="hour">{{millisecond.millisecond}}</div>
+                <div class="total">{{millisecond.total | number: 0}}</div>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+    <div>{{vm}}</div>
+</div>

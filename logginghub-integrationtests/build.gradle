@@ -1,4 +1,4 @@
-apply plugin: 'distribution'
+//apply plugin: 'distribution'
 
 dependencies {
     compile project(':logginghub-utils')

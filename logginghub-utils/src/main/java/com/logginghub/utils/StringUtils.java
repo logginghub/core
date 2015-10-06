@@ -570,6 +570,7 @@ public class StringUtils {
                 } else {
                     // Just a closing curly brace
                     formatted.append(c);
+                    isEscaped = false;
                 }
             } else if (c == '%' && i + 1 < message.length() && message.charAt(i + 1) == 'n') {
                 formatted.append(newline);
@@ -1024,7 +1025,6 @@ public class StringUtils {
 
     public static String format(int value) {
         return NumberFormat.getInstance().format(value);
-
     }
 
     /**

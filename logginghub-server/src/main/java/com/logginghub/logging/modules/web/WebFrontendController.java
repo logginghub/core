@@ -21,6 +21,8 @@ import com.logginghub.logging.messaging.PatternisedLogEvent;
 import com.logginghub.logging.messaging.SubscriptionController;
 import com.logginghub.logging.modules.PatternManagerService;
 import com.logginghub.logging.utils.ObservableList;
+import com.logginghub.utils.ColourInterpolation;
+import com.logginghub.utils.ColourUtils;
 import com.logginghub.utils.CompareUtils;
 import com.logginghub.utils.Destination;
 import com.logginghub.utils.JSONWriter;
@@ -28,6 +30,7 @@ import com.logginghub.utils.KeyedFactory;
 import com.logginghub.utils.MutableLongValue;
 import com.logginghub.utils.Result;
 import com.logginghub.utils.SinglePassStatisticsDoublePrecision;
+import com.logginghub.utils.TimeKey;
 import com.logginghub.utils.TimeUtils;
 import com.logginghub.utils.WorkerThread;
 import com.logginghub.utils.logging.Logger;
@@ -41,15 +44,20 @@ import com.logginghub.web.WebSocketListener;
 import com.logginghub.web.WebSocketSupport;
 import org.eclipse.jetty.websocket.WebSocket.Connection;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.Future;
 
@@ -79,6 +87,9 @@ public class WebFrontendController implements WebSocketSupport {
     };
     private DataController dataController = new DataController();
     private ServiceDiscovery serviceDiscovery;
+    private LoggingHubDatabase database = new FirstCutLoggingHubDatabase(new File("data/database"));
+    private DatabaseHelper databaseHelper = new DatabaseHelper(database);
+    private Gson gson = new Gson();
 
     public WebFrontendController() {
         WorkerThread.execute("Test data reader", new Runnable() {
@@ -375,10 +386,479 @@ public class WebFrontendController implements WebSocketSupport {
         return object.toString();
     }
 
+    public JsonArray getCalendar() {
+
+        //LoggingHubDatabase database = serviceDiscovery.findService(LoggingHubDatabase.class);
+
+        Calendar calendar = new GregorianCalendar();
+
+        int weeksBefore = 3;
+        int weeksAfter = 1;
+
+        int todayYear = calendar.get(Calendar.YEAR);
+        int todayMonth = calendar.get(Calendar.MONTH);
+        int todayDay = calendar.get(Calendar.DAY_OF_MONTH);
+
+        calendar.add(Calendar.WEEK_OF_YEAR, -weeksBefore);
+        calendar.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
+        JsonArray weeks = new JsonArray();
+
+        for (int i = 0; i < weeksBefore + weeksAfter; i++) {
+
+            JsonObject week = new JsonObject();
+            week.add("year", new JsonPrimitive(calendar.get(Calendar.YEAR)));
+            week.add("month", new JsonPrimitive(calendar.get(Calendar.MONTH)));
+            week.add("monthFormatted", new JsonPrimitive(new SimpleDateFormat("MMM").format(calendar.getTime())));
+            week.add("startDayOfMonth", new JsonPrimitive(calendar.get(Calendar.DAY_OF_MONTH)));
+
+            JsonArray days = new JsonArray();
+            for (int j = 0; j < 7; j++) {
+
+                JsonObject day = new JsonObject();
+                day.add("date", new JsonPrimitive(calendar.get(Calendar.DAY_OF_MONTH)));
+                day.add("month", new JsonPrimitive(calendar.get(Calendar.MONTH)));
+                day.add("year", new JsonPrimitive(calendar.get(Calendar.YEAR)));
+                day.add("dayFormatted", new JsonPrimitive(new SimpleDateFormat("DDD").format(calendar.getTime())));
+
+                int dayYear = calendar.get(Calendar.YEAR);
+                int dayMonth = calendar.get(Calendar.MONTH);
+                int dayDay = calendar.get(Calendar.DAY_OF_MONTH);
+
+                if (dayYear == todayYear && dayMonth == todayMonth && dayDay == todayDay) {
+                    day.add("isToday", new JsonPrimitive(true));
+                }
+
+                SummaryStatistics dailyStats = database.getDailyStats(dayYear, dayMonth, dayDay);
+                if (dailyStats != null) {
+                    day.add("total", new JsonPrimitive(dailyStats.getCount()));
+                }
+
+                days.add(day);
+
+                calendar.add(Calendar.DAY_OF_MONTH, 1);
+            }
+
+            week.add("days", days);
+            weeks.add(week);
+        }
+
+        return weeks;
+    }
+
+    public JsonObject getDaily(@Param(name = "year") int year, @Param(name = "month") int month, @Param(name = "day") int day) {
+        logger.info("Creating daily view for year='{}' month='{}' day='{}'", year, month, day);
+
+        //LoggingHubDatabase database = serviceDiscovery.findService(LoggingHubDatabase.class);
+
+        JsonObject dailyView = new JsonObject();
+
+        dailyView.add("year", new JsonPrimitive(year));
+        dailyView.add("month", new JsonPrimitive(month));
+        dailyView.add("day", new JsonPrimitive(day));
+
+        SummaryStatistics dailyStats = database.getDailyStats(year, month, day);
+        if (dailyStats != null) {
+            dailyView.add("total", new JsonPrimitive(dailyStats.getCount()));
+        }
+
+        JsonArray segments = new JsonArray();
+        for (int i = 0; i < 8; i++) {
+
+            JsonObject segment = new JsonObject();
+            JsonArray hours = new JsonArray();
+
+            for (int j = 0; j < 3; j++) {
+                JsonObject hour = new JsonObject();
+
+                int hourIndex = (i * 3) + j;
+                hour.add("hour", new JsonPrimitive(hourIndex));
+
+                SummaryStatistics hourlyStats = database.getHourlyStats(year, month, day, hourIndex);
+                if (hourlyStats != null) {
+                    hour.add("total", new JsonPrimitive(hourlyStats.getCount()));
+                }
+
+
+                hours.add(hour);
+            }
+
+            segment.add("hours", hours);
+            segments.add(segment);
+        }
+
+        dailyView.add("segments", segments);
+
+        return dailyView;
+    }
+
+    public JsonObject getHourly(@Param(name = "year") int year,
+                                @Param(name = "month") int month,
+                                @Param(name = "day") int day,
+                                @Param(name = "hour") int hour,
+                                @Param(name = "independentPatternHeat") boolean independentPatternHeat,
+                                @Param(name = "useTotalScale") boolean useTotalScale) {
+
+        int columns = 6;
+        int rows = 10;
+        long interval = TimeUtils.hours;
+        long subInterval = TimeUtils.minutes;
+        TimeKey timeKey = TimeKey.from(year, month, day, hour);
+        String viewName = "hourly";
+
+        return createView(independentPatternHeat, useTotalScale, columns, rows, interval, subInterval, timeKey, viewName);
+
+//
+//
+//
+//        logger.info("Creating hourly view for year='{}' month='{}' day='{}' hour='{}'", year, month, day, hour);
+//
+//        JsonObject hourlyView = new JsonObject();
+//
+//        hourlyView.add("year", new JsonPrimitive(year));
+//        hourlyView.add("month", new JsonPrimitive(month));
+//        hourlyView.add("day", new JsonPrimitive(day));
+//        hourlyView.add("hour", new JsonPrimitive(hour));
+//
+//        SummaryStatistics dailyStats = database.getHourlyStats(year, month, day, hour);
+//        if (dailyStats != null) {
+//            hourlyView.add("total", new JsonPrimitive(dailyStats.getCount()));
+//        }
+//
+//        JsonObject patternLookup = getPatternLookup();
+//        hourlyView.add("patternLookup", patternLookup);
+//
+//        long max = 0;
+//
+//        JsonArray segments = new JsonArray();
+//        int seg = 6;
+//        int row = 10;
+//        for (int i = 0; i < seg; i++) {
+//
+//            JsonObject segment = new JsonObject();
+//            JsonArray minutes = new JsonArray();
+//
+//            for (int j = 0; j < row; j++) {
+//                JsonObject minute = new JsonObject();
+//
+//                int minuteIndex = (i * row) + j;
+//                minute.add("minute", new JsonPrimitive(minuteIndex));
+//
+//                SummaryStatistics minutelyStats = database.getMinutelyStats(year, month, day, hour, minuteIndex);
+//                if (minutelyStats != null) {
+//                    long count = minutelyStats.getCount();
+//                    minute.add("total", new JsonPrimitive(count));
+//
+//                    JsonObject patterns = getPatternCounts(minutelyStats);
+//                    minute.add("patterns", patterns);
+//
+//                    max = Math.max(max, count);
+//                }
+//
+//                minutes.add(minute);
+//            }
+//
+//            segment.add("minutes", minutes);
+//            segments.add(segment);
+//        }
+//
+//        addHeatmapColours(max, segments, seg, row, "minutes");
+//
+//        hourlyView.add("segments", segments);
+//
+//        return hourlyView;
+    }
+
+
+    private JsonObject getPatternLookup() {
+        JsonObject patternLookup = new JsonObject();
+
+        ObservableList<Pattern> patternsSortedById = patternManager.getPatterns().getValue();
+        for (Pattern pattern : patternsSortedById) {
+            patternLookup.add("" + pattern.getPatternId(), new JsonPrimitive(pattern.getName()));
+        }
+        return patternLookup;
+    }
+
+    private JsonObject getPatternCounts(SummaryStatistics millisecondlyStats) {
+
+        JsonObject patterns = new JsonObject();
+
+        //        JsonArray patterns = new JsonArray();
+        Map<Integer, Long> patternCounts = millisecondlyStats.getPatternCounts();
+        for (Entry<Integer, Long> entry : patternCounts.entrySet()) {
+            int patternId = entry.getKey();
+            long patternCount = entry.getValue();
+
+            patterns.add("" + patternId, new JsonPrimitive(patternCount));
+
+            //            JsonObject pattern = new JsonObject();
+            //            pattern.add("patternId", new JsonPrimitive(patternId));
+            //            pattern.add("count", new JsonPrimitive(patternCount));
+
+            //            patterns.add(pattern);
+        }
+        return patterns;
+    }
+
+    private void addHeatmapColours(double max, JsonArray segments, int seg, int row, String name) {
+        ColourInterpolation interp = new ColourInterpolation(Color.white, Color.blue);
+
+        for (int i = 0; i < seg; i++) {
+            for (int j = 0; j < row; j++) {
+                JsonObject second = segments.get(i).getAsJsonObject().get(name).getAsJsonArray().get(j).getAsJsonObject();
+                long total;
+                if (second.has("total")) {
+                    total = second.get("total").getAsLong();
+                } else {
+                    total = 0;
+                }
+
+                if (total > 0) {
+                    double factor = total / max;
+                    Color color = interp.interpolate(factor);
+
+                    int mag = (color.getBlue() + color.getGreen() + color.getRed()) / 3;
+                    if (mag < (128)) {
+                        second.add("textcolour", new JsonPrimitive("white"));
+                    } else {
+                        second.add("textcolour", new JsonPrimitive("black"));
+                    }
+
+                    String hexString = ColourUtils.toHex(color);
+                    second.add("colour", new JsonPrimitive("#" + hexString));
+                } else {
+                    second.add("colour", new JsonPrimitive("#dddddd"));
+                }
+            }
+        }
+    }
+
+    public JsonObject getMinutely(@Param(name = "year") int year,
+                                  @Param(name = "month") int month,
+                                  @Param(name = "day") int day,
+                                  @Param(name = "hour") int hour,
+                                  @Param(name = "minute") int minute,
+                                  @Param(name = "independentPatternHeat") boolean independentPatternHeat,
+                                  @Param(name = "useTotalScale") boolean useTotalScale) {
+
+        int columns = 6;
+        int rows = 10;
+        long interval = TimeUtils.minutes;
+        long subInterval = TimeUtils.seconds;
+        TimeKey timeKey = TimeKey.from(year, month, day, hour, minute);
+        String viewName = "minutely";
+
+        return createView(independentPatternHeat, useTotalScale, columns, rows, interval, subInterval, timeKey, viewName);
+    }
+
+    private JsonObject createView(@Param(name = "independentPatternHeat") boolean independentPatternHeat,
+                                  @Param(name = "useTotalScale") boolean useTotalScale,
+                                  int columns,
+                                  int rows,
+                                  long interval,
+                                  long subInterval,
+                                  TimeKey timeKey,
+                                  String viewName) {
+        logger.info("Creating {} view for key='{}' independentPatternHeat='{}' useTotalScale='{}'",
+                    viewName,
+                    timeKey,
+                    independentPatternHeat,
+                    useTotalScale);
+
+        JsonObject view = new JsonObject();
+
+        view.add("timeKey", gson.toJsonTree(timeKey));
+
+        SummaryStatistics summaryStats = database.getIntervalStats(interval, timeKey);
+        if (summaryStats != null) {
+            view.add("total", new JsonPrimitive(summaryStats.getCount()));
+        }
+
+        List<SummaryStatistics> secondStats = databaseHelper.query(timeKey, subInterval, columns * rows);
+
+        long commonMax = 0;
+        List<SingleSeriesSummaryStatistics> overall = databaseHelper.extractOverallStats(secondStats);
+
+        JsonArray overallHeatmap = buildHeatmap(overall, columns, rows);
+        JsonObject patternHeatmaps = new JsonObject();
+
+        if (!independentPatternHeat) {
+            if (useTotalScale) {
+                for (SingleSeriesSummaryStatistics singleSeriesSummaryStatistics : overall) {
+                    commonMax = Math.max(commonMax, singleSeriesSummaryStatistics.getCount());
+                }
+            } else {
+                for (SummaryStatistics stat : secondStats) {
+                    Map<Integer, Long> patternCounts = stat.getPatternCounts();
+                    for (Long aLong : patternCounts.values()) {
+                        commonMax = Math.max(commonMax, aLong);
+                    }
+                }
+            }
+        }
+
+        for (Pattern pattern : getPatternList()) {
+            List<SingleSeriesSummaryStatistics> patternStats = databaseHelper.extractPatternStats(pattern.getPatternId(), secondStats);
+            JsonArray patternHeatmap;
+
+            if (independentPatternHeat) {
+                patternHeatmap = buildHeatmap(patternStats, columns, rows);
+            } else {
+                patternHeatmap = buildHeatmap(patternStats, columns, rows, commonMax);
+            }
+            patternHeatmaps.add(Integer.toString(pattern.getPatternId()), patternHeatmap);
+        }
+
+        JsonObject patternLookup = getPatternLookup();
+
+        view.add("overall", overallHeatmap);
+        view.add("patterns", patternHeatmaps);
+        view.add("patternLookup", patternLookup);
+
+        return view;
+    }
+
+    private JsonArray buildHeatmap(List<SingleSeriesSummaryStatistics> stats, int columns, int row) {
+
+        long max = 0;
+        for (SingleSeriesSummaryStatistics stat : stats) {
+            max = Math.max(max, stat.getCount());
+        }
+
+        return buildHeatmap(stats, columns, row, max);
+    }
+
+    private List<Pattern> getPatternList() {
+        return patternManager.getPatterns().getValue();
+    }
+
+    private JsonArray buildHeatmap(List<SingleSeriesSummaryStatistics> stats, int columns, int row, long max) {
+
+        ColourInterpolation interp = new ColourInterpolation(Color.white, Color.blue);
+
+        JsonArray rowsArray = new JsonArray();
+        for (int i = 0; i < columns; i++) {
+
+            JsonObject columnObject = new JsonObject();
+            JsonArray cells = new JsonArray();
+
+            for (int j = 0; j < row; j++) {
+                JsonObject cell = new JsonObject();
+
+                int index = (i * row) + j;
+                cell.add("index", new JsonPrimitive(index));
+
+                SingleSeriesSummaryStatistics item = stats.get(index);
+
+                long count = item.getCount();
+                cell.add("total", new JsonPrimitive(count));
+
+                if (count > 0) {
+                    double factor = count / (double) max;
+                    Color color = interp.interpolate(factor);
+
+                    int mag = (color.getBlue() + color.getGreen() + color.getRed()) / 3;
+                    if (mag < (128)) {
+                        cell.add("textcolour", new JsonPrimitive("white"));
+                    } else {
+                        cell.add("textcolour", new JsonPrimitive("black"));
+                    }
+
+                    String hexString = ColourUtils.toHex(color);
+                    cell.add("colour", new JsonPrimitive("#" + hexString));
+                } else {
+                    cell.add("colour", new JsonPrimitive("#dddddd"));
+                }
+
+
+                cells.add(cell);
+            }
+
+            columnObject.add("cells", cells);
+            rowsArray.add(columnObject);
+        }
+
+        return rowsArray;
+    }
+
     public String getPatterns() {
         logger.info("Getting patterns");
         Result<ObservableList<Pattern>> patterns = patternManager.getPatterns();
         return toJSON(patterns);
+    }
+
+    public JsonObject getSecondly(@Param(name = "year") int year,
+                                  @Param(name = "month") int month,
+                                  @Param(name = "day") int day,
+                                  @Param(name = "hour") int hour,
+                                  @Param(name = "minute") int minute,
+                                  @Param(name = "second") int second) {
+
+        logger.info("Creating secondly view for year='{}' month='{}' day='{}' hour='{}' minute='{}' second='{}'",
+                    year,
+                    month,
+                    day,
+                    hour,
+                    minute,
+                    second);
+
+        JsonObject secondlyView = new JsonObject();
+
+        secondlyView.add("year", new JsonPrimitive(year));
+        secondlyView.add("month", new JsonPrimitive(month));
+        secondlyView.add("day", new JsonPrimitive(day));
+        secondlyView.add("hour", new JsonPrimitive(hour));
+        secondlyView.add("minute", new JsonPrimitive(minute));
+        secondlyView.add("second", new JsonPrimitive(second));
+
+        SummaryStatistics secondlyStats = database.getSecondlyStats(year, month, day, hour, minute, second);
+        if (secondlyStats != null) {
+            secondlyView.add("total", new JsonPrimitive(secondlyStats.getCount()));
+        }
+
+        JsonObject patternLookup = getPatternLookup();
+        secondlyView.add("patternLookup", patternLookup);
+
+        long max = 0;
+
+        JsonArray segments = new JsonArray();
+        int seg = 50;
+        int row = 20;
+        for (int i = 0; i < seg; i++) {
+
+            JsonObject segment = new JsonObject();
+            JsonArray milliseconds = new JsonArray();
+
+            for (int j = 0; j < row; j++) {
+                JsonObject millisecond = new JsonObject();
+
+                int index = (i * row) + j;
+                millisecond.add("millisecond", new JsonPrimitive(index));
+
+                SummaryStatistics millisecondlyStats = database.getMillisecondlyStats(year, month, day, hour, minute, second, index);
+                if (millisecondlyStats != null) {
+                    long count = millisecondlyStats.getCount();
+                    millisecond.add("total", new JsonPrimitive(count));
+
+                    JsonObject patterns = getPatternCounts(millisecondlyStats);
+                    millisecond.add("patterns", patterns);
+                    max = Math.max(max, count);
+                }
+
+                milliseconds.add(millisecond);
+            }
+
+            segment.add("milliseconds", milliseconds);
+            segments.add(segment);
+        }
+
+        addHeatmapColours(max, segments, seg, row, "milliseconds");
+
+        //        JsonArray patternHeatmap = buildPatternHeatmap(0, seg, row);
+
+        secondlyView.add("segments", segments);
+
+        return secondlyView;
     }
 
     //    public Object handle(String url) {

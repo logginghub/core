@@ -4,6 +4,7 @@ dependencies {
     compile project(':logginghub-utils')
 
     compile("org.codehaus.jackson:jackson-mapper-asl:1.9.7")
+    compile("com.google.code.gson:gson:2.3.1")
     compile("org.eclipse.jetty:jetty-server:7.6.4.v20120524")
     compile("org.eclipse.jetty:jetty-websocket:7.6.4.v20120524")
     compile("org.jasypt:jasypt:1.9.0")

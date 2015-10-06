@@ -1,0 +1,32 @@
+<div class="calendar" ng-controller="CalendarController as vm">
+    <h1>Calendar</h1>
+
+    <div class="table noselect">
+
+        <div class="row headings">
+            <div class="cell">Mon</div>
+            <div class="cell">Tue</div>
+            <div class="cell">Wed</div>
+            <div class="cell">Thur</div>
+            <div class="cell">Fri</div>
+            <div class="cell">Sat</div>
+            <div class="cell">Sun</div>
+        </div>
+
+        <div class="row" ng-repeat="week in vm.calendar">
+
+            <div class="day cell" ng-class="{today: day.isToday, selected: day.isSelected}" ng-repeat="day in week.days" ng-click="vm.select(day)">
+
+                <div class="date">{{day.date}}</div>
+
+                <div class="total">{{day.total | number: 0}}</div>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+    <div>{{vm}}</div>
+</div>

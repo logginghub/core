@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 
 /**
@@ -55,6 +54,10 @@ public class SummaryTimeElement implements SerialisableObject {
         }
 
         return count;
+    }
+
+    public FactoryMap<Integer, MutableLongValue<Integer>> getCountsByPatternId() {
+        return countsByPatternId;
     }
 
     public long getTime() {
