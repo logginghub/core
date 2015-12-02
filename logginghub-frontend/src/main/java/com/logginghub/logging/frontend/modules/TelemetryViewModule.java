@@ -91,7 +91,7 @@ public class TelemetryViewModule {
 
     public void start() {
         StatBundle bundle = new StatBundle();
-        updates = bundle.createStat("Updates");
+        updates = bundle.createIntegerStat("Updates");
         updates.setIncremental(true);
         bundle.startPerSecond(logger);
 

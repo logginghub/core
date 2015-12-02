@@ -2,14 +2,16 @@ package com.logginghub.logging.datafiles;
 
 import com.logginghub.logging.datafiles.aggregation.Aggregation;
 import com.logginghub.logging.datafiles.aggregation.PatternAggregation;
-import com.logginghub.logging.messaging.PatternisedLogEvent;
 import com.logginghub.logging.modules.PatternCollection;
-import com.logginghub.logging.utils.BinaryPatternisedFileStream;
+import com.logginghub.logging.utils.BinaryFileStream;
 import com.logginghub.utils.Destination;
 import com.logginghub.utils.IntegerStat;
+import com.logginghub.utils.LongStat;
 import com.logginghub.utils.Out;
 import com.logginghub.utils.StatBundle;
+import com.logginghub.utils.StatBundle.StatRenderer;
 import com.logginghub.utils.logging.Logger;
+import com.logginghub.utils.logging.LoggerPerformanceInterface.EventContext;
 import com.logginghub.utils.sof.SofException;
 
 import java.io.File;
@@ -19,28 +21,36 @@ import java.util.Collection;
 /**
  * Created by james on 17/09/15.
  */
-public class PatterniserReplayToAggregator {
+public class EventContextsReplayToAggregator {
 
     public static void main(String[] args) {
         StatBundle bundle = new StatBundle();
-        final IntegerStat events = bundle.createIntegerStat("events");
+        final IntegerStat events = bundle.createIncremental("events");
+        final LongStat time = bundle.createSnapshotLongStat("time");
+        bundle.setRenderer(time, new StatRenderer<LongStat>() {
+            @Override
+            public String render(LongStat stat) {
+                return Logger.toDateString(stat.getValue()).toString();
+            }
+        });
         bundle.startPerSecond(Logger.root());
 
         final PatternCollection patternCollection = new BatsPatternCollection();
 
         final Aggregation aggregation = new Aggregation(patternCollection, 1000);
 
-
-        BinaryPatternisedFileStream.replay(new File("/Users/james/development/git/marketstreamer/marketstreamer-core/mso-trading/tmp",
-                                                    "bats.patternised.binary.log"), new Destination<PatternisedLogEvent>() {
+        BinaryFileStream.replayEventContexts(new File("/Users/james/development/git/marketstreamer/marketstreamer-core/mso-trading/tmp",
+                                                      "bats.binary.log"), new Destination<EventContext>() {
             @Override
-            public void send(PatternisedLogEvent logEvent) {
+            public void send(EventContext eventContext) {
                 events.increment(1);
-                aggregation.send(logEvent);
+                aggregation.send(eventContext);
+                time.set(eventContext.getTime());
             }
         });
+
         bundle.stop();
-        Out.out("Events = {}", events.getValue());
+        Out.out("Events = {N}", events.getTotal());
 
         // Write out the individual pattern files
         Collection<PatternAggregation> patternData = aggregation.getPatternData();

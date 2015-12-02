@@ -32,3 +32,7 @@ logginghub-server/binarylogs/
 logginghub-server/stackTraceHistory/
 *.iml
 data/
+logginghub-visualiser/build logginghub-visualiser/build.gradle logginghub-visualiser/hs_err_pid61406.log logginghub-visualiser/logginghub-visualiser.iml logginghub-visualiser/marketstreamer.txt logginghub-visualiser/shaders logginghub-visualiser/src logginghub-visualiser/stGrid1.png
+logginghub-visualiser/
+logginghub-server/src/main/resources/logginghubweb/angular/app/visualiser/
+logginghub-server/src/main/resources/logginghubweb/angular/app/

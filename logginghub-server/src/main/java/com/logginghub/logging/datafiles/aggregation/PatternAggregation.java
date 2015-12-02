@@ -5,6 +5,7 @@ import com.logginghub.logging.utils.ValueStripper2;
 import com.logginghub.utils.Destination;
 import com.logginghub.utils.Out;
 import com.logginghub.utils.TimeUtils;
+import com.logginghub.utils.logging.LoggerPerformanceInterface.EventContext;
 import com.logginghub.utils.sof.SerialisableObject;
 import com.logginghub.utils.sof.SofException;
 import com.logginghub.utils.sof.SofReader;
@@ -88,6 +89,20 @@ public class PatternAggregation implements Destination<PatternisedLogEvent>, Ser
         writer.write(1, intervalLength);
         writer.write(2, dataByTime.values(), TimeAggregation.class);
     }
+
+    public void send(EventContext eventContext) {
+        long time = eventContext.getTime();
+        long chunk = TimeUtils.chunk(time, intervalLength);
+
+        TimeAggregation timeAggregation = dataByTime.get(chunk);
+        if (timeAggregation == null) {
+            timeAggregation = new TimeAggregation(chunk, stripper);
+            dataByTime.put(chunk, timeAggregation);
+        }
+
+        timeAggregation.send(eventContext);
+    }
+
 
     @Override
     public void send(PatternisedLogEvent patternisedLogEvent) {

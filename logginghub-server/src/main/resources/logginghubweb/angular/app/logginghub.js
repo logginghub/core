@@ -41,16 +41,22 @@ loggingHubModule.controller('LineCtrl', ['$scope', '$timeout', function ($scope,
     //}, 3000);
 }]);
 
+loggingHubModule.filter('zpad', function() {
+    return function(input, n) {
+        if(input === undefined)
+            input = ""
+        if(input.length >= n)
+            return input
+        var zeros = "0".repeat(n);
+        return (zeros + input).slice(-1 * n)
+    };
+});
 
 loggingHubModule.config(function ($stateProvider, $urlRouterProvider) {
 
-    $urlRouterProvider.otherwise("/home")
+    $urlRouterProvider.otherwise("/patterns")
 
     $stateProvider
-
-        .state('home', {
-            url: "/home", templateUrl: "home.html"
-        })
 
         .state('patterns', {
             url: "/patterns", templateUrl: "patterns/patterns.html"
@@ -62,6 +68,10 @@ loggingHubModule.config(function ($stateProvider, $urlRouterProvider) {
 
         .state('pattern', {
             url: "/pattern?patternId", templateUrl: "pattern/pattern.html"
+        })
+
+        .state('visualiser', {
+            url: "/visualiser", templateUrl: "visualiser/visualiser.html"
         })
 
         .state('calendar', {

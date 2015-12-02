@@ -8,6 +8,7 @@ import com.logginghub.logging.modules.configuration.InternalLoggingConfiguration
 import com.logginghub.logging.servers.SocketHubInterface;
 import com.logginghub.utils.ProcessUtils;
 import com.logginghub.utils.logging.Logger;
+import com.logginghub.utils.logging.LoggerPerformanceInterface.EventContext;
 import com.logginghub.utils.logging.LoggerStream;
 import com.logginghub.utils.module.Module;
 import com.logginghub.utils.module.ServiceDiscovery;
@@ -50,6 +51,11 @@ public class InternalLoggingModule implements Module<InternalLoggingConfiguratio
                     VLLogEvent vlevent = new VLLogEvent(event, finalPid, sourceApplication, finalHost.getHostAddress(), finalHost.getHostName());
                     vlevent.setChannel("private/hubinternal");
                     socketHubInterface.processLogEvent(new LogEventMessage(vlevent), internal);
+                }
+
+                @Override
+                public void onNewLogEvent(EventContext eventContext) {
+
                 }
             });
         }

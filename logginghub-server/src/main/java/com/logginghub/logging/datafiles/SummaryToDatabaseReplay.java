@@ -9,7 +9,7 @@ import java.io.File;
 /**
  * Created by james on 18/09/15.
  */
-public class SummaryReplay {
+public class SummaryToDatabaseReplay {
     public static void main(String[] args) {
 
 

@@ -1,6 +1,7 @@
 package com.logginghub.utils.logging;
 
 import com.logginghub.utils.FileUtils;
+import com.logginghub.utils.logging.LoggerPerformanceInterface.EventContext;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -60,6 +61,11 @@ public class FileStream implements LoggerStream {
                 }
             }
         }
+    }
+
+    @Override
+    public void onNewLogEvent(EventContext eventContext) {
+
     }
 
     public void close() {

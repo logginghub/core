@@ -1,5 +1,8 @@
 package com.logginghub.utils.logging;
 
+import com.logginghub.utils.VLPorts;
+import com.logginghub.utils.logging.LoggerPerformanceInterface.EventContext;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -7,8 +10,6 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-
-import com.logginghub.utils.VLPorts;
 
 public class UDPPatternisedLogEventStream implements LoggerStream {
 
@@ -60,6 +61,11 @@ public class UDPPatternisedLogEventStream implements LoggerStream {
                 e.printStackTrace();
             }
         }
+    }
+
+    @Override
+    public void onNewLogEvent(EventContext eventContext) {
+
     }
 
     private void putString(ByteBuffer byteBuffer, String string) {

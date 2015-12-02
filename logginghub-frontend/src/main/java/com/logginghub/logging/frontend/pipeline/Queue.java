@@ -1,12 +1,12 @@
 package com.logginghub.logging.frontend.pipeline;
 
-import java.util.concurrent.ArrayBlockingQueue;
-
 import com.logginghub.utils.BaseStat;
 import com.logginghub.utils.IntegerStat;
 import com.logginghub.utils.Stat;
 import com.logginghub.utils.StatBundle;
 import com.logginghub.utils.logging.Logger;
+
+import java.util.concurrent.ArrayBlockingQueue;
 
 public class Queue<In> {
 
@@ -15,10 +15,11 @@ public class Queue<In> {
     private int processedCount = 0;
 
     private StatBundle statBundle = new StatBundle();
-    private IntegerStat inStat = statBundle.createStat("in");
-    private IntegerStat outStat = statBundle.createStat("out");
+    private IntegerStat inStat = statBundle.createIntegerStat("in");
+    private IntegerStat outStat = statBundle.createIntegerStat("out");
+
     private Stat queueStat = statBundle.addStat(new BaseStat("size") {
-        public int getValue() {
+        public Integer getValue() {
             return queue.size();
         }
     });

@@ -1,19 +1,5 @@
 package com.logginghub.logging.servers;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
-
-import java.io.Closeable;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-
-import com.logginghub.logging.messaging.SocketConnectionInterface;
-import org.junit.Test;
-import org.mockito.Mockito;
-
 import com.logginghub.logging.DefaultLogEvent;
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.LogEventBuilder;
@@ -31,15 +17,24 @@ import com.logginghub.logging.messages.SubscriptionRequestMessage;
 import com.logginghub.logging.messages.SubscriptionResponseMessage;
 import com.logginghub.logging.messages.UnsubscriptionRequestMessage;
 import com.logginghub.logging.messaging.SocketConnection;
-import com.logginghub.logging.servers.ServerSocketConnector;
-import com.logginghub.logging.servers.ServerSocketConnectorListener;
-import com.logginghub.logging.servers.SocketHub;
+import com.logginghub.logging.messaging.SocketConnectionInterface;
 import com.logginghub.utils.Bucket;
 import com.logginghub.utils.MutableBoolean;
 import com.logginghub.utils.OSUtils;
 import com.logginghub.utils.Timeout;
 import com.logginghub.utils.logging.Logger;
+import com.logginghub.utils.logging.LoggerPerformanceInterface.EventContext;
 import com.logginghub.utils.logging.LoggerStream;
+import org.junit.Test;
+import org.mockito.Mockito;
+
+import java.io.Closeable;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 
 public class TestSocketHub {
 
@@ -101,6 +96,11 @@ public class TestSocketHub {
                 if (event.getLevel() > Logger.info) {
                     hasWarning.value = true;
                 }
+            }
+
+            @Override
+            public void onNewLogEvent(EventContext eventContext) {
+
             }
         });
 

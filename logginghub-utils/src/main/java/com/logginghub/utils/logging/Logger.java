@@ -934,4 +934,12 @@ public class Logger {
     }
 
 
+    public LoggerPerformanceInterface getPerformanceInterface() {
+        return new LoggerPerformanceInterface(this);
+    }
+
+    public List<LoggerStream> getStreams() {
+        return streams;
+    }
+
 }

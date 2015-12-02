@@ -5,6 +5,7 @@ import com.logginghub.logging.modules.PatternCollection;
 import com.logginghub.logging.utils.ValueStripper2;
 import com.logginghub.utils.Destination;
 import com.logginghub.utils.Is;
+import com.logginghub.utils.logging.LoggerPerformanceInterface.EventContext;
 import com.logginghub.utils.sof.SerialisableObject;
 import com.logginghub.utils.sof.SofException;
 import com.logginghub.utils.sof.SofReader;
@@ -56,6 +57,24 @@ public class Aggregation implements Destination<PatternisedLogEvent>, Serialisab
     @Override
     public void write(SofWriter writer) throws SofException {
         writer.write(0, dataByPatternId.values(), PatternAggregation.class);
+    }
+
+    public void send(EventContext eventContext) {
+        int patternId = eventContext.getPatternId();
+        PatternAggregation patternAggregation = dataByPatternId.get(patternId);
+
+        if (patternAggregation == null) {
+            ValueStripper2 stripper = patternCollection.getStripper(patternId);
+//            Is.notNull(stripper, "Couldn't find pattern metadata (stripper) for patternId '{}'", patternId);
+            patternAggregation = new PatternAggregation(patternId, intervalLength, stripper);
+            dataByPatternId.put(patternId, patternAggregation);
+        }
+
+        try {
+            patternAggregation.send(eventContext);
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

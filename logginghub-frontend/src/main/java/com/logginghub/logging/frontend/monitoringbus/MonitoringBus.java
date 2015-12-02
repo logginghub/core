@@ -60,7 +60,7 @@ public class MonitoringBus {
         startLogEventListeners(eventStream);
 
         // final StatBundle statBundle = new StatBundle();
-        // final IntegerStat events = statBundle.createStat("Events");
+        // final IntegerStat events = statBundle.createIntegerStat("Events");
         // events.setIncremental(true);
 
         // final List<ValueStripper2> strippers = new
@@ -190,9 +190,9 @@ public class MonitoringBus {
 
     public void startStatsLogging() {
         final StatBundle statBundle = new StatBundle();
-        final IntegerStat events = statBundle.createStat("Events");
-        final IntegerStat paternised = statBundle.createStat("Paternised");
-        final IntegerStat telemetry = statBundle.createStat("Telemetry");
+        final IntegerStat events = statBundle.createIntegerStat("Events");
+        final IntegerStat paternised = statBundle.createIntegerStat("Paternised");
+        final IntegerStat telemetry = statBundle.createIntegerStat("Telemetry");
 
         paternised.setIncremental(true);
         telemetry.setIncremental(true);

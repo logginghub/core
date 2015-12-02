@@ -1,6 +1,10 @@
 <div class="daily calendar" ng-controller="HourlyController as vm">
     <h1>Hourly</h1>
 
+    <h2>{{vm.hour | zpad : 2}}:{{0 | zpad : 2}} {{vm.day| zpad : 2}}/{{vm.month| zpad : 2}}/{{vm.year}}</h2>
+
+    <h2>Each box represents a one minute interval</h2>
+
     <div class="table noselect">
 
         <div class="row headings">
@@ -45,7 +49,7 @@
                      ng-click="vm.select(cell)"
                      ng-style="{'background-color':cell.colour, 'color':cell.textcolour}">
 
-                    <div class="hour">{{cell.index}}</div>
+                    <div class="hour">{{vm.hour | zpad : 2}}:{{cell.index | zpad: 2}}</div>
                     <div class="total">{{cell.total | number: 0}}</div>
                 </div>
             </div>

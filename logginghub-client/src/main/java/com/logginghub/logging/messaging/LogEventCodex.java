@@ -1,15 +1,16 @@
 package com.logginghub.logging.messaging;
 
-import java.nio.BufferOverflowException;
-import java.nio.BufferUnderflowException;
-import java.nio.ByteBuffer;
-
 import com.logginghub.logging.DefaultLogEvent;
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.messages.PartialMessageException;
 import com.logginghub.utils.ExpandingByteBuffer;
 import com.logginghub.utils.FormattedRuntimeException;
 import com.logginghub.utils.logging.Logger;
+import com.logginghub.utils.logging.LoggerPerformanceInterface.EventContext;
+
+import java.nio.BufferOverflowException;
+import java.nio.BufferUnderflowException;
+import java.nio.ByteBuffer;
 
 public class LogEventCodex extends AbstractCodex {
 
@@ -55,7 +56,7 @@ public class LogEventCodex extends AbstractCodex {
                     try {
                         event.setLevel(buffer.getShort());
                         decodeProgress = 1;
-                        event.setMessage(decodeString(buffer));                        
+                        event.setMessage(decodeString(buffer));
                         decodeProgress = 2;
                         event.setLocalCreationTimeMillis(buffer.getLong());
                         decodeProgress = 3;
@@ -78,23 +79,23 @@ public class LogEventCodex extends AbstractCodex {
                         event.setSourceMethodName(decodeString(buffer));
                         decodeProgress = 12;
                         event.setThreadName(decodeString(buffer));
-                       
+
                         // Read optional fields - pid
                         int progress = buffer.position() - payloadStart;
                         if (progress < length) {
                             event.setPid(buffer.getInt());
                             decodeProgress = 14;
                         }
-                        
+
                         // Read optional fields - channel
                         progress = buffer.position() - payloadStart;
                         if (progress < length) {
                             event.setChannel(decodeString(buffer));
                             decodeProgress = 15;
                         }
-                        
+
                         decodeProgress = 16;
-                        
+
                         // Skip anything we dont support at the end of the
                         // message
                         int toSkip = length - (buffer.position() - payloadStart);
@@ -183,7 +184,7 @@ public class LogEventCodex extends AbstractCodex {
         buffer.putInt(length);
         buffer.position(endPosition);
     }
-    
+
     public static void encodeInternal_version1_with_channel_and_pid(ExpandingByteBuffer buffer, LogEvent event) {
         buffer.put(versionOne);
 
@@ -192,7 +193,7 @@ public class LogEventCodex extends AbstractCodex {
 
         int contentPosition = buffer.position();
 
-        buffer.putShort((short) event.getLevel());        
+        buffer.putShort((short) event.getLevel());
         encodeString(buffer, event.getMessage());
         buffer.putLong(event.getOriginTime());
         encodeString(buffer, event.getSourceApplication());
@@ -216,6 +217,95 @@ public class LogEventCodex extends AbstractCodex {
         buffer.position(endPosition);
     }
 
+    public static EventContext decode(ByteBuffer buffer, EventContext flyweight) throws PartialMessageException {
+        logger.finer("Attempting to decode log event context from buffer '{}'", buffer);
+
+        buffer.mark();
+
+        try {
+            byte b = buffer.get();
+            int version = b;
+
+            if (version == versionOne) {
+                int length = buffer.getInt();
+
+                int payloadStart = buffer.position();
+
+                logger.finer("Length decoded '{}', buffer state is '{}'", length, buffer);
+
+                BufferDebugger bd = new BufferDebugger(buffer);
+
+                if (length == 0) {
+                    throw new RuntimeException(String.format("Invalid event size '%d'", length));
+                }
+
+                if (buffer.remaining() >= length) {
+
+                    int decodeProgress =0;
+                    try {
+                        flyweight.level(buffer.getShort());
+                        flyweight.pattern(buffer.getInt());
+                        flyweight.time(buffer.getLong());
+
+                        int bufferLength = buffer.getInt();
+                        flyweight.setBuffer(ByteBuffer.wrap(buffer.array(), buffer.position(), bufferLength));
+                        buffer.position(buffer.position() + bufferLength);
+
+                        flyweight.sourceClass(decodeString(buffer));
+                        flyweight.sourceMethod(decodeString(buffer));
+
+                        // Skip anything we dont support at the end of the
+                        // message
+                        int toSkip = length - (buffer.position() - payloadStart);
+                        buffer.position(buffer.position() + toSkip);
+                    } catch (RuntimeException re) {
+                        throw new FormattedRuntimeException(re, "Decoding failed at position {} (decode progress {}) : {}", buffer.position(), decodeProgress, re.getMessage());
+                    }
+
+                } else {
+                    buffer.reset();
+                    throw new PartialMessageException();
+                }
+            } else {
+                throw new RuntimeException("Unknown encoding version number " + version);
+            }
+        } catch (BufferUnderflowException bufferUnderflowException) {
+            // This is ok, it just means the entire event isn't in the buffer
+            // yet.
+            buffer.reset();
+            throw new PartialMessageException();
+        }
+
+        logger.finer("Log event '{}' decoded, buffer state is now '{}'", flyweight, buffer);
+
+        return flyweight;
+    }
+
+    public static void encodeEventContext(ExpandingByteBuffer buffer, EventContext event) {
+        buffer.put(versionOne);
+
+        int lengthPosition = buffer.position();
+        buffer.putInt(lengthPlaceHolder);
+
+        int contentPosition = buffer.position();
+
+        buffer.putShort((short) event.getLevel());
+        buffer.putInt(event.getPatternId());
+        buffer.putLong(event.getTime());
+
+        buffer.putInt(event.getBuffer().remaining());
+        buffer.put(event.getBuffer());
+
+        encodeString(buffer, event.getSourceClassName());
+        encodeString(buffer, event.getSourceMethodName());
+
+        int endPosition = buffer.position();
+        int length = endPosition - contentPosition;
+
+        buffer.position(lengthPosition);
+        buffer.putInt(length);
+        buffer.position(endPosition);
+    }
 
     public static void encode(ExpandingByteBuffer buffer, LogEvent event) {
         logger.finer("Attempting to encode log event '{}' into buffer '{}'", event, buffer);

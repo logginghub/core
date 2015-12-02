@@ -1,5 +1,7 @@
 package com.logginghub.utils.logging;
 
+import com.logginghub.utils.logging.LoggerPerformanceInterface.EventContext;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.MessageFormat;
@@ -178,5 +180,10 @@ public class SingleLineFormatter extends Formatter implements LogEventFormatter 
 
         return sb.toString();
 
+    }
+
+    @Override
+    public String format(EventContext event) {
+        return null;
     }
 }

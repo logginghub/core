@@ -1,13 +1,19 @@
-
 <container>
 
+    <socketHub port="9000" />
 
-    <socketHub port="15001"/>
+    <socketTextReader port="9001">
+        <template message="TestStatus : ${message}"/>
+    </socketTextReader>
 
-    <channelSubscriptions />
+    <timestampFixedRollingFileLogger folder="/hublogs/"
+                                     filename="hub"
+                                     extension=".log"
+                                     maximumFileSize="104857600"
+                                     numberOfFiles="10"
+                                     numberOfCompressedFiles="50000"
+                                     openWithAppend="false"
+                                     writeAsynchronously="true"
+                                     asynchronousQueueWarningSize="10000"/>
 
-    <patternManager />
-    <webFrontend port="12345"/>
-
- 
 </container>

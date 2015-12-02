@@ -9,6 +9,8 @@ import com.logginghub.utils.ExpandingByteBuffer;
 import com.logginghub.utils.FileUtils;
 import com.logginghub.utils.logging.LogEvent;
 import com.logginghub.utils.logging.Logger;
+import com.logginghub.utils.logging.LoggerPerformanceInterface;
+import com.logginghub.utils.logging.LoggerPerformanceInterface.EventContext;
 import com.logginghub.utils.logging.LoggerStream;
 
 import java.io.File;
@@ -36,6 +38,7 @@ public class BinaryFileStream implements LoggerStream, Destination<LogEvent> {
     private String hostName;
     private ExpandingByteBuffer writeBuffer = new ExpandingByteBuffer(10 * 1024);
     private FileChannel channel;
+    private boolean ignoreOldStyle = false;
 
     public BinaryFileStream(File folder, String name, String sourceApplication) {
         this.folder = folder;
@@ -94,6 +97,41 @@ public class BinaryFileStream implements LoggerStream, Destination<LogEvent> {
         }
     }
 
+    public static void replayEventContexts(File file, Destination<EventContext> destination) {
+
+        FileChannel channel = null;
+        try {
+            FileInputStream fis = new FileInputStream(file);
+            ByteBuffer buffer = ByteBuffer.allocate(10 * 1024);
+
+            LoggerPerformanceInterface lpi = new LoggerPerformanceInterface(Logger.root());
+            EventContext eventContext = lpi.new EventContext();
+
+            int read;
+            channel = fis.getChannel();
+            while ((read = channel.read(buffer)) != -1) {
+
+                buffer.flip();
+                try {
+                    while (buffer.hasRemaining()) {
+                        buffer.mark();
+                        LogEventCodex.decode(buffer, eventContext);
+                        destination.send(eventContext);
+                    }
+                } catch (PartialMessageException e) {
+                    buffer.reset();
+                }
+
+                buffer.compact();
+            }
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            FileUtils.closeQuietly(channel);
+        }
+    }
+
     public int getLevelFilter() {
         return levelFilter;
     }
@@ -107,7 +145,7 @@ public class BinaryFileStream implements LoggerStream, Destination<LogEvent> {
     }
 
     public void onNewLogEvent(LogEvent event) {
-        if (event.getLevel() >= levelFilter) {
+        if (event.getLevel() >= levelFilter && !ignoreOldStyle) {
 
             VLLogEvent vlevent = new VLLogEvent(event, pid, sourceApplication, localHost.getHostAddress(), localHost.getHostName());
 
@@ -131,6 +169,34 @@ public class BinaryFileStream implements LoggerStream, Destination<LogEvent> {
                 }
             }
         }
+    }
+
+    @Override
+    public void onNewLogEvent(EventContext event) {
+
+        if (event.getLevel() >= levelFilter) {
+
+            synchronized (this) {
+                ensureOpen();
+
+                try {
+
+                    LogEventCodex.encodeEventContext(writeBuffer, event);
+                    writeBuffer.flip();
+                    channel.write(writeBuffer.getBuffer());
+                    writeBuffer.clear();
+
+                    if (autoFlush) {
+                        channel.force(true);
+                    }
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    close();
+                }
+            }
+        }
+
     }
 
     private void ensureOpen() {
@@ -158,5 +224,9 @@ public class BinaryFileStream implements LoggerStream, Destination<LogEvent> {
 
     public void setAutoFlush(boolean autoFlush) {
         this.autoFlush = autoFlush;
+    }
+
+    public void setIgnoreOldStyle(boolean ignoreOldStyle) {
+        this.ignoreOldStyle = ignoreOldStyle;
     }
 }

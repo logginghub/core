@@ -1,0 +1,13 @@
+
+<container>
+
+
+    <socketHub port="15001"/>
+
+    <channelSubscriptions />
+
+    <patternManager />
+    <webFrontend port="12345"/>
+
+ 
+</container>

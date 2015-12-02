@@ -1,11 +1,11 @@
 package com.logginghub.utils;
 
-public class IntegerStat implements Stat<Integer> {
+public class LongStat implements Stat<Long> {
 
     private String name;
-    private volatile int total;
-    private volatile int value;
-    private volatile int lastValue = -1;
+    private volatile long total;
+    private volatile long value;
+    private volatile long lastValue = -1;
 
     // Incremental stats are important if they are greater than zero - for
     // example the number of new events in the hub. Non-incremental stats are
@@ -13,23 +13,27 @@ public class IntegerStat implements Stat<Integer> {
     // they have changed.
     private boolean isIncremental = false;
 
-    public IntegerStat(String name, int value) {
+    public LongStat(String name, int value) {
         super();
         this.name = name;
         this.value = value;
     }
 
-    public IntegerStat() {}
+    public LongStat() {}
     
     public String getName() {
         return name;
+    }
+
+    public void set(long value) {
+        this.value = value;
     }
 
     public void setName(String name) {
         this.name = name;
     }
 
-    public Integer getValue() {
+    public Long getValue() {
         return value;
     }
 
@@ -37,7 +41,7 @@ public class IntegerStat implements Stat<Integer> {
         this.value = value;
     }
 
-    public int getLastValue() {
+    public long getLastValue() {
         return lastValue;
     }
 
@@ -56,7 +60,7 @@ public class IntegerStat implements Stat<Integer> {
         }
     }
 
-    public int getTotal() {
+    public long getTotal() {
         return total;
     }
 
@@ -85,8 +89,8 @@ public class IntegerStat implements Stat<Integer> {
         this.isIncremental = isIncremental;
     }
 
-    public int getDeltaValue() {
-        int delta = value - lastValue;
+    public long getDeltaValue() {
+        long delta = value - lastValue;
         value = lastValue;
         return delta;
     }

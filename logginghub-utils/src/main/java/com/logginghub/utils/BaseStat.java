@@ -1,9 +1,10 @@
 package com.logginghub.utils;
 
-public abstract class BaseStat implements Stat {
+
+public abstract class BaseStat<ReturnType extends Number> implements Stat<ReturnType> {
 
     private String name;
-    private int lastValue = -1;
+    private ReturnType lastValue = null;
 
     private boolean isIncremental = false;
 
@@ -22,13 +23,13 @@ public abstract class BaseStat implements Stat {
         this.name = name;
     }
 
-    public abstract int getValue();
+    public abstract ReturnType getValue();
 
-    public int getLastValue() {
+    public ReturnType getLastValue() {
         return lastValue;
     }
 
-    public void setLastValue(int lastValue) {
+    public void setLastValue(ReturnType lastValue) {
         this.lastValue = lastValue;
     }
 
@@ -38,10 +39,10 @@ public abstract class BaseStat implements Stat {
 
     public boolean hasChanged() {
         if (isIncremental) {
-            return getValue() > 0;
+            return getValue().doubleValue() > 0;
         }
         else {
-            return getValue() != lastValue;
+            return !getValue().equals(lastValue);
         }
     }
 

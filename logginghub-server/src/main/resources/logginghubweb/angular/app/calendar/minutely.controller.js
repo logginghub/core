@@ -52,11 +52,12 @@
             });
         }
 
+
         function selectSecond(second) {
             logger.info("Selecting second %o", second);
 
             if (second.isSelected) {
-                $state.go("secondly", {year: vm.year, month: vm.month, day: vm.day, hour: vm.hour, minute: vm.minute.minute, second: second.second});
+                $state.go("secondly", {year: vm.year, month: vm.month, day: vm.day, hour: vm.hour, minute: vm.minute, second: second.index});
             }
 
             _.forEach(vm.minute.segments, function (segment) {

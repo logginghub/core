@@ -29,6 +29,7 @@ import com.logginghub.utils.ResourceUtils;
 import com.logginghub.utils.ThreadUtils;
 import com.logginghub.utils.Throttler;
 import com.logginghub.utils.logging.Logger;
+import com.logginghub.utils.logging.LoggerPerformanceInterface.EventContext;
 import com.logginghub.utils.logging.LoggerStream;
 import com.logginghub.utils.logging.SystemErrStream;
 import com.logginghub.utils.module.ProxyServiceDiscovery;
@@ -221,6 +222,11 @@ public class LegacyRunHub implements Closeable {
                 VLLogEvent vlevent = new VLLogEvent(event, finalPid, sourceApplication, finalHost.getHostAddress(), finalHost.getHostName());
                 vlevent.setChannel("private/hubinternal");
                 hub.processLogEvent(new LogEventMessage(vlevent), internal);
+            }
+
+            @Override
+            public void onNewLogEvent(EventContext eventContext) {
+
             }
         });
     }

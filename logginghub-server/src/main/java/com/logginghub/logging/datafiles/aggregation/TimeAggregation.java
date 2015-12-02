@@ -10,6 +10,7 @@ import com.logginghub.utils.Out;
 import com.logginghub.utils.SinglePassStatisticsDoublePrecision;
 import com.logginghub.utils.SinglePassStatisticsDoublePrecision.StatisticsSnapshot;
 import com.logginghub.utils.logging.Logger;
+import com.logginghub.utils.logging.LoggerPerformanceInterface.EventContext;
 import com.logginghub.utils.sof.SerialisableObject;
 import com.logginghub.utils.sof.SofException;
 import com.logginghub.utils.sof.SofReader;
@@ -17,6 +18,7 @@ import com.logginghub.utils.sof.SofWriter;
 
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -52,7 +54,12 @@ public class TimeAggregation implements Destination<PatternisedLogEvent>, Serial
         this.time = time;
         this.stripper = stripper;
 
-        labels = stripper.getLabels();
+        if(stripper != null) {
+            labels = stripper.getLabels();
+        }else{
+            labels = new ArrayList<String>();
+        }
+
     }
 
     public TimeAggregation() {
@@ -147,6 +154,33 @@ public class TimeAggregation implements Destination<PatternisedLogEvent>, Serial
 
     }
 
+    public void send(EventContext patternisedLogEvent) {
+        count++;
+
+        // TODO : work out best way to do this for event context events
+
+//        String[] variables = patternisedLogEvent.getVariables();
+//        for (int i = 0; i < variables.length; i++) {
+//
+//            boolean isNumericField;
+//            String key;
+//            key = labels.get(i);
+//            isNumericField = stripper.isNumericField(i);
+//
+//            String variable = variables[i];
+//            if (isNumericField) {
+//                try {
+//                    Number parse = numberFormat.parse(variable);
+//                    statistics.get(key).addValue(parse.doubleValue());
+//                } catch (ParseException e) {
+//                    e.printStackTrace();
+//                }
+//            } else {
+//                frequencyCounts.get(key).count(variable, 1);
+//            }
+//        }
+    }
+
     @Override
     public void send(PatternisedLogEvent patternisedLogEvent) {
         count++;
@@ -156,14 +190,8 @@ public class TimeAggregation implements Destination<PatternisedLogEvent>, Serial
 
             boolean isNumericField;
             String key;
-            // TODO : go back one level in the process and work out why some patterns end up with more values than labels
-            //                if (i < labels.size()) {
             key = labels.get(i);
             isNumericField = stripper.isNumericField(i);
-            //                } else {
-            //                    key = "??";
-            //                    isNumericField = false;
-            //                }
 
             String variable = variables[i];
             if (isNumericField) {

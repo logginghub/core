@@ -20,6 +20,7 @@ import com.logginghub.utils.Metadata;
 import com.logginghub.utils.NetUtils;
 import com.logginghub.utils.WorkerThread;
 import com.logginghub.utils.logging.Logger;
+import com.logginghub.utils.logging.LoggerPerformanceInterface.EventContext;
 import com.logginghub.utils.logging.LoggerStream;
 
 import java.io.File;
@@ -432,6 +433,11 @@ public class LoggingHubStream implements LoggerStream, StandardAppenderFeatures 
                 }
             });
         }
+    }
+
+    @Override
+    public void onNewLogEvent(EventContext eventContext) {
+
     }
 
     public void setHostOverride(String hostOverride) {

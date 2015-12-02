@@ -9,30 +9,30 @@ public class BatsPatternCollection extends PatternCollection {
         add(new PatternModel(0,
                              "onAddOrder",
                              "onAddOrder processed successfully in {time} ms : timestamp = '[timestamp]', daySpecificOrderId = '[orderId]', isBuy = '[isBuy]', sharesBeingAddedToBook = '[shares]', symbol = '[symbol]', price = '[price]'"));
-        add(new PatternModel(1,
-                             "onLevel1Price",
-                             "onLevel1Price instrumentId='[symbol]' bid='[bid]' ask='[ask]' bidQuantity='[bidQuantity]', askQuantity='[askQuantity]', bidOrders='[bidOrders]', askOrders='[askOrders]'"));
-        add(new PatternModel(2,
+        add(new PatternModel(3,
                              "onOrderCancelled",
                              "onOrderCancelled processed successfully in {time} ms : timestamp = '[timestamp]', daySpecificOrderId = '[orderId]', sharesBeingCancelled = '[shares]'"));
-        add(new PatternModel(3,
+        add(new PatternModel(4,
                              "onOrderExecuted",
                              "onOrderExecuted processed successfully in {time} ms : timestamp = '[timestamp]', daySpecificOrderId = '[orderId]', sharesBeingExecuted = '[shares]', executionId = '[executionId]', executionFlags = '[flags]'"));
-        add(new PatternModel(4,
+        add(new PatternModel(8,
                              "onTradeExecuted",
                              "onTradeExecuted : timestamp = '[timestamp]', obfuscatedOrderId = '[obfuscatedOrderId]', isBuy = '[isBuy]', sharesBeingExecuted = '[shares]', symbol = '[symbol]', price = '[price]', dayUniqueExecutionId = '[executionId]', tradeFlags = '[tradeFlags]'"));
-        add(new PatternModel(5,
+        add(new PatternModel(6,
                              "onSymbolClear",
                              "onSymbolClear : timestamp = '[timestamp]', symbol = '[symbol]'"));
-        add(new PatternModel(6,
+        add(new PatternModel(5,
                              "onStatistics",
                              "onStatistics : timestamp = '[timestamp]', symbol = '[symbol]', price = '[price]', statisticType = '[statisticType]', priceDetermination = '[priceDetermination]'"));
-        add(new PatternModel(7,
+        add(new PatternModel(10,
                              "onTradingStatus",
                              "onTradingStatus : timestamp = '[timestamp]', symbol = '[symbol]', status = '[status]', reserved = '[reserved]'"));
-        add(new PatternModel(8,
+        add(new PatternModel(2,
                              "onAuctionUpdate",
                              "onAuctionUpdate : timestamp = '[timestamp]', symbol = '[symbol]', auctionType = '[auctionType]', referencePrice = '[referencePrice]', buyShares= '[buyShares]', sellShares = '[sellShares]', indicativePrice = '[indicativePrice]'"));
+        add(new PatternModel(11,
+                             "onLevel1Price",
+                             "onLevel1Price instrumentId='[symbol]' bid='[bid]' ask='[ask]' bidQuantity='[bidQuantity]', askQuantity='[askQuantity]', bidOrders='[bidOrders]', askOrders='[askOrders]'"));
 
     }
 }

@@ -20,7 +20,7 @@ public class LogEventReplayToPatterniser {
 
     public static void main(String[] args) {
         StatBundle bundle = new StatBundle();
-        final IntegerStat events = bundle.createStat("events");
+        final IntegerStat events = bundle.createIntegerStat("events");
         bundle.startPerSecond(Logger.root());
 
         final PatternCollection patternCollection = new BatsPatternCollection();

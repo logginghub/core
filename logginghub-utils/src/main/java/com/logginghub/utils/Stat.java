@@ -1,8 +1,8 @@
 package com.logginghub.utils;
 
-public interface Stat {
+public interface Stat<ReturnType> {
     boolean hasChanged();
-    int getValue();
+    ReturnType getValue();
     String getName();
     void reset();
 }

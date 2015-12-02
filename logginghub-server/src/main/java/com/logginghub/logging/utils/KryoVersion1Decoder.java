@@ -60,7 +60,7 @@ public class KryoVersion1Decoder {
         DataInputStream dis = new DataInputStream(cis);
 
         StatBundle bundle = new StatBundle();
-        IntegerStat events = bundle.createStat("Event/sec");
+        IntegerStat events = bundle.createIntegerStat("Event/sec");
         events.setIncremental(true);
 
         Inflater inflater = new Inflater();

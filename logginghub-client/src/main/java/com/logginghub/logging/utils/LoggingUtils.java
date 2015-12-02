@@ -13,6 +13,7 @@ import com.logginghub.logging.telemetry.SigarHelper;
 import com.logginghub.utils.NetUtils;
 import com.logginghub.utils.SizeOf;
 import com.logginghub.utils.VLPorts;
+import com.logginghub.utils.logging.LoggerPerformanceInterface.EventContext;
 import com.logginghub.utils.logging.LoggerStream;
 import com.logginghub.utils.logging.SingleLineFormatter;
 
@@ -255,6 +256,11 @@ public class LoggingUtils {
                     }
                     catch (LoggingMessageSenderException e) {}
                 }
+
+                @Override
+                public void onNewLogEvent(EventContext eventContext) {
+
+                }
             });
         }
 
@@ -315,6 +321,11 @@ public class LoggingUtils {
                     socketClient.send(new LogEventMessage(vlevent));
                 }
                 catch (LoggingMessageSenderException e) {}
+            }
+
+            @Override
+            public void onNewLogEvent(EventContext eventContext) {
+
             }
         });
     }
