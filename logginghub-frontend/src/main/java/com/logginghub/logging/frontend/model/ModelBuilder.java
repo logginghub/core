@@ -18,6 +18,7 @@ public class ModelBuilder {
         model.setShowDashboard(configuration.isShowDashboard());
         model.setPopoutCharting(configuration.isPopoutCharting());
         model.setSelectedRowFormat(RowFormatModel.fromConfiguration(configuration.getSelectedRowFormat()));
+        model.setShowHubClearEvents(configuration.isShowHubClearEvents());
 
         List<EnvironmentConfiguration> environments = configuration.getEnvironments();
         for (EnvironmentConfiguration environmentConfiguration : environments) {
@@ -43,6 +44,7 @@ public class ModelBuilder {
 
         environmentConfiguration.setupDefaultLogConfiguration();
         environmentModel.setClustered(environmentConfiguration.isClustered());
+        environmentModel.setEventMemoryMB(environmentConfiguration.getEventMemoryMB());
 
         environmentModel.setOutputLogConfiguration(environmentConfiguration.getOutputLogConfiguration());
         environmentModel.setWriteOutputLog(environmentConfiguration.isWriteOutputLog());

@@ -1,15 +1,14 @@
 package com.logginghub.logging.frontend.configuration;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.logginghub.utils.JAXBConfiguration;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-
-import com.logginghub.utils.JAXBConfiguration;
+import java.util.ArrayList;
+import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD) @XmlRootElement public class LoggingFrontendConfiguration {
 
@@ -25,7 +24,8 @@ import com.logginghub.utils.JAXBConfiguration;
     @XmlAttribute private boolean showExperimental = true;
     @XmlAttribute private boolean showChartingEditor = true;
     @XmlAttribute private boolean showHeapSlider = false;
-    
+    @XmlAttribute private boolean showHubClearEvents = false;
+
     @XmlElement List<RemoteChartConfiguration> remoteCharting = new ArrayList<RemoteChartConfiguration>();
 
     public LoggingFrontendConfiguration() {
@@ -40,6 +40,10 @@ import com.logginghub.utils.JAXBConfiguration;
         return selectedRowFormat;
     }
 
+    public boolean isShowHubClearEvents() {
+        return showHubClearEvents;
+    }
+
     public void setSelectedRowFormat(RowFormatConfiguration selectedRowFormat) {
         this.selectedRowFormat = selectedRowFormat;
     }
@@ -50,6 +54,10 @@ import com.logginghub.utils.JAXBConfiguration;
 
     public boolean isPopoutCharting() {
         return popoutCharting;
+    }
+
+    public void setShowHubClearEvents(boolean showHubClearEvents) {
+        this.showHubClearEvents = showHubClearEvents;
     }
 
     public void setShowOldCharting(boolean showOldCharting) {

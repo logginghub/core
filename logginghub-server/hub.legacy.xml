@@ -1,8 +1,12 @@
 <container>
 
-    <socketHub port="9000" allowClearEvents="true"/>
+    <socketHub port="9000" />
 
-    <timestampFixedRollingFileLogger folder="/tmp/"
+    <socketTextReader port="9001">
+        <template message="TestStatus : ${message}"/>
+    </socketTextReader>
+
+    <timestampFixedRollingFileLogger folder="/hublogs/"
                                      filename="hub"
                                      extension=".log"
                                      maximumFileSize="104857600"
@@ -11,9 +15,5 @@
                                      openWithAppend="false"
                                      writeAsynchronously="true"
                                      asynchronousQueueWarningSize="10000"/>
-
-    <generator>
-        <message rateMin="5000" rateMax="5000" trendMin="1" trendMax="1" random="false" level="INFO" patternFile="message.template"/>
-    </generator>
 
 </container>

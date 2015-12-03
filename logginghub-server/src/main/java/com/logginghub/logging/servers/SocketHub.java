@@ -7,6 +7,7 @@ import com.logginghub.logging.hub.configuration.FilterConfiguration;
 import com.logginghub.logging.hub.configuration.SocketHubConfiguration;
 import com.logginghub.logging.interfaces.FilteredMessageSender;
 import com.logginghub.logging.interfaces.LoggingMessageSender;
+import com.logginghub.logging.messages.ClearEventsMessage;
 import com.logginghub.logging.messages.ConnectedMessage;
 import com.logginghub.logging.messages.ConnectionTypeMessage;
 import com.logginghub.logging.messages.EventSubscriptionRequestMessage;
@@ -63,13 +64,8 @@ import java.util.logging.Level;
  *
  * @author James
  */
-@Provides({LogEvent.class, LoggingMessageSender.class}) public class SocketHub implements ServerSocketConnectorListener,
-                                                                                          Closeable,
-                                                                                          Module<SocketHubConfiguration>,
-                                                                                          Source<LogEvent>,
-                                                                                          Destination<LogEvent>,
-                                                                                          LoggingMessageSender,
-                                                                                          SocketHubInterface {
+@Provides({LogEvent.class, LoggingMessageSender.class})
+public class SocketHub implements ServerSocketConnectorListener, Closeable, Module<SocketHubConfiguration>, Source<LogEvent>, Destination<LogEvent>, LoggingMessageSender, SocketHubInterface {
 
     private static final Logger logger = Logger.getLoggerFor(SocketHub.class);
     private List<ServerSocketConnectorListener> connectionListeners = new CopyOnWriteArrayList<ServerSocketConnectorListener>();
@@ -104,7 +100,8 @@ import java.util.logging.Level;
     private Throttler throttler = new Throttler(10, TimeUnit.SECONDS);
     private SocketHubConfiguration configuration;
     private FactoryMap<Class<? extends LoggingMessage>, List<SocketHubMessageHandler>> messageHandlers = new FactoryMap<Class<? extends LoggingMessage>, List<SocketHubMessageHandler>>() {
-        @Override protected List<SocketHubMessageHandler> createEmptyValue(Class<? extends LoggingMessage> key) {
+        @Override
+        protected List<SocketHubMessageHandler> createEmptyValue(Class<? extends LoggingMessage> key) {
             return new CopyOnWriteArrayList<SocketHubMessageHandler>();
         }
     };
@@ -119,9 +116,16 @@ import java.util.logging.Level;
         return hub;
     }
 
+    public void useRandomPort() {
+        listeningPort = NetUtils.findFreePort();
+
+        if (restfulListenerPort > 0) {
+            restfulListenerPort = NetUtils.findFreePort();
+        }
+    }
+
     /**
-     * If you have wired up external listeners to the hub, you can add them as closables if you'd like them to be closed
-     * when the hub is stopped.
+     * If you have wired up external listeners to the hub, you can add them as closables if you'd like them to be closed when the hub is stopped.
      *
      * @param closables
      */
@@ -131,21 +135,152 @@ import java.util.logging.Level;
         }
     }
 
+    @Override
+    public void addDestination(Destination<LogEvent> listener) {
+        localListeners.addDestination(listener);
+    }
+
+    @Override
+    public void removeDestination(Destination<LogEvent> listener) {
+        localListeners.removeDestination(listener);
+    }
+
+    public void addFilter(FilterConfiguration filterConfiguration) {
+        excludeFilter.addFilter(filterConfiguration);
+    }
+
+    public void addMessageDestination(Destination<LoggingMessage> listener) {
+        messageListeners.addDestination(listener);
+    }
+
+    // //////////////////////////////////////////////////////////////////
+    // ServerSocketConnectorListener implementation
+    // //////////////////////////////////////////////////////////////////
+
+    @Override
+    public void addMessageListener(Class<? extends LoggingMessage> messageType, SocketHubMessageHandler handler) {
+        // TODO : if we used integer message types we could just put these in an array!
+        messageHandlers.get(messageType).add(handler);
+    }
+
+    @Override
+    public void removeMessageListener(Class<? extends LoggingMessage> messageType, SocketHubMessageHandler handler) {
+        // TODO : if we used integer message types we could just put these in an array!
+        messageHandlers.get(messageType).remove(handler);
+    }
+
+    @Override
+    public void addConnectionListener(ServerSocketConnectorListener listener) {
+        connectionListeners.add(listener);
+    }
+
+    @Override
+    public void removeConnectionListener(ServerSocketConnectorListener listener) {
+        connectionListeners.remove(listener);
+    }
+
+    public void processLogEvent(LogEventMessage message, SocketConnectionInterface source) {
+        messagesIn++;
+
+        LogEvent logEvent = message.getLogEvent();
+        if (!excludeFilter.passes(logEvent)) {
+
+            forceHubTime(logEvent);
+
+            if (logEvent.getChannel() == null) {
+                if (logEvent instanceof DefaultLogEvent) {
+                    DefaultLogEvent defaultLogEvent = (DefaultLogEvent) logEvent;
+                    defaultLogEvent.setChannel("events");
+                }
+            }
+
+            boolean sent = false;
+
+            for (final FilteredMessageSender connection : subscribedConnections) {
+                if (connection != source) {
+                    if (connection.getConnectionType() == SocketConnection.CONNECTION_TYPE_HUB_BRIDGE &&
+                        source.getConnectionType() == SocketConnection.CONNECTION_TYPE_HUB_BRIDGE) {
+                        logger.finest("[{}] not sending message back to bridge connection {} (from {})", name, connection, source);
+                    } else {
+                        logger.finest("[{}] sending to {} (from {})", name, connection, source);
+                        connection.send(logEvent);
+                        sent = true;
+                    }
+                }
+            }
+
+            localListeners.send(logEvent);
+
+            sent |= channelMultiplexer.send(logEvent, source);
+
+            if (!sent) {
+                logger.finest(
+                        "[{}] We have no globally subscribed connections, or matching channel subscriptions; the log event is not being sent anywhere",
+                        name);
+            }
+
+            logger.finer("[{}] LogEvent broadcast to {} subscribed connections", name, subscribedConnections.size());
+        } else {
+            messagesFilteredOut++;
+            logger.finer("[{}] LogEvent was filtered out", name);
+        }
+    }
+
     public void addAndSubscribeLocalListener(FilteredMessageSender logger) {
         Is.notNull(logger, "You can't add a null listener");
         subscribedConnections.add(logger);
     }
 
-    @Override public void close() throws IOException {
+    @Override
+    public void close() throws IOException {
         stop();
     }
 
-    public InetSocketAddress getConnectionPoint() {
-        return new InetSocketAddress("localhost", listeningPort);
+    private void stopTimer() {
+        if (timer != null) {
+            timer.stop();
+            timer = null;
+        }
     }
 
-    public List<SocketConnectionInterface> getConnectionsList() {
-        return connectionsList;
+    //    public void processInternalLogEvent(LogEvent event) {
+    //        forceHubTime(event);
+    //
+    //        LogEventMessage message = new LogEventMessage(event);
+    //        processLogEvent(message, null);
+    //    }
+
+    // public void setTelemetryPort(int telemetryPort) {
+    // this.telemetryPort = telemetryPort;
+    // }
+
+    @Override
+    public void configure(SocketHubConfiguration configuration, ServiceDiscovery serviceDiscovery) {
+        this.configuration = configuration;
+        setPort(configuration.getPort());
+        setRestfulListenerPort(configuration.getRestfulListenerPort());
+        setMaximumClientSendQueueSize(configuration.getMaximumClientSendQueueSize());
+        setStatsInterval(configuration.getStatsInterval());
+
+        List<FilterConfiguration> filters = configuration.getFilters();
+        for (FilterConfiguration filterConfiguration : filters) {
+            excludeFilter.addFilter(filterConfiguration);
+        }
+    }
+
+    public void setRestfulListenerPort(int restfulListenerPort) {
+        this.restfulListenerPort = restfulListenerPort;
+    }
+
+    public void setMaximumClientSendQueueSize(int maximumClientSendQueueSize) {
+        this.maximumClientSendQueueSize = maximumClientSendQueueSize;
+    }
+
+    public SocketClient createClient(String name) {
+        SocketClient client = new SocketClient(name);
+        client.addConnectionPoint(new InetSocketAddress(getPort()));
+        return client;
+
     }
 
     public int getPort() {
@@ -157,16 +292,112 @@ import java.util.logging.Level;
         }
     }
 
-    // //////////////////////////////////////////////////////////////////
-    // ServerSocketConnectorListener implementation
-    // //////////////////////////////////////////////////////////////////
-
     public void setPort(int port) {
         listeningPort = port;
     }
 
+    public void disconnectAll() {
+        logger.warn("Closing all connections");
+        for (SocketConnectionInterface connection : connectionsList) {
+            connection.close();
+        }
+    }
+
+    public List<Destination<LogEvent>> getChannelSubscribedConnections(String string) {
+        return channelMultiplexer.getChannelSubscribedConnections(string);
+    }
+
+    public InetSocketAddress getConnectionPoint() {
+        return new InetSocketAddress("localhost", listeningPort);
+    }
+
+    public List<SocketConnectionInterface> getConnectionsList() {
+        return connectionsList;
+    }
+
+    public int getMessagesIn() {
+        return messagesIn;
+    }
+
+    public IntegerStat getMessagesOut() {
+        return messagesOut;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public ServerSocketConnector getServerSocketConnector() {
+        return serverSocketConnector;
+    }
+
+    public String getStatsInterval() {
+        return statsInterval;
+    }
+
+    public void setStatsInterval(String statsInterval) {
+        this.statsInterval = statsInterval;
+    }
+
     public List<FilteredMessageSender> getSubscribedConnections() {
         return subscribedConnections;
+    }
+
+    public TimeProvider getTimeProvider() {
+        return timeProvider;
+    }
+
+    public void setTimeProvider(TimeProvider timeProvider) {
+        this.timeProvider = timeProvider;
+    }
+
+    @Override
+    public void onBound(ServerSocketConnector connector) {
+        throttler.reset();
+        logger.info(StringUtils.format("Socket hub has successfully bound to port {}", connector.getPort()));
+
+        for (ServerSocketConnectorListener serverSocketConnectorListener : connectionListeners) {
+            serverSocketConnectorListener.onBound(connector);
+        }
+
+    }
+
+    @Override
+    public void onBindFailure(ServerSocketConnector connector, IOException e) {
+        if (throttler.isOkToFire()) {
+            logger.warning(
+                    "Socket hub has failed to bind to port {} : {} - we'll try to bind 5 times every second until it succeeds, but you'll only see this error message once every 10 seconds.",
+                    connector.getPort(),
+                    e.getMessage());
+        }
+
+        for (ServerSocketConnectorListener serverSocketConnectorListener : connectionListeners) {
+            serverSocketConnectorListener.onBindFailure(connector, e);
+        }
+    }
+
+    public void onNewConnection(SocketConnectionInterface connection) {
+
+        int connectionID = nextConnectionID.getAndIncrement();
+        connection.setConnectionID(connectionID);
+
+        try {
+            connection.send(new ConnectedMessage(connectionID));
+        } catch (LoggingMessageSenderException e) {
+            logger.warn(e, "Failed to send connected message to connection '{}' - did they disconnect really quickly?", connection);
+        }
+
+        connectionsList.add(connection);
+        connection.setMessagesOutCounter(messagesOut);
+        logger.info(String.format("New connection accepted : %s", connection));
+
+        for (ServerSocketConnectorListener serverSocketConnectorListener : connectionListeners) {
+            serverSocketConnectorListener.onNewConnection(connection);
+        }
     }
 
     public void onConnectionClosed(SocketConnectionInterface connection, String reason) {
@@ -185,28 +416,6 @@ import java.util.logging.Level;
 
     }
 
-    public void onNewConnection(SocketConnectionInterface connection) {
-
-        int connectionID = nextConnectionID.getAndIncrement();
-        connection.setConnectionID(connectionID);
-
-        try {
-            connection.send(new ConnectedMessage(connectionID));
-        } catch (LoggingMessageSenderException e) {
-            logger.warn(e,
-                    "Failed to send connected message to connection '{}' - did they disconnect really quickly?",
-                    connection);
-        }
-
-        connectionsList.add(connection);
-        connection.setMessagesOutCounter(messagesOut);
-        logger.info(String.format("New connection accepted : %s", connection));
-
-        for (ServerSocketConnectorListener serverSocketConnectorListener : connectionListeners) {
-            serverSocketConnectorListener.onNewConnection(connection);
-        }
-    }
-
     public void onNewMessage(LoggingMessage message, SocketConnectionInterface source) {
         logger.fine("[{}] Message {} received from {}", name, message, source);
         messageListeners.send(message);
@@ -218,8 +427,7 @@ import java.util.logging.Level;
             try {
                 source.send(new SubscriptionResponseMessage());
             } catch (LoggingMessageSenderException e) {
-                throw new RuntimeException("Failed to send subscription response message back to connection " + source,
-                        e);
+                throw new RuntimeException("Failed to send subscription response message back to connection " + source, e);
             }
         } else if (message instanceof UnsubscriptionRequestMessage) {
             logger.info("Unsubscribing {} from all events", source);
@@ -228,8 +436,7 @@ import java.util.logging.Level;
             try {
                 source.send(new UnsubscriptionResponseMessage());
             } catch (LoggingMessageSenderException e) {
-                throw new RuntimeException("Failed to send subscription response message back to connection " + source,
-                        e);
+                throw new RuntimeException("Failed to send subscription response message back to connection " + source, e);
             }
         } else if (message instanceof EventSubscriptionRequestMessage) {
             EventSubscriptionRequestMessage request = (EventSubscriptionRequestMessage) message;
@@ -253,11 +460,7 @@ import java.util.logging.Level;
             }
 
             try {
-                source.send(new EventSubscriptionResponseMessage(request.getCorrelationID(),
-                        request.isSubscribe(),
-                        "",
-                        true,
-                        channels));
+                source.send(new EventSubscriptionResponseMessage(request.getCorrelationID(), request.isSubscribe(), "", true, channels));
             } catch (LoggingMessageSenderException e) {
                 logger.info(e, "Failed to send event subscription response  back to connection " + source);
             }
@@ -278,6 +481,10 @@ import java.util.logging.Level;
         } else if (message instanceof FilterRequestMessage) {
             FilterRequestMessage filterRequestMessage = (FilterRequestMessage) message;
             processFilterRequest(filterRequestMessage, source);
+        } else if (message instanceof ClearEventsMessage) {
+            if (configuration.isAllowClearEvents()) {
+                broadcast(message);
+            }
         }
 
         List<SocketHubMessageHandler> handlers = messageHandlers.getOnlyIfExists(message.getClass());
@@ -290,6 +497,27 @@ import java.util.logging.Level;
         for (ServerSocketConnectorListener serverSocketConnectorListener : connectionListeners) {
             serverSocketConnectorListener.onNewMessage(message, source);
         }
+    }
+
+    public void removeMessageDestination(Destination<LoggingMessage> listener) {
+        messageListeners.removeDestination(listener);
+    }
+
+    @Override
+    public void send(LogEvent event) {
+        LogEventMessage message = new LogEventMessage(event);
+        processLogEvent(message, null);
+    }
+
+    private void forceHubTime(LogEvent event) {
+        if (forceHubTime) {
+            DefaultLogEvent defaultLogEvent = (DefaultLogEvent) event;
+            defaultLogEvent.setLocalCreationTimeMillis(timeProvider.getTime());
+        }
+    }
+
+    public void send(LoggingMessage message) {
+        onNewMessage(message, null);
     }
 
     private void processChannelSubscription(SocketConnectionInterface source, String[] channels) {
@@ -321,77 +549,19 @@ import java.util.logging.Level;
         source.setLevelFilter(levelFilter);
     }
 
-    //    public void processInternalLogEvent(LogEvent event) {
-    //        forceHubTime(event);
-    //
-    //        LogEventMessage message = new LogEventMessage(event);
-    //        processLogEvent(message, null);
-    //    }
-
-    // public void setTelemetryPort(int telemetryPort) {
-    // this.telemetryPort = telemetryPort;
-    // }
-
-    public void processLogEvent(LogEventMessage message, SocketConnectionInterface source) {
-        messagesIn++;
-
-        LogEvent logEvent = message.getLogEvent();
-        if (!excludeFilter.passes(logEvent)) {
-
-            forceHubTime(logEvent);
-
-            if (logEvent.getChannel() == null) {
-                if (logEvent instanceof DefaultLogEvent) {
-                    DefaultLogEvent defaultLogEvent = (DefaultLogEvent) logEvent;
-                    defaultLogEvent.setChannel("events");
-                }
+    public void broadcast(LoggingMessage message)  {
+        for (SocketConnectionInterface connection : connectionsList) {
+            try{
+                connection.send(message);
+            }catch(LoggingMessageSenderException e) {
+                logger.info(e, "Failed to send message '{}' to connection '{}'", message, connection);
             }
-
-            boolean sent = false;
-
-            for (final FilteredMessageSender connection : subscribedConnections) {
-                if (connection != source) {
-                    if (connection.getConnectionType() == SocketConnection.CONNECTION_TYPE_HUB_BRIDGE && source.getConnectionType() == SocketConnection.CONNECTION_TYPE_HUB_BRIDGE) {
-                        logger.finest("[{}] not sending message back to bridge connection {} (from {})",
-                                name,
-                                connection,
-                                source);
-                    } else {
-                        logger.finest("[{}] sending to {} (from {})", name, connection, source);
-                        connection.send(logEvent);
-                        sent = true;
-                    }
-                }
-            }
-
-            localListeners.send(logEvent);
-
-            sent |= channelMultiplexer.send(logEvent, source);
-
-            if (!sent) {
-                logger.finest(
-                        "[{}] We have no globally subscribed connections, or matching channel subscriptions; the log event is not being sent anywhere",
-                        name);
-            }
-
-            logger.finer("[{}] LogEvent broadcast to {} subscribed connections", name, subscribedConnections.size());
-        } else {
-            messagesFilteredOut++;
-            logger.finer("[{}] LogEvent was filtered out", name);
         }
-    }
-
-    public void setMaximumClientSendQueueSize(int maximumClientSendQueueSize) {
-        this.maximumClientSendQueueSize = maximumClientSendQueueSize;
     }
 
     public void shutdown() {
         stopTimer();
         stop();
-    }
-
-    public void setRestfulListenerPort(int restfulListenerPort) {
-        this.restfulListenerPort = restfulListenerPort;
     }
 
     public void start() {
@@ -410,7 +580,8 @@ import java.util.logging.Level;
         if (useUDPListeners) {
             patternisedUDPListener = new UDPListener();
             patternisedUDPListener.getEventStream().addListener(new StreamListener<UDPListener.PatternisedUDPData>() {
-                @Override public void onNewItem(PatternisedUDPData t) {
+                @Override
+                public void onNewItem(PatternisedUDPData t) {
                     outputPatternisedEvent(t);
                 }
             });
@@ -441,8 +612,36 @@ import java.util.logging.Level;
         processLogEvent(message, null);
     }
 
-    public ServerSocketConnector getServerSocketConnector() {
-        return serverSocketConnector;
+    private void startTimer() {
+        long interval = TimeUtils.parseInterval(statsInterval);
+        timer = WorkerThread.everyNow("SocketHub-stats", interval, TimeUnit.MILLISECONDS, new Runnable() {
+            @Override
+            public void run() {
+                logStatus();
+            }
+        });
+    }
+
+    protected void logStatus() {
+
+        if (this.connectionsList.size() == lastConnections &&
+            this.subscribedConnections.size() == lastSubscriptions &&
+            messagesIn == 0 &&
+            messagesOut.getValue() == 0) {
+            // Nothing worth logging
+        } else {
+            logger.info(String.format("Hub status : %d connections, %d subscriptions, %d filtered, %d messages in, %d messages out",
+                                      this.connectionsList.size(),
+                                      this.subscribedConnections.size(),
+                                      messagesFilteredOut,
+                                      messagesIn,
+                                      messagesOut.getDeltaValue()));
+
+            messagesIn = 0;
+            lastConnections = this.connectionsList.size();
+            lastSubscriptions = this.subscribedConnections.size();
+        }
+
     }
 
     public void stop() {
@@ -456,8 +655,7 @@ import java.util.logging.Level;
 
         connectionsList.clear();
 
-        logger.fine(
-                "Server socket connector stopped, the server socket has been closed and all client connections have been closed");
+        logger.fine("Server socket connector stopped, the server socket has been closed and all client connections have been closed");
 
         stopTimer();
 
@@ -468,197 +666,8 @@ import java.util.logging.Level;
         FileUtils.closeQuietly(closables);
     }
 
-    public TimeProvider getTimeProvider() {
-        return timeProvider;
-    }
-
-    public void setTimeProvider(TimeProvider timeProvider) {
-        this.timeProvider = timeProvider;
-    }
-
-    public void useRandomPort() {
-        listeningPort = NetUtils.findFreePort();
-
-        if (restfulListenerPort > 0) {
-            restfulListenerPort = NetUtils.findFreePort();
-        }
-    }
-
-    private void forceHubTime(LogEvent event) {
-        if (forceHubTime) {
-            DefaultLogEvent defaultLogEvent = (DefaultLogEvent) event;
-            defaultLogEvent.setLocalCreationTimeMillis(timeProvider.getTime());
-        }
-    }
-
-    private void startTimer() {
-        long interval = TimeUtils.parseInterval(statsInterval);
-        timer = WorkerThread.everyNow("SocketHub-stats", interval, TimeUnit.MILLISECONDS, new Runnable() {
-            @Override public void run() {
-                logStatus();
-            }
-        });
-    }
-
-    private void stopTimer() {
-        if (timer != null) {
-            timer.stop();
-            timer = null;
-        }
-    }
-
-    protected void logStatus() {
-
-        if (this.connectionsList.size() == lastConnections &&
-                this.subscribedConnections.size() == lastSubscriptions &&
-                messagesIn == 0 &&
-                messagesOut.getValue() == 0) {
-            // Nothing worth logging
-        } else {
-            logger.info(String.format(
-                    "Hub status : %d connections, %d subscriptions, %d filtered, %d messages in, %d messages out",
-                    this.connectionsList.size(),
-                    this.subscribedConnections.size(),
-                    messagesFilteredOut,
-                    messagesIn,
-                    messagesOut.getDeltaValue()));
-
-            messagesIn = 0;
-            lastConnections = this.connectionsList.size();
-            lastSubscriptions = this.subscribedConnections.size();
-        }
-
-    }
-
-    @Override public void onBindFailure(ServerSocketConnector connector, IOException e) {
-        if (throttler.isOkToFire()) {
-            logger.warning(
-                    "Socket hub has failed to bind to port {} : {} - we'll try to bind 5 times every second until it succeeds, but you'll only see this error message once every 10 seconds.",
-                    connector.getPort(),
-                    e.getMessage());
-        }
-
-        for (ServerSocketConnectorListener serverSocketConnectorListener : connectionListeners) {
-            serverSocketConnectorListener.onBindFailure(connector, e);
-        }
-    }
-
-    @Override public void onBound(ServerSocketConnector connector) {
-        throttler.reset();
-        logger.info(StringUtils.format("Socket hub has successfully bound to port {}", connector.getPort()));
-
-        for (ServerSocketConnectorListener serverSocketConnectorListener : connectionListeners) {
-            serverSocketConnectorListener.onBound(connector);
-        }
-
-    }
-
     public void waitUntilBound() {
         serverSocketConnector.waitUntilBound();
-    }
-
-    @Override public void configure(SocketHubConfiguration configuration, ServiceDiscovery serviceDiscovery) {
-        this.configuration = configuration;
-        setPort(configuration.getPort());
-        setRestfulListenerPort(configuration.getRestfulListenerPort());
-        setMaximumClientSendQueueSize(configuration.getMaximumClientSendQueueSize());
-        setStatsInterval(configuration.getStatsInterval());
-
-        List<FilterConfiguration> filters = configuration.getFilters();
-        for (FilterConfiguration filterConfiguration : filters) {
-            excludeFilter.addFilter(filterConfiguration);
-        }
-    }
-
-    @Override public void send(LogEvent event) {
-        LogEventMessage message = new LogEventMessage(event);
-        processLogEvent(message, null);
-    }
-
-    @Override public void addDestination(Destination<LogEvent> listener) {
-        localListeners.addDestination(listener);
-    }
-
-    @Override public void removeDestination(Destination<LogEvent> listener) {
-        localListeners.removeDestination(listener);
-    }
-
-    public List<Destination<LogEvent>> getChannelSubscribedConnections(String string) {
-        return channelMultiplexer.getChannelSubscribedConnections(string);
-    }
-
-    public void addMessageDestination(Destination<LoggingMessage> listener) {
-        messageListeners.addDestination(listener);
-    }
-
-    public void removeMessageDestination(Destination<LoggingMessage> listener) {
-        messageListeners.removeDestination(listener);
-    }
-
-    public void send(LoggingMessage message) {
-        onNewMessage(message, null);
-    }
-
-    @Override
-    public void addMessageListener(Class<? extends LoggingMessage> messageType, SocketHubMessageHandler handler) {
-        // TODO : if we used integer message types we could just put these in an array!
-        messageHandlers.get(messageType).add(handler);
-    }
-
-    @Override
-    public void removeMessageListener(Class<? extends LoggingMessage> messageType, SocketHubMessageHandler handler) {
-        // TODO : if we used integer message types we could just put these in an array!
-        messageHandlers.get(messageType).remove(handler);
-    }
-
-    public SocketClient createClient(String name) {
-        SocketClient client = new SocketClient(name);
-        client.addConnectionPoint(new InetSocketAddress(getPort()));
-        return client;
-
-    }
-
-    @Override public void addConnectionListener(ServerSocketConnectorListener listener) {
-        connectionListeners.add(listener);
-    }
-
-    @Override public void removeConnectionListener(ServerSocketConnectorListener listener) {
-        connectionListeners.remove(listener);
-    }
-
-    public void disconnectAll() {
-        logger.warn("Closing all connections");
-        for (SocketConnectionInterface SocketConnectionInterface : connectionsList) {
-            SocketConnectionInterface.close();
-        }
-    }
-
-    public int getMessagesIn() {
-        return messagesIn;
-    }
-
-    public IntegerStat getMessagesOut() {
-        return messagesOut;
-    }
-
-    public void addFilter(FilterConfiguration filterConfiguration) {
-        excludeFilter.addFilter(filterConfiguration);
-    }
-
-    public String getStatsInterval() {
-        return statsInterval;
-    }
-
-    public void setStatsInterval(String statsInterval) {
-        this.statsInterval = statsInterval;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
 }

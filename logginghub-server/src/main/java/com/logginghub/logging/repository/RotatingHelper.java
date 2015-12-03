@@ -1,5 +1,9 @@
 package com.logginghub.logging.repository;
 
+import com.logginghub.utils.CompareUtils;
+import com.logginghub.utils.FileDateFormat;
+import com.logginghub.utils.StringUtils;
+
 import java.io.File;
 import java.io.FileFilter;
 import java.text.DateFormat;
@@ -8,10 +12,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 
-import com.logginghub.utils.CompareUtils;
-import com.logginghub.utils.FileDateFormat;
-import com.logginghub.utils.StringUtils;
-
 public class RotatingHelper {
     
     private static DateFormat dateFormat = new FileDateFormat();
@@ -19,7 +19,7 @@ public class RotatingHelper {
     public static File[] getSortedFileList(File folder, final String prefix, final String postfix, boolean mostRecentFirst) {
         File[] listFiles = folder.listFiles(new FileFilter() {
             @Override public boolean accept(File file) {
-                String fullTimeRegex = "{}\\d{8}\\.\\d{6}(\\.\\d+)?{}";
+                String fullTimeRegex = "{}\\d\\{8\\}\\.\\d\\{6\\}(\\.\\d+)?{}";
                 boolean matches = StringUtils.matches(file.getName(), fullTimeRegex, prefix, postfix);
                 return matches;
             }

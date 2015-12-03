@@ -398,7 +398,7 @@ public class TestStringUtils {
         assertThat(StringUtils.matches("file.logdata.1", logdataRegex), is(true));
         assertThat(StringUtils.matches("file.logdata.1123", logdataRegex), is(true));
 
-        String groupRegex = ".*\\.(\\d\\{8})\\.(\\d\\{6})\\..*";
+        String groupRegex = ".*\\.(\\d{8})\\.(\\d{6})\\..*";
         assertThat(StringUtils.matches("hub.binary.20140311.145000.logdata.0", groupRegex), is(true));
 
         assertThat(StringUtils.matches("prefix.19700101.000000.0.postfix", "{}\\.\\d\\{8}\\.\\d\\{6}(\\.\\d+)?\\.{}", "prefix", "postfix"), is(true));
@@ -407,7 +407,7 @@ public class TestStringUtils {
 
     @Test
     public void testMatchGroups() throws Exception {
-        String groupRegex = ".*?(\\d\\{8})\\.(\\d\\{6})\\..*";
+        String groupRegex = ".*?(\\d{8})\\.(\\d{6})\\..*";
         List<String> matchGroups = StringUtils.matchGroups("hub.binary.20140311.145000.logdata.0", groupRegex);
         assertThat(matchGroups.get(0), is("20140311"));
         assertThat(matchGroups.get(1), is("145000"));

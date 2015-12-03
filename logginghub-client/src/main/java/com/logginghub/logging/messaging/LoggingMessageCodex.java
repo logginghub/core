@@ -21,6 +21,7 @@ import com.logginghub.logging.messages.BaseRequestResponseMessage;
 import com.logginghub.logging.messages.ChannelMessage;
 import com.logginghub.logging.messages.ChannelSubscriptionRequestMessage;
 import com.logginghub.logging.messages.ChannelSubscriptionResponseMessage;
+import com.logginghub.logging.messages.ClearEventsMessage;
 import com.logginghub.logging.messages.CompressedBlock;
 import com.logginghub.logging.messages.ConnectedMessage;
 import com.logginghub.logging.messages.ConnectionTypeMessage;
@@ -223,6 +224,8 @@ public class LoggingMessageCodex {
             registerType(ReportExecuteResult.class, 68);
 
             registerType(InstanceKey.class, 69);
+
+            registerType(ClearEventsMessage.class, 70);
 
         }
     };

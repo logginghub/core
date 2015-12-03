@@ -1,14 +1,13 @@
 package com.logginghub.logging.modules.configuration;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.logginghub.logging.transaction.configuration.LogEventTemplateConfiguration;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
-
-import com.logginghub.logging.transaction.configuration.LogEventTemplateConfiguration;
+import java.util.ArrayList;
+import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD) public class GeneratorMessageConfiguration {
 
@@ -18,11 +17,15 @@ import com.logginghub.logging.transaction.configuration.LogEventTemplateConfigur
     @XmlAttribute private int trendMax = 20;
     @XmlAttribute private boolean random = false;
     @XmlAttribute private String pattern;
+    @XmlAttribute private String patternFile;
     @XmlElement private LogEventTemplateConfiguration template = new LogEventTemplateConfiguration();
 
     @XmlElement private List<VariableConfiguration> variable = new ArrayList<VariableConfiguration>();
-    @XmlAttribute private String level = null;
+    @XmlAttribute private String level = "INFO";
 
+    public String getPatternFile() {
+        return patternFile;
+    }
 
     public String getPattern() {
         return pattern;
@@ -85,3 +88,4 @@ import com.logginghub.logging.transaction.configuration.LogEventTemplateConfigur
 
 
 }
+

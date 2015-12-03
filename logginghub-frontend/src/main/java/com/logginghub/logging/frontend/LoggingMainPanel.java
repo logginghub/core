@@ -34,6 +34,9 @@ import com.logginghub.logging.frontend.views.logeventdetail.DetailedLogEventTabl
 import com.logginghub.logging.frontend.views.logeventdetail.time.TimeController;
 import com.logginghub.logging.frontend.views.reports.ReportsViewModule;
 import com.logginghub.logging.frontend.views.stack.StackTraceViewModule;
+import com.logginghub.logging.listeners.LoggingMessageListener;
+import com.logginghub.logging.messages.ClearEventsMessage;
+import com.logginghub.logging.messages.LoggingMessage;
 import com.logginghub.logging.messaging.PatternModel;
 import com.logginghub.logging.messaging.SocketClient;
 import com.logginghub.logging.messaging.SocketClientManager;
@@ -57,32 +60,11 @@ import com.logginghub.utils.Xml;
 import com.logginghub.utils.logging.Logger;
 import net.miginfocom.swing.MigLayout;
 
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.ImageIcon;
-import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JTabbedPane;
-import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.TabbedPaneUI;
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Point;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -105,8 +87,8 @@ import java.util.logging.Level;
 
 public class LoggingMainPanel extends JPanel implements MenuService, SocketClientDirectAccessService {
 
-    public static final String FILENAME_COMBO = "filenameCombo";
     public static final String CHANGE_OUTPUT_LOG_DESTINATION = "Change output log destination...";
+    public static final String FILENAME_COMBO = "filenameCombo";
     public static final String LOG_EVENT_PANEL = "logEventPanel-";
     private static final Logger logger = Logger.getLoggerFor(LoggingMainPanel.class);
     private static final long serialVersionUID = 1L;
@@ -127,6 +109,7 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
     private JTabbedPane tabbedPane = null;
     private JCheckBoxMenuItem horizontalDetailView;
     private JCheckBoxMenuItem hubLevelFiltering;
+    private JMenuItem hubClearEvents;
     private JCheckBoxMenuItem autoLockWarnings;
     private JMenuItem viewRepo;
     private JCheckBoxMenuItem autoScroll;
@@ -162,235 +145,26 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
         add(tabbedPane, BorderLayout.CENTER);
     }
 
-    private void setupSingleEnvironmentMode(EnvironmentModel environmentModel,
-                                            ConfigurationProxy proxy,
-                                            LoggingFrontendModel newGoodModel) {
-
-        if (model.getShowDashboard()) {
-            createDashboard(model);
-        }
-
-        configurationPanel = new ConfigurationPanel();
-        configurationPanel.setName("ConfigurationPanel");
-        configurationPanel.setModel(newGoodModel);
-        configurationPanel.setMinimumSize(new Dimension(0, 0));
-        configurationPanel.setMaximumSize(new Dimension(10000, 10000));
-
-        firstDetailPanel = createNewDetailedLogEventTablePanel(environmentModel);
-        showModel(firstDetailPanel);
-
-        // TODO : this is kind of temporary - we are feeding the charting world
-        // a configuration object, whereas the rest of the code has been changed
-        // to use the model instead.
-        EnvironmentConfiguration config = getEnvironmentConfigurationFromModel(environmentModel, proxy);
-
-        if (newGoodModel.isPopoutCharting()) {
-            if (proxy.getLoggingFrontendConfiguration().isShowOldCharting()) {
-                chartingPopoutFrameOldx = new SmartJFrame("charting", proxy.getDynamicSettings());
-                chartingPopoutFrameOldx.setTitle("LogViewer Charting Popout");
-            }
-
-            chartingPopoutFrameNew = new SmartJFrame("newcharting", proxy.getDynamicSettings());
-            chartingPopoutFrameNew.setTitle("LogViewer New Charting Popout");
-        }
-
-        // TODO : new charting needs to replace the old charting after a while
-        newChartingView = setupNewCharting(newGoodModel);
-
-        // Wire up the charting controller to this environments event stream
-        environmentModel.addLogEventListener(chartingController.getLogEventMultiplexer());
-
-        OldChartingPanel chartingPanelOld = null;
-        if (proxy.getLoggingFrontendConfiguration().isShowOldCharting()) {
-            chartingPanelOld = new OldChartingPanel(config.getChartingConfiguration(), proxy.getParsersLocation());
-            chartingPanelsx.add(chartingPanelOld);
-            environmentModel.addLogEventListener(chartingPanelOld);
-        }
-
-        // Wire up notification of the hub side filter changing
-        firstDetailPanel.addChartCreationRequestListener(new DetailedLogEventPanelListener() {
-            @Override public void onLevelFilterChanged(int levelFilter) {
-                updateHubSideFilter(levelFilter);
-            }
-
-            @Override public void onCreateNewChartForEvent(LogEvent event) {
-            }
-        });
-
-        if (newGoodModel.isPopoutCharting()) {
-            if (proxy.getLoggingFrontendConfiguration().isShowOldCharting()) {
-                chartingPopoutFrameOldx.getContentPane().add(chartingPanelOld);
-            }
-            chartingPopoutFrameNew.getContentPane().add(newChartingView);
-        } else {
-            if (proxy.getLoggingFrontendConfiguration().isShowOldCharting()) {
-                tabbedPane.addTab("Charting", chartingPanelOld);
-                tabbedPane.addTab("Charting (New)", newChartingView);
-            } else {
-                tabbedPane.addTab("Charting", newChartingView);
-            }
-        }
-
-        // Add the config tab last to make sure it appears at the end
-        tabbedPane.addTab("Configuration", configurationPanel);
-
-        // Add the help menu last so it appears at the right of the menu bar
-        setupHelpMenu(mainFrame);
-
-        setupWriteOutputLogState(firstDetailPanel);
-
-        // TODO : try and get this working, the mash up between modules and the trad style needs
-        // some work!
-        // if (environmentModel.isShowHistoryTab()) {
-        // addHistoryTab(environmentModel);
-        // }
-    }
-
-    public void start() {
-        if (chartingController != null) {
-            chartingController.start();
+    protected void activateDemoSource() {
+        DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
+        if (currentSelectedTabx != null) {
+            currentSelectedTabx.activateDemoSource();
         }
     }
 
-    public void stop() {
-        if (chartingController != null) {
-            chartingController.stop();
+    protected void activateDummySource() {
+        DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
+        if (currentSelectedTabx != null) {
+            currentSelectedTabx.activateDummySource();
         }
     }
 
-    private NewChartingView setupNewCharting(LoggingFrontendModel newGoodModel) {
-        NewChartingView chartingPanel = new NewChartingView();
-        // TODO : this will only plot disconnections from the first environment
-        chartingController = new NewChartingController(newGoodModel.getChartingModel(), timeProvider);
-        chartingController.bindDisconnectionEvents(model.getEnvironments().get(0));
-        chartingPanel.bind(chartingController);
-        return chartingPanel;
-    }
-
-    private EnvironmentConfiguration getEnvironmentConfigurationFromModel(EnvironmentModel environmentModel,
-                                                                          ConfigurationProxy proxy) {
-        EnvironmentConfiguration config = null;
-        List<EnvironmentConfiguration> environments = proxy.getLoggingFrontendConfiguration().getEnvironments();
-        for (EnvironmentConfiguration environmentConfiguration : environments) {
-            if (environmentConfiguration.getName().equals(environmentModel.getName())) {
-                config = environmentConfiguration;
-                break;
-            }
-        }
-        return config;
-    }
-
-    public LoggingFrontendModel getModel() {
-        return model;
-    }
-
-    public void setModel(LoggingFrontendModel model, Metadata settings, SwingFrontEnd swingFrontEnd) {
-        this.model = model;
-        setParentFrame(swingFrontEnd);
-        setMenuBar(swingFrontEnd.getJMenuBar());
-
-        logger.info("Setting up main panel with model...");
-
-        long memoryForEvents = (long) (Runtime.getRuntime().maxMemory() * Double.parseDouble(System.getProperty(
-                "logginghub.eventmemoryratio",
-                "0.1")));
-        ObservableList<EnvironmentModel> environments = model.getEnvironments();
-        for (EnvironmentModel environmentModel : environments) {
-            long threshold = (long) (memoryForEvents / (double) environments.size());
-            environmentModel.getEventController().setThreshold(threshold);
-        }
-
-        if (environments.size() == 1) {
-            // This is the old single loggin tab with charting and configuration
-            // tab option
-            EnvironmentModel environmentModel = environments.get(0);
-            setupSingleEnvironmentMode(environmentModel, proxy, model);
-
-            if (environmentModel.isRepoEnabled()) {
-                viewRepo.setVisible(true);
-            } else {
-                viewRepo.setVisible(false);
-            }
-        } else {
-            if (model.getShowDashboard()) {
-                createDashboard(model);
-            }
-
-            if (model.getEnvironments().size() > 0) {
-                newChartingView = setupNewCharting(model);
-            }
-
-            JTabbedPane chartingTabsOld = new JTabbedPane();
-
-            if (model.isPopoutCharting()) {
-                if (swingFrontEnd.getProxy().getLoggingFrontendConfiguration().isShowOldCharting()) {
-                    chartingPopoutFrameOldx = new SmartJFrame("charting", settings);
-                    chartingPopoutFrameOldx.setTitle("LogViewer Charting Popout");
-                    chartingPopoutFrameOldx.getContentPane().add(chartingTabsOld);
-                }
-
-                chartingPopoutFrameNew = new SmartJFrame("newcharting", settings);
-                chartingPopoutFrameNew.setTitle("LogViewer Charting Popout (New)");
-                chartingPopoutFrameNew.getContentPane().add(newChartingView);
-            }
-
-            for (EnvironmentModel environmentModel : environments) {
-
-                if (environmentModel.isOpenOnStartup()) {
-                    addEnvironmentLoggingDetailsTab(environmentModel);
-                }
-
-                if (environmentModel.isShowHistoryTab()) {
-                    addHistoryTab(environmentModel);
-                }
-
-                environmentModel.addLogEventListener(chartingController.getLogEventMultiplexer());
-
-                if (model.isPopoutCharting()) {
-                    EnvironmentConfiguration config = getEnvironmentConfigurationFromModel(environmentModel, proxy);
-                    OldChartingPanel chartingPanel = new OldChartingPanel(config.getChartingConfiguration(),
-                                                                          proxy.getParsersLocation());
-                    chartingPanelsx.add(chartingPanel);
-                    environmentModel.addLogEventListener(chartingPanel);
-
-                    chartingTabsOld.addTab(environmentModel.getName(), chartingPanel);
-
-                    // TODO : create a new charting panel for this environment
-                    // chartingTabsNew.addTab(environmentModel.getName(),
-                    // chartingPanel);
-                }
-            }
-
-            tabbedPane.addChangeListener(new ChangeListener() {
-                public void stateChanged(ChangeEvent evt) {
-                    handleTabChange();
-                }
-            });
-
-            installMouseHandlerAndMenusForTabbedPane(tabbedPane);
-
-            DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
-            if (currentSelectedTabx != null) {
-                autoLockWarnings.setSelected(currentSelectedTabx.getEnvironmentModel().isAutoLocking());
-
-                setupWriteOutputLogState(currentSelectedTabx);
-
-                EnvironmentModel environmentModel = currentSelectedTabx.getEnvironmentModel();
-                if (environmentModel.isRepoEnabled()) {
-                    viewRepo.setVisible(true);
-                } else {
-                    viewRepo.setVisible(false);
-                }
-            } else {
-                autoLockWarnings.setEnabled(false);
-            }
-
-            // Once we've added everything, stick the help menu in so it always
-            // appears last
-            setupHelpMenu(mainFrame);
-        }
-
-        logger.info("Main panel setup complete.");
+    private void addEnvironmentLoggingDetailsTab(EnvironmentModel environmentModel) {
+        DetailedLogEventTablePanel tablePanel = createNewDetailedLogEventTablePanel(environmentModel);
+        String name = environmentModel.get(EnvironmentModel.Fields.Name);
+        int tabIndex = tabbedPane.getTabCount();
+        tabbedPane.addTab(name, tablePanel);
+        TabColourManager.bind(tabbedPane, tabIndex, tablePanel, environmentModel);
     }
 
     private void addHistoryTab(EnvironmentModel environmentModel) {
@@ -399,12 +173,13 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
 
         HistoryViewModule module = new HistoryViewModule(environmentAdaptor);
 
-//        module.setMessagingService(environmentAdaptor);
-//        module.setEnvironmentNotificationService(environmentAdaptor);
+        //        module.setMessagingService(environmentAdaptor);
+        //        module.setEnvironmentNotificationService(environmentAdaptor);
 
         final String name = environmentModel.get(EnvironmentModel.Fields.Name) + " history";
         module.setLayoutService(new LayoutService() {
-            @Override public void add(Component component, String layout) {
+            @Override
+            public void add(Component component, String layout) {
                 int index = tabbedPane.getTabCount();
                 tabbedPane.addTab(name, component);
                 tabbedPane.setTabComponentAt(index, new ButtonTabComponent(tabbedPane));
@@ -426,21 +201,87 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
         // tabbedPane.addTab(name, detailPanel);
     }
 
-    private void configureRemoteChartingTab(RemoteChartConfiguration remoteChartConfiguration) {
+    private JMenuItem addMenuItem(JMenu menu, String menuItemText, ActionListener actionListener) {
+        JMenuItem menuItem = new JMenuItem(menuItemText);
+        menuItem.addActionListener(actionListener);
+        menu.add(menuItem);
+        return menuItem;
+    }
 
-        String filename = remoteChartConfiguration.getFilename();
-        Xml xml = Xml.parse(new File(filename));
-        NewChartingModel chartingModel = new NewChartingModel();
-        chartingModel.fromXml(xml.getRoot());
+    @Override
+    public void addMenuItem(String topLevel, String secondLevel, ActionListener action) {
+        // TODO : this is a hack to expose the legacy menu to the modules world
+        if (topLevel.equals("Edit")) {
+            JMenuItem item = new JMenuItem(secondLevel);
+            item.addActionListener(action);
+            editMenu.add(item);
+        } else if (topLevel.equals("View")) {
+            JMenuItem item = new JMenuItem(secondLevel);
+            item.addActionListener(action);
+            viewMenu.add(item);
+        }
+    }
 
-        NewChartingController chartingController = new NewChartingController(chartingModel, timeProvider);
+    protected void changeOutputLogDestination() {
+        DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
+        if (currentSelectedTabx != null) {
+            TimestampVariableRollingFileLogger outputLogger = currentSelectedTabx.getOutputLogger();
+            if (outputLogger != null) {
 
-        RemoteChartingTab tab = new RemoteChartingTab();
-        tab.configure(remoteChartConfiguration);
-        tab.bind(chartingController);
-        tabbedPane.add(remoteChartConfiguration.getName(), tab);
+                existingOutputLogFilenames.add(outputLogger.getFileName());
+                DefaultComboBoxModel comboBoxModel = new DefaultComboBoxModel();
+                for (String filename : existingOutputLogFilenames) {
+                    comboBoxModel.addElement(filename);
+                }
 
-        remoteChartingTabs.add(tab);
+                final JComboBox combo = new JComboBox(comboBoxModel);
+                combo.setName(FILENAME_COMBO);
+                combo.setEditable(true);
+                combo.setSelectedItem(outputLogger.getFileName());
+
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        combo.getEditor().selectAll();
+                        combo.requestFocus();
+                    }
+                });
+
+                int result = JOptionPane.showConfirmDialog(this,
+                                                           combo,
+                                                           "Choose a new log file name (without the file extention) : ",
+                                                           JOptionPane.OK_CANCEL_OPTION,
+                                                           JOptionPane.QUESTION_MESSAGE);
+
+                if (result == JOptionPane.OK_OPTION) {
+                    String filename = comboBoxModel.getSelectedItem().toString();
+                    logger.info("Changing output log filename to '{}'", filename);
+                    outputLogger.close();
+                    outputLogger.setFileName(filename);
+                    existingOutputLogFilenames.add(filename);
+                } else {
+                    logger.info("Changing output log filename was cancelled");
+                }
+            }
+        }
+    }
+
+    protected void clearChartData() {
+        for (OldChartingPanel chartingPanel : chartingPanelsx) {
+            chartingPanel.clearChartData();
+        }
+
+        // chartingController.clearChartData();
+        newChartingView.clearChartData();
+        chartingController.clearChartData();
+    }
+
+    public void closeOutputLogs() {
+
+        List<DetailedLogEventTablePanel> detailedLogEventTablePanels = getDetailedLogEventTablePanels();
+        for (DetailedLogEventTablePanel detailedLogEventTablePanel : detailedLogEventTablePanels) {
+            detailedLogEventTablePanel.closeOutputLog();
+        }
     }
 
     //    private void startRemoteChartingTab(RemoteChartingTab tab) {
@@ -534,39 +375,131 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
     //
     //    }
 
-    private void installMouseHandlerAndMenusForTabbedPane(final JTabbedPane tabbedPane) {
-        MouseListener handler = findUIMouseListener(tabbedPane);
-        tabbedPane.removeMouseListener(handler);
-        tabbedPane.addMouseListener(new MouseListenerWrapper(handler) {
-            @Override public void handleRightMouse(MouseEvent e) {
+    private List<DetailedLogEventTablePanel> getDetailedLogEventTablePanels() {
 
-                Point point = e.getPoint();
-                final int tabIndex = ((TabbedPaneUI) tabbedPane.getUI()).tabForCoordinate(tabbedPane, point.x, point.y);
-                Component clickedTab = tabbedPane.getComponentAt(tabIndex);
+        List<DetailedLogEventTablePanel> list = new ArrayList<DetailedLogEventTablePanel>();
+        for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+            Component component = tabbedPane.getComponentAt(i);
+            if (component instanceof DetailedLogEventTablePanel) {
+                DetailedLogEventTablePanel detailedLogEventTablePanel = (DetailedLogEventTablePanel) component;
+                list.add(detailedLogEventTablePanel);
+            }
+        }
+        return list;
+    }
 
-                if (clickedTab instanceof DetailedLogEventTablePanel) {
-                    final DetailedLogEventTablePanel detailedLogEventTablePanel = (DetailedLogEventTablePanel) clickedTab;
-                    if (detailedLogEventTablePanel.isHistoricalView()) {
-                        JPopupMenu menu = new JPopupMenu();
-                        JMenuItem menuItem = new JMenuItem("Close tab");
-                        menuItem.addActionListener(new ActionListener() {
-                            @Override public void actionPerformed(ActionEvent e) {
-                                detailedLogEventTablePanel.close();
-                                tabbedPane.removeTabAt(tabIndex);
-                            }
-                        });
+    private void configureAggregatedPatternDataSubscriptions() {
+        List<RemoteChartConfiguration> remoteCharting = proxy.getLoggingFrontendConfiguration().getRemoteCharting();
+        for (RemoteChartConfiguration remoteChartConfiguration : remoteCharting) {
+            configureRemoteChartingTab(remoteChartConfiguration);
+        }
+    }
 
-                        menu.add(menuItem);
-                        menu.setLocation(point);
-                        menu.setVisible(true);
+    private void configureRemoteChartingTab(RemoteChartConfiguration remoteChartConfiguration) {
 
-                        menu.show(tabbedPane, point.x, point.y);
-                        detailedLogEventTablePanel.setComponentPopupMenu(menu);
-                    }
+        String filename = remoteChartConfiguration.getFilename();
+        Xml xml = Xml.parse(new File(filename));
+        NewChartingModel chartingModel = new NewChartingModel();
+        chartingModel.fromXml(xml.getRoot());
+
+        NewChartingController chartingController = new NewChartingController(chartingModel, timeProvider);
+
+        RemoteChartingTab tab = new RemoteChartingTab();
+        tab.configure(remoteChartConfiguration);
+        tab.bind(chartingController);
+        tabbedPane.add(remoteChartConfiguration.getName(), tab);
+
+        remoteChartingTabs.add(tab);
+    }
+
+    private void createDashboard(LoggingFrontendModel model) {
+        DashboardPanel dashboardPanel = new DashboardPanel();
+        dashboardPanel.setDashboardSelectionListener(new DashboardSelectionListener() {
+            @Override
+            public void onSelected(EnvironmentModel model, EnvironmentLevelStatsModel.Level level) {
+                int tabIndex = findIndexForEnvironmentDetailView(model.getName());
+                tabbedPane.setSelectedIndex(tabIndex);
+                DetailedLogEventTablePanel panel = (DetailedLogEventTablePanel) tabbedPane.getComponentAt(tabIndex);
+
+                Level realLevel;
+
+                if (level == EnvironmentLevelStatsModel.Level.Severe) {
+                    realLevel = Level.SEVERE;
+                } else if (level == EnvironmentLevelStatsModel.Level.Warning) {
+                    realLevel = Level.WARNING;
+                } else {
+                    realLevel = Level.INFO;
                 }
 
+                panel.setQuickLevelFilter(realLevel);
             }
         });
+        dashboardPanel.bind(model.getEnvironments());
+        tabbedPane.addTab("Dashboard", dashboardPanel);
+    }
+
+    private DetailedLogEventTablePanel createNewDetailedLogEventTablePanel(final EnvironmentModel environmentModel) {
+
+        final DetailedLogEventTablePanel tablePanel = new DetailedLogEventTablePanel(menuBar,
+                                                                                     environmentModel.getName(),
+                                                                                     environmentModel.getEventController(),
+                                                                                     timeProvider,
+                                                                                     proxy.getLoggingFrontendConfiguration().isShowHeapSlider());
+        tablePanel.bind(environmentModel);
+        tablePanel.setSelectedRowFormat(model.getSelectedRowFormat());
+
+        ObservableList<com.logginghub.logging.frontend.model.HighlighterModel> highlighters2 = environmentModel.getHighlighters();
+        for (com.logginghub.logging.frontend.model.HighlighterModel highlighterModel : highlighters2) {
+            tablePanel.addHighlighter(highlighterModel);
+        }
+
+        tablePanel.setName(LOG_EVENT_PANEL + environmentModel.getName());
+
+        environmentModel.addLogEventListener(tablePanel);
+        tablePanel.setDynamicSettings(proxy.getDynamicSettings());
+        tablePanel.setEnvironmentModel(environmentModel);
+
+        return tablePanel;
+    }
+
+    protected void deactivateDemoSource() {
+        DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
+        if (currentSelectedTabx != null) {
+            currentSelectedTabx.deactivateDemoSource();
+        }
+    }
+
+    protected void deactivateDummySource() {
+        DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
+        if (currentSelectedTabx != null) {
+            currentSelectedTabx.deactivateDummySource();
+        }
+    }
+
+    protected void exportBinaryFile() {
+        DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
+        if (currentSelectedTabx != null) {
+            currentSelectedTabx.exportBinaryFile();
+        } else {
+            JOptionPane.showMessageDialog(this, "You must have a log tab selected before you can export binary events");
+        }
+    }
+
+    protected int findIndexForEnvironmentDetailView(String name) {
+        int foundIndex = -1;
+        for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+            Component component = tabbedPane.getComponentAt(i);
+            if (component instanceof DetailedLogEventTablePanel) {
+                DetailedLogEventTablePanel detailedLogEventTablePanel = (DetailedLogEventTablePanel) component;
+                if (detailedLogEventTablePanel.getEnvironmentModel().getName().equals(name)) {
+                    foundIndex = i;
+                    break;
+                }
+            }
+        }
+
+        return foundIndex;
+
     }
 
     // http://stackoverflow.com/questions/8080438/mouseevent-of-jtabbedpane
@@ -578,6 +511,87 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
             }
         }
         return null;
+    }
+
+    public NewChartingController getChartingController() {
+        return chartingController;
+    }
+
+    public JFrame getChartingPopoutFrameNew() {
+        return chartingPopoutFrameNew;
+    }
+
+    public JFrame getChartingPopoutFrameOld() {
+        return chartingPopoutFrameOldx;
+    }
+
+    public DetailedLogEventTablePanel getDetailedLogEventTablePanelForEnvironment(String environment) {
+        DetailedLogEventTablePanel found = null;
+        List<DetailedLogEventTablePanel> detailedLogEventTablePanels = getDetailedLogEventTablePanels();
+        for (DetailedLogEventTablePanel detailedLogEventTablePanel : detailedLogEventTablePanels) {
+            if (detailedLogEventTablePanel.getEnvironmentModel().getName().equals(environment)) {
+                found = detailedLogEventTablePanel;
+                break;
+            }
+        }
+        return found;
+    }
+
+    @Override
+    public List<SocketClient> getDirectAccess() {
+        List<SocketClient> clients = new ArrayList<SocketClient>();
+        DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
+        if (currentSelectedTabx != null) {
+            EnvironmentModel environmentModel = currentSelectedTabx.getEnvironmentModel();
+            ObservableList<HubConnectionModel> hubConnectionModels = environmentModel.getHubConnectionModels();
+            for (HubConnectionModel hubConnectionModel : hubConnectionModels) {
+                SocketClient client = hubConnectionModel.getSocketClientManager().getClient();
+                clients.add(client);
+            }
+        }
+
+        return clients;
+
+    }
+
+    private DetailedLogEventTablePanel getCurrentSelectedTabx() {
+        DetailedLogEventTablePanel selected;
+        Component selectedComponent = tabbedPane.getSelectedComponent();
+        if (selectedComponent instanceof DetailedLogEventTablePanel) {
+            selected = (DetailedLogEventTablePanel) selectedComponent;
+        } else {
+            selected = null;
+        }
+
+        return selected;
+    }
+
+    private EnvironmentConfiguration getEnvironmentConfigurationFromModel(EnvironmentModel environmentModel, ConfigurationProxy proxy) {
+        EnvironmentConfiguration config = null;
+        List<EnvironmentConfiguration> environments = proxy.getLoggingFrontendConfiguration().getEnvironments();
+        for (EnvironmentConfiguration environmentConfiguration : environments) {
+            if (environmentConfiguration.getName().equals(environmentModel.getName())) {
+                config = environmentConfiguration;
+                break;
+            }
+        }
+        return config;
+    }
+
+    public DetailedLogEventTablePanel getFirstDetailPanel() {
+        return firstDetailPanel;
+    }
+
+    public LoggingFrontendModel getModel() {
+        return model;
+    }
+
+    public JTabbedPane getTabbedPane() {
+        return tabbedPane;
+    }
+
+    public OffsetableSystemTimeProvider getTimeProvider() {
+        return timeProvider;
     }
 
     private void handleTabChange() {
@@ -621,138 +635,454 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
         }
     }
 
-    private void setupWriteOutputLogState(DetailedLogEventTablePanel selected) {
-        if (selected.getEnvironmentModel().getOutputLogConfiguration() == null) {
-            writeOutputLog.setEnabled(false);
-            changeOutputLogDestination.setEnabled(false);
-        } else {
-            writeOutputLog.setEnabled(true);
-            writeOutputLog.setSelected(selected.getEnvironmentModel().isWriteOutputLog());
-            changeOutputLogDestination.setEnabled(true);
+    private void hubClearEvents() {
+        int result = JOptionPane.showConfirmDialog(this,
+                                                   "Are you sure? This will clear the event buffer for all connected users.",
+                                                   "Clear events for all users",
+                                                   JOptionPane.YES_NO_OPTION,
+                                                   JOptionPane.WARNING_MESSAGE);
+
+        if (result == JOptionPane.YES_OPTION) {
+            DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
+            if (currentSelectedTabx != null) {
+                ObservableList<HubConnectionModel> hubConnectionModels = currentSelectedTabx.getEnvironmentModel().getHubConnectionModels();
+                for (HubConnectionModel hubConnectionModel : hubConnectionModels) {
+                    try {
+                        hubConnectionModel.getSocketClientManager().getClient().send(new ClearEventsMessage());
+                    } catch (LoggingMessageSenderException e) {
+                        logger.info(e, "Failed to send clear events message to connection '{}'", hubConnectionModel);
+                    }
+                }
+            }
         }
     }
 
-    private void createDashboard(LoggingFrontendModel model) {
-        DashboardPanel dashboardPanel = new DashboardPanel();
-        dashboardPanel.setDashboardSelectionListener(new DashboardSelectionListener() {
-            @Override public void onSelected(EnvironmentModel model, EnvironmentLevelStatsModel.Level level) {
-                int tabIndex = findIndexForEnvironmentDetailView(model.getName());
-                tabbedPane.setSelectedIndex(tabIndex);
-                DetailedLogEventTablePanel panel = (DetailedLogEventTablePanel) tabbedPane.getComponentAt(tabIndex);
+    protected void importBinaryFile() {
 
-                Level realLevel;
+        String binaryFolder;
 
-                if (level == EnvironmentLevelStatsModel.Level.Severe) {
-                    realLevel = Level.SEVERE;
-                } else if (level == EnvironmentLevelStatsModel.Level.Warning) {
-                    realLevel = Level.WARNING;
-                } else {
-                    realLevel = Level.INFO;
+        DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
+        if (currentSelectedTabx != null) {
+            binaryFolder = proxy.getDynamicSettings().getString(currentSelectedTabx.getBinaryFileSettingsKey(), ".");
+        } else {
+            binaryFolder = proxy.getDynamicSettings().getString("binaryFolder", ".");
+        }
+
+        final JFileChooser fc = new JFileChooser();
+        fc.setCurrentDirectory(new File(binaryFolder));
+        int returnVal = fc.showOpenDialog(this);
+
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            final File file = fc.getSelectedFile();
+
+            File parentFile = file.getParentFile();
+            if (parentFile != null) {
+                proxy.getDynamicSettings().set("binaryFolder", parentFile.getAbsolutePath());
+            }
+
+            List<DecodeStrategy> decodeStrategies = new ArrayList<DecodeStrategy>();
+
+            decodeStrategies.add(new DecodeStrategy() {
+                final BinaryLogFileReader decoder = new BinaryLogFileReader();
+
+                @Override
+                public String getStrategyName() {
+                    return "BinaryLogFileReader";
                 }
 
-                panel.setQuickLevelFilter(realLevel);
-            }
-        });
-        dashboardPanel.bind(model.getEnvironments());
-        tabbedPane.addTab("Dashboard", dashboardPanel);
-    }
+                @Override
+                public boolean canParse(File input) {
+                    return decoder.canParse(input);
+                }
 
-    protected int findIndexForEnvironmentDetailView(String name) {
-        int foundIndex = -1;
-        for (int i = 0; i < tabbedPane.getTabCount(); i++) {
-            Component component = tabbedPane.getComponentAt(i);
-            if (component instanceof DetailedLogEventTablePanel) {
-                DetailedLogEventTablePanel detailedLogEventTablePanel = (DetailedLogEventTablePanel) component;
-                if (detailedLogEventTablePanel.getEnvironmentModel().getName().equals(name)) {
-                    foundIndex = i;
+                @Override
+                public void decode(File file,
+                                   StreamListener<LogEventBlockElement> blockListener,
+                                   StreamListener<LogEvent> eventListener) throws IOException {
+                    decoder.readFileInternal(file, blockListener, eventListener);
+                }
+
+
+            });
+
+            decodeStrategies.add(new DecodeStrategy() {
+                final KryoVersion1Decoder decoder = new KryoVersion1Decoder();
+
+                @Override
+                public boolean canParse(File input) {
+                    return decoder.canParse(input);
+                }
+
+                @Override
+                public void decode(File file,
+                                   StreamListener<LogEventBlockElement> blockListener,
+                                   StreamListener<LogEvent> eventListener) throws IOException {
+                    decoder.readFileInternal(file, blockListener, eventListener);
+                }
+
+                @Override
+                public String getStrategyName() {
+                    return "KryoVersion1Decoder";
+                }
+            });
+
+            boolean parsed = false;
+
+            for (final DecodeStrategy decodeStrategy : decodeStrategies) {
+                if (decodeStrategy.canParse(file)) {
+
+                    logger.info("Using decode strategy '{}'", decodeStrategy.getStrategyName());
+
+                    // TODO : replace this stuff with attached streams
+                    // final Stream<LogEvent> eventStream = new Stream<LogEvent>();
+
+                    EnvironmentModel fileModel = new EnvironmentModel();
+                    fileModel.setName(file.getName());
+                    DetailedLogEventTablePanel detailPanel = createNewDetailedLogEventTablePanel(fileModel);
+                    tabbedPane.add(fileModel.getName(), detailPanel);
+                    tabbedPane.setSelectedComponent(detailPanel);
+                    TimeController timeFilterController = detailPanel.getTimeFilterController();
+                    final ImportController importHandler = new ImportController(timeFilterController);
+
+                    final StreamListener<LogEventBlockElement> blockHandler = new StreamListener<LogEventBlockElement>() {
+                        @Override
+                        public void onNewItem(LogEventBlockElement t) {
+                            importHandler.addBlock(t);
+                        }
+                    };
+
+                    detailPanel.bind(importHandler);
+
+                    // DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
+                    // if (currentSelectedTabx != null) {
+                    // final EnvironmentModel environmentModel =
+                    // currentSelectedTabx.getEnvironmentModel();
+                    WorkerThread.execute("ImporterThread", new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                decodeStrategy.decode(file, blockHandler, importHandler);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+
+                    parsed = true;
                     break;
                 }
             }
+
+            if (!parsed) {
+                JOptionPane.showMessageDialog(this, "We have nothing that can decode that kind of file, did you select a binary log file?");
+            }
+        }
+    }
+
+    private void installMouseHandlerAndMenusForTabbedPane(final JTabbedPane tabbedPane) {
+        MouseListener handler = findUIMouseListener(tabbedPane);
+        tabbedPane.removeMouseListener(handler);
+        tabbedPane.addMouseListener(new MouseListenerWrapper(handler) {
+            @Override
+            public void handleRightMouse(MouseEvent e) {
+
+                Point point = e.getPoint();
+                final int tabIndex = ((TabbedPaneUI) tabbedPane.getUI()).tabForCoordinate(tabbedPane, point.x, point.y);
+                Component clickedTab = tabbedPane.getComponentAt(tabIndex);
+
+                if (clickedTab instanceof DetailedLogEventTablePanel) {
+                    final DetailedLogEventTablePanel detailedLogEventTablePanel = (DetailedLogEventTablePanel) clickedTab;
+                    if (detailedLogEventTablePanel.isHistoricalView()) {
+                        JPopupMenu menu = new JPopupMenu();
+                        JMenuItem menuItem = new JMenuItem("Close tab");
+                        menuItem.addActionListener(new ActionListener() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                detailedLogEventTablePanel.close();
+                                tabbedPane.removeTabAt(tabIndex);
+                            }
+                        });
+
+                        menu.add(menuItem);
+                        menu.setLocation(point);
+                        menu.setVisible(true);
+
+                        menu.show(tabbedPane, point.x, point.y);
+                        detailedLogEventTablePanel.setComponentPopupMenu(menu);
+                    }
+                }
+
+            }
+        });
+    }
+
+    protected void openBinaryFolder() {
+        DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
+        if (currentSelectedTabx != null) {
+            currentSelectedTabx.openBinaryFolder();
+        }
+    }
+
+    protected void saveChartData() {
+        for (OldChartingPanel chartingPanel : chartingPanelsx) {
+            chartingPanel.saveChartData();
         }
 
-        return foundIndex;
+        newChartingView.saveChartData();
+        // chartingController.saveChartData();
+    }
 
+    protected void saveChartImages() {
+        for (OldChartingPanel chartingPanel : chartingPanelsx) {
+            chartingPanel.saveChartImages();
+        }
+
+        // chartingController.saveChartImages();
+        newChartingView.saveChartImages();
+    }
+
+    private void sendHistoricalIndexRequests(EnvironmentModel environmentModel) {
+        List<DetailedLogEventTablePanel> detailedLogEventTablePanels = getDetailedLogEventTablePanels();
+        for (DetailedLogEventTablePanel detailedLogEventTablePanel : detailedLogEventTablePanels) {
+            EnvironmentModel panelModel = detailedLogEventTablePanel.getEnvironmentModel();
+            if (panelModel != null && panelModel.getName().equals(environmentModel.getName())) {
+                detailedLogEventTablePanel.sendHistoricalIndexRequest();
+            }
+        }
+
+    }
+
+    protected void setAutoLockWarning(boolean selected) {
+
+        DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
+        if (currentSelectedTabx != null) {
+            currentSelectedTabx.setAutoLockWarning(selected);
+        }
+
+        // List<DetailedLogEventTablePanel> detailedLogEventTablePanels =
+        // getDetailedLogEventTablePanels();
+        // for (DetailedLogEventTablePanel detailedLogEventTablePanel :
+        // detailedLogEventTablePanels) {
+        // detailedLogEventTablePanel.setAutoLockWarning(selected);
+        // }
+        // proxy.getDynamicSettings().set("loggingMainPanel.autoLockWarning",
+        // selected);
+    }
+
+    public void setConfigurationProxy(ConfigurationProxy proxy) {
+        this.proxy = proxy;
+    }
+
+    public void setInitialPropertyValues() {
+        boolean filteringOn = proxy.getDynamicSettings().getBoolean("loggingMainPanel.hubFiltering", false);
+        hubLevelFiltering.setSelected(filteringOn);
+        setServerSideFiltering(filteringOn);
+
+        boolean autoScrollProperty = proxy.getDynamicSettings().getBoolean("loggingMainPanel.autoScroll", true);
+        autoScroll.setSelected(autoScrollProperty);
+        setAutoScroll(autoScrollProperty);
+
+        boolean horinzontalSplit = proxy.getDynamicSettings().getBoolean("loggingMainPanel.horizontalSplit", true);
+        horizontalDetailView.setSelected(horinzontalSplit);
+        setDetailViewOrientation(horinzontalSplit);
+    }
+
+    private void setServerSideFiltering(boolean selected) {
+        logger.info("Server side filtering menu option changed to {}", selected);
+        serversideFilteringEnabled = selected;
+
+        if (selected) {
+            if (firstDetailPanel != null) {
+                int levelFilter = firstDetailPanel.getLevelFilter();
+                sendFilterToHubs(levelFilter);
+            }
+        } else {
+            // If the item isn't selected, dont send anything to the hubs. This
+            // allows backwards compatibility
+        }
+
+        proxy.getDynamicSettings().set("loggingMainPanel.hubFiltering", selected);
+    }
+
+    protected void setAutoScroll(boolean selected) {
+        List<DetailedLogEventTablePanel> detailedLogEventTablePanels = getDetailedLogEventTablePanels();
+        for (DetailedLogEventTablePanel detailedLogEventTablePanel : detailedLogEventTablePanels) {
+            detailedLogEventTablePanel.setAutoScroll(selected);
+        }
+        proxy.getDynamicSettings().set("loggingMainPanel.autoScroll", selected);
+    }
+
+    protected void setDetailViewOrientation(boolean selected) {
+        DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
+        if (currentSelectedTabx != null) {
+            currentSelectedTabx.setDetailPaneOrientation(selected);
+        }
+
+        proxy.getDynamicSettings().set("loggingMainPanel.horizontalSplit", selected);
+    }
+
+    private void sendFilterToHubs(int levelFilter) {
+
+        logger.info("Sending server side filtering value to hub, level is {}", Level.parse("" + levelFilter));
+
+        ObservableList<EnvironmentModel> environments = model.getEnvironments();
+        for (EnvironmentModel environmentModel : environments) {
+            ObservableList<HubConnectionModel> hubConnectionModels = environmentModel.getHubConnectionModels();
+            for (HubConnectionModel hubConnectionModel : hubConnectionModels) {
+                try {
+                    SocketClientManager socketClientManager = hubConnectionModel.getSocketClientManager();
+                    if (socketClientManager != null) {
+                        SocketClient client = socketClientManager.getClient();
+                        logger.info("Sending server side filtering value to {}",
+                                    client.getConnector().getConnectionPointManager().getCurrentConnectionPoint());
+                        client.setLevelFilter(levelFilter);
+                    } else {
+                        // Probably means this environment exists but hasn't
+                        // been started
+                    }
+                } catch (LoggingMessageSenderException e) {
+                    // Maybe we aren't connected... dont worry about this.
+                }
+            }
+        }
+    }
+
+    public void setMenuBar(JMenuBar menuBar) {
+        setupMenuBar();
+        mainFrame.setJMenuBar(menuBar);
+    }
+
+    public void setModel(LoggingFrontendModel model, Metadata settings, SwingFrontEnd swingFrontEnd) {
+        this.model = model;
+        setParentFrame(swingFrontEnd);
+        setMenuBar(swingFrontEnd.getJMenuBar());
+
+        logger.info("Setting up main panel with model...");
+
+        double memoryRatio = Double.parseDouble(System.getProperty("logginghub.eventmemoryratio", "0.1"));
+        long memoryForEvents = (long) (Runtime.getRuntime().maxMemory() * memoryRatio);
+
+        ObservableList<EnvironmentModel> environments = model.getEnvironments();
+        for (EnvironmentModel environmentModel : environments) {
+
+            if (!Double.isNaN(environmentModel.getEventMemoryMB())) {
+                environmentModel.getEventController().setThreshold((long) (environmentModel.getEventMemoryMB() * 1024 * 1024));
+            } else {
+                long threshold = (long) (memoryForEvents / (double) environments.size());
+                environmentModel.getEventController().setThreshold(threshold);
+            }
+        }
+
+        if (environments.size() == 1) {
+            // This is the old single loggin tab with charting and configuration
+            // tab option
+            EnvironmentModel environmentModel = environments.get(0);
+            setupSingleEnvironmentMode(environmentModel, proxy, model);
+
+            if (environmentModel.isRepoEnabled()) {
+                viewRepo.setVisible(true);
+            } else {
+                viewRepo.setVisible(false);
+            }
+        } else {
+            if (model.getShowDashboard()) {
+                createDashboard(model);
+            }
+
+            if (model.getEnvironments().size() > 0) {
+                newChartingView = setupNewCharting(model);
+            }
+
+            JTabbedPane chartingTabsOld = new JTabbedPane();
+
+            if (model.isPopoutCharting()) {
+                if (swingFrontEnd.getProxy().getLoggingFrontendConfiguration().isShowOldCharting()) {
+                    chartingPopoutFrameOldx = new SmartJFrame("charting", settings);
+                    chartingPopoutFrameOldx.setTitle("LogViewer Charting Popout");
+                    chartingPopoutFrameOldx.getContentPane().add(chartingTabsOld);
+                }
+
+                chartingPopoutFrameNew = new SmartJFrame("newcharting", settings);
+                chartingPopoutFrameNew.setTitle("LogViewer Charting Popout (New)");
+                chartingPopoutFrameNew.getContentPane().add(newChartingView);
+            }
+
+            for (EnvironmentModel environmentModel : environments) {
+
+                if (environmentModel.isOpenOnStartup()) {
+                    addEnvironmentLoggingDetailsTab(environmentModel);
+                }
+
+                if (environmentModel.isShowHistoryTab()) {
+                    addHistoryTab(environmentModel);
+                }
+
+                environmentModel.addLogEventListener(chartingController.getLogEventMultiplexer());
+
+                if (model.isPopoutCharting()) {
+                    EnvironmentConfiguration config = getEnvironmentConfigurationFromModel(environmentModel, proxy);
+                    OldChartingPanel chartingPanel = new OldChartingPanel(config.getChartingConfiguration(), proxy.getParsersLocation());
+                    chartingPanelsx.add(chartingPanel);
+                    environmentModel.addLogEventListener(chartingPanel);
+
+                    chartingTabsOld.addTab(environmentModel.getName(), chartingPanel);
+
+                    // TODO : create a new charting panel for this environment
+                    // chartingTabsNew.addTab(environmentModel.getName(),
+                    // chartingPanel);
+                }
+            }
+
+            tabbedPane.addChangeListener(new ChangeListener() {
+                public void stateChanged(ChangeEvent evt) {
+                    handleTabChange();
+                }
+            });
+
+            installMouseHandlerAndMenusForTabbedPane(tabbedPane);
+
+            DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
+            if (currentSelectedTabx != null) {
+                autoLockWarnings.setSelected(currentSelectedTabx.getEnvironmentModel().isAutoLocking());
+
+                setupWriteOutputLogState(currentSelectedTabx);
+
+                EnvironmentModel environmentModel = currentSelectedTabx.getEnvironmentModel();
+                if (environmentModel.isRepoEnabled()) {
+                    viewRepo.setVisible(true);
+                } else {
+                    viewRepo.setVisible(false);
+                }
+            } else {
+                autoLockWarnings.setEnabled(false);
+            }
+
+            // Once we've added everything, stick the help menu in so it always
+            // appears last
+            setupHelpMenu(mainFrame);
+        }
+
+        logger.info("Main panel setup complete.");
     }
 
     public void setParentFrame(JFrame frame) {
         this.mainFrame = frame;
     }
 
-    private void addEnvironmentLoggingDetailsTab(EnvironmentModel environmentModel) {
-        DetailedLogEventTablePanel tablePanel = createNewDetailedLogEventTablePanel(environmentModel);
-        String name = environmentModel.get(EnvironmentModel.Fields.Name);
-        int tabIndex = tabbedPane.getTabCount();
-        tabbedPane.addTab(name, tablePanel);
-        TabColourManager.bind(tabbedPane, tabIndex, tablePanel, environmentModel);
+    private void setToStartExport() {
+        exportBinaryMenuItem.setText("Export binary");
     }
 
-    private JMenuItem addMenuItem(JMenu menu, String menuItemText, ActionListener actionListener) {
-        JMenuItem menuItem = new JMenuItem(menuItemText);
-        menuItem.addActionListener(actionListener);
-        menu.add(menuItem);
-        return menuItem;
+    private void setToStopExport() {
+        exportBinaryMenuItem.setText("Stop exporting");
     }
 
-    private DetailedLogEventTablePanel createNewDetailedLogEventTablePanel(EnvironmentModel environmentModel) {
-
-        DetailedLogEventTablePanel tablePanel = new DetailedLogEventTablePanel(menuBar,
-                                                                               environmentModel.getName(),
-                                                                               environmentModel.getEventController(),
-                                                                               timeProvider,
-                                                                               proxy.getLoggingFrontendConfiguration()
-                                                                                    .isShowHeapSlider());
-        tablePanel.bind(environmentModel);
-        tablePanel.setSelectedRowFormat(model.getSelectedRowFormat());
-
-        ObservableList<com.logginghub.logging.frontend.model.HighlighterModel> highlighters2 = environmentModel.getHighlighters();
-        for (com.logginghub.logging.frontend.model.HighlighterModel highlighterModel : highlighters2) {
-            tablePanel.addHighlighter(highlighterModel);
+    protected void setWriteOutputLog(boolean selected) {
+        DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
+        if (currentSelectedTabx != null) {
+            currentSelectedTabx.getEnvironmentModel().setWriteOutputLog(selected);
+            currentSelectedTabx.setWriteOutputLog(selected);
         }
-
-        tablePanel.setName(LOG_EVENT_PANEL + environmentModel.getName());
-
-        environmentModel.addLogEventListener(tablePanel);
-        tablePanel.setDynamicSettings(proxy.getDynamicSettings());
-        tablePanel.setEnvironmentModel(environmentModel);
-
-        return tablePanel;
-    }
-
-    private List<DetailedLogEventTablePanel> getDetailedLogEventTablePanels() {
-
-        List<DetailedLogEventTablePanel> list = new ArrayList<DetailedLogEventTablePanel>();
-        for (int i = 0; i < tabbedPane.getTabCount(); i++) {
-            Component component = tabbedPane.getComponentAt(i);
-            if (component instanceof DetailedLogEventTablePanel) {
-                DetailedLogEventTablePanel detailedLogEventTablePanel = (DetailedLogEventTablePanel) component;
-                list.add(detailedLogEventTablePanel);
-            }
-        }
-        return list;
-    }
-
-    public DetailedLogEventTablePanel getDetailedLogEventTablePanelForEnvironment(String environment) {
-        DetailedLogEventTablePanel found = null;
-        List<DetailedLogEventTablePanel> detailedLogEventTablePanels = getDetailedLogEventTablePanels();
-        for (DetailedLogEventTablePanel detailedLogEventTablePanel : detailedLogEventTablePanels) {
-            if (detailedLogEventTablePanel.getEnvironmentModel().getName().equals(environment)) {
-                found = detailedLogEventTablePanel;
-                break;
-            }
-        }
-        return found;
-    }
-
-    private DetailedLogEventTablePanel getCurrentSelectedTabx() {
-        DetailedLogEventTablePanel selected;
-        Component selectedComponent = tabbedPane.getSelectedComponent();
-        if (selectedComponent instanceof DetailedLogEventTablePanel) {
-            selected = (DetailedLogEventTablePanel) selectedComponent;
-        } else {
-            selected = null;
-        }
-
-        return selected;
     }
 
     private void setupFileMenu(JMenu fileMenu) {
@@ -776,6 +1106,32 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
         fileMenu.add(exitItem);
     }
 
+    private void setupHelpMenu(JFrame mainFrame) {
+
+        JMenu helpMenu = new JMenu("Help");
+
+        JMenuItem onlineHelp = new JMenuItem("Vertex Labs Wiki");
+        onlineHelp.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                BrowserUtils.browseTo(URI.create("http://www.vertexlabs.co.uk/vllogging/frontend"));
+            }
+        });
+        helpMenu.add(onlineHelp);
+
+        JMenuItem about = new JMenuItem("About the Logging Front End");
+        about.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                showAbout();
+            }
+        });
+        helpMenu.addSeparator();
+        helpMenu.add(about);
+
+        menuBar.add(helpMenu);
+
+        mainFrame.setJMenuBar(menuBar);
+    }
+
     private void setupMenuBar() {
         menuBar = new JMenuBar();
 
@@ -783,13 +1139,15 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
         fileMenu.setMnemonic('f');
 
         addMenuItem(fileMenu, "Import binary", new ActionListener() {
-            @Override public void actionPerformed(ActionEvent e) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
                 importBinaryFile();
             }
         });
 
         exportBinaryMenuItem = addMenuItem(fileMenu, "Export binary", new ActionListener() {
-            @Override public void actionPerformed(ActionEvent e) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
                 if (exportBinaryMenuItem.getText().equals("Export binary")) {
                     exportBinaryFile();
                     setToStopExport();
@@ -802,7 +1160,8 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
         });
 
         addMenuItem(fileMenu, "Open binary folder", new ActionListener() {
-            @Override public void actionPerformed(ActionEvent e) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
                 openBinaryFolder();
             }
         });
@@ -911,7 +1270,8 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
 
         hubLevelFiltering = new JCheckBoxMenuItem("Hub filtering");
         hubLevelFiltering.addActionListener(new ActionListener() {
-            @Override public void actionPerformed(ActionEvent actionEvent) {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
                 setServerSideFiltering(hubLevelFiltering.isSelected());
             }
         });
@@ -919,9 +1279,22 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
         sourcesMenu.add(hubLevelFiltering);
         sourcesMenu.addSeparator();
 
+        if (getModel().isShowHubClearEvents()) {
+            hubClearEvents = new JMenuItem("Hub clear events");
+            hubClearEvents.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent actionEvent) {
+                    hubClearEvents();
+                }
+            });
+            sourcesMenu.add(hubClearEvents);
+            sourcesMenu.addSeparator();
+        }
+
         autoLockWarnings = new JCheckBoxMenuItem("Auto-lock warnings");
         autoLockWarnings.addActionListener(new ActionListener() {
-            @Override public void actionPerformed(ActionEvent actionEvent) {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
                 setAutoLockWarning(autoLockWarnings.isSelected());
             }
         });
@@ -931,7 +1304,8 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
 
         autoScroll = new JCheckBoxMenuItem("Auto-scroll");
         autoScroll.addActionListener(new ActionListener() {
-            @Override public void actionPerformed(ActionEvent actionEvent) {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
                 setAutoScroll(autoScroll.isSelected());
             }
         });
@@ -941,7 +1315,8 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
 
         writeOutputLog = new JCheckBoxMenuItem("Write output log");
         writeOutputLog.addActionListener(new ActionListener() {
-            @Override public void actionPerformed(ActionEvent actionEvent) {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
                 setWriteOutputLog(writeOutputLog.isSelected());
             }
         });
@@ -950,7 +1325,8 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
 
         changeOutputLogDestination = new JMenuItem(CHANGE_OUTPUT_LOG_DESTINATION);
         changeOutputLogDestination.addActionListener(new ActionListener() {
-            @Override public void actionPerformed(ActionEvent actionEvent) {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
                 changeOutputLogDestination();
             }
         });
@@ -987,7 +1363,8 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
 
         viewRepo = new JMenuItem("Repository Search");
         viewRepo.addActionListener(new ActionListener() {
-            @Override public void actionPerformed(ActionEvent actionEvent) {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
                 showRepoSearchDialog();
             }
         });
@@ -997,7 +1374,8 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
         editMenu.addSeparator();
         horizontalDetailView = new JCheckBoxMenuItem("Horizontal detail view", true);
         horizontalDetailView.addActionListener(new ActionListener() {
-            @Override public void actionPerformed(ActionEvent actionEvent) {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
                 setDetailViewOrientation(horizontalDetailView.isSelected());
             }
         });
@@ -1019,188 +1397,262 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
 
     }
 
-    protected void setDetailViewOrientation(boolean selected) {
-        DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
-        if (currentSelectedTabx != null) {
-            currentSelectedTabx.setDetailPaneOrientation(selected);
+    private NewChartingView setupNewCharting(LoggingFrontendModel newGoodModel) {
+        NewChartingView chartingPanel = new NewChartingView();
+        // TODO : this will only plot disconnections from the first environment
+        chartingController = new NewChartingController(newGoodModel.getChartingModel(), timeProvider);
+        chartingController.bindDisconnectionEvents(model.getEnvironments().get(0));
+        chartingPanel.bind(chartingController);
+        return chartingPanel;
+    }
+
+    private void setupSingleEnvironmentMode(EnvironmentModel environmentModel, ConfigurationProxy proxy, LoggingFrontendModel newGoodModel) {
+
+        if (model.getShowDashboard()) {
+            createDashboard(model);
         }
 
-        proxy.getDynamicSettings().set("loggingMainPanel.horizontalSplit", selected);
-    }
+        configurationPanel = new ConfigurationPanel();
+        configurationPanel.setName("ConfigurationPanel");
+        configurationPanel.setModel(newGoodModel);
+        configurationPanel.setMinimumSize(new Dimension(0, 0));
+        configurationPanel.setMaximumSize(new Dimension(10000, 10000));
 
-    protected void deactivateDemoSource() {
-        DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
-        if (currentSelectedTabx != null) {
-            currentSelectedTabx.deactivateDemoSource();
-        }
-    }
+        firstDetailPanel = createNewDetailedLogEventTablePanel(environmentModel);
+        showModel(firstDetailPanel);
 
-    protected void activateDemoSource() {
-        DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
-        if (currentSelectedTabx != null) {
-            currentSelectedTabx.activateDemoSource();
-        }
-    }
+        // TODO : this is kind of temporary - we are feeding the charting world
+        // a configuration object, whereas the rest of the code has been changed
+        // to use the model instead.
+        EnvironmentConfiguration config = getEnvironmentConfigurationFromModel(environmentModel, proxy);
 
-    protected void deactivateDummySource() {
-        DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
-        if (currentSelectedTabx != null) {
-            currentSelectedTabx.deactivateDummySource();
-        }
-    }
-
-    protected void activateDummySource() {
-        DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
-        if (currentSelectedTabx != null) {
-            currentSelectedTabx.activateDummySource();
-        }
-    }
-
-    private void setToStartExport() {
-        exportBinaryMenuItem.setText("Export binary");
-    }
-
-    private void setToStopExport() {
-        exportBinaryMenuItem.setText("Stop exporting");
-    }
-
-    protected void openBinaryFolder() {
-        DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
-        if (currentSelectedTabx != null) {
-            currentSelectedTabx.openBinaryFolder();
-        }
-    }
-
-    protected void stopExportBinary() {
-        DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
-        if (currentSelectedTabx != null) {
-            currentSelectedTabx.stopBinaryExport();
-        } else {
-            JOptionPane.showMessageDialog(this,
-                                          "You must have a log tab selected before you can stop exporting binary events");
-        }
-    }
-
-    protected void exportBinaryFile() {
-        DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
-        if (currentSelectedTabx != null) {
-            currentSelectedTabx.exportBinaryFile();
-        } else {
-            JOptionPane.showMessageDialog(this, "You must have a log tab selected before you can export binary events");
-        }
-    }
-
-    protected void importBinaryFile() {
-
-        String binaryFolder;
-
-        DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
-        if (currentSelectedTabx != null) {
-            binaryFolder = proxy.getDynamicSettings().getString(currentSelectedTabx.getBinaryFileSettingsKey(), ".");
-        } else {
-            binaryFolder = proxy.getDynamicSettings().getString("binaryFolder", ".");
-        }
-
-        final JFileChooser fc = new JFileChooser();
-        fc.setCurrentDirectory(new File(binaryFolder));
-        int returnVal = fc.showOpenDialog(this);
-
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            final File file = fc.getSelectedFile();
-
-            File parentFile = file.getParentFile();
-            if (parentFile != null) {
-                proxy.getDynamicSettings().set("binaryFolder", parentFile.getAbsolutePath());
+        if (newGoodModel.isPopoutCharting()) {
+            if (proxy.getLoggingFrontendConfiguration().isShowOldCharting()) {
+                chartingPopoutFrameOldx = new SmartJFrame("charting", proxy.getDynamicSettings());
+                chartingPopoutFrameOldx.setTitle("LogViewer Charting Popout");
             }
 
-            List<DecodeStrategy> decodeStrategies = new ArrayList<DecodeStrategy>();
+            chartingPopoutFrameNew = new SmartJFrame("newcharting", proxy.getDynamicSettings());
+            chartingPopoutFrameNew.setTitle("LogViewer New Charting Popout");
+        }
 
-            decodeStrategies.add(new DecodeStrategy() {
-                final BinaryLogFileReader decoder = new BinaryLogFileReader();
+        // TODO : new charting needs to replace the old charting after a while
+        newChartingView = setupNewCharting(newGoodModel);
 
-                @Override public boolean canParse(File input) {
-                    return decoder.canParse(input);
-                }
+        // Wire up the charting controller to this environments event stream
+        environmentModel.addLogEventListener(chartingController.getLogEventMultiplexer());
 
-                @Override public void decode(File file,
-                                             StreamListener<LogEventBlockElement> blockListener,
-                                             StreamListener<LogEvent> eventListener) throws IOException {
-                    decoder.readFileInternal(file, blockListener, eventListener);
-                }
+        OldChartingPanel chartingPanelOld = null;
+        if (proxy.getLoggingFrontendConfiguration().isShowOldCharting()) {
+            chartingPanelOld = new OldChartingPanel(config.getChartingConfiguration(), proxy.getParsersLocation());
+            chartingPanelsx.add(chartingPanelOld);
+            environmentModel.addLogEventListener(chartingPanelOld);
+        }
 
-                @Override public String getStrategyName() {
-                    return "BinaryLogFileReader";
-                }
-            });
-
-            decodeStrategies.add(new DecodeStrategy() {
-                final KryoVersion1Decoder decoder = new KryoVersion1Decoder();
-
-                @Override public boolean canParse(File input) {
-                    return decoder.canParse(input);
-                }
-
-                @Override public void decode(File file,
-                                             StreamListener<LogEventBlockElement> blockListener,
-                                             StreamListener<LogEvent> eventListener) throws IOException {
-                    decoder.readFileInternal(file, blockListener, eventListener);
-                }
-
-                @Override public String getStrategyName() {
-                    return "KryoVersion1Decoder";
-                }
-            });
-
-            boolean parsed = false;
-
-            for (final DecodeStrategy decodeStrategy : decodeStrategies) {
-                if (decodeStrategy.canParse(file)) {
-
-                    logger.info("Using decode strategy '{}'", decodeStrategy.getStrategyName());
-
-                    // TODO : replace this stuff with attached streams
-                    // final Stream<LogEvent> eventStream = new Stream<LogEvent>();
-
-                    EnvironmentModel fileModel = new EnvironmentModel();
-                    fileModel.setName(file.getName());
-                    DetailedLogEventTablePanel detailPanel = createNewDetailedLogEventTablePanel(fileModel);
-                    tabbedPane.add(fileModel.getName(), detailPanel);
-                    tabbedPane.setSelectedComponent(detailPanel);
-                    TimeController timeFilterController = detailPanel.getTimeFilterController();
-                    final ImportController importHandler = new ImportController(timeFilterController);
-
-                    final StreamListener<LogEventBlockElement> blockHandler = new StreamListener<LogEventBlockElement>() {
-                        @Override public void onNewItem(LogEventBlockElement t) {
-                            importHandler.addBlock(t);
-                        }
-                    };
-
-                    detailPanel.bind(importHandler);
-
-                    // DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
-                    // if (currentSelectedTabx != null) {
-                    // final EnvironmentModel environmentModel =
-                    // currentSelectedTabx.getEnvironmentModel();
-                    WorkerThread.execute("ImporterThread", new Runnable() {
-                        @Override public void run() {
-                            try {
-                                decodeStrategy.decode(file, blockHandler, importHandler);
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    });
-
-                    parsed = true;
-                    break;
-                }
+        // Wire up notification of the hub side filter changing
+        firstDetailPanel.addChartCreationRequestListener(new DetailedLogEventPanelListener() {
+            @Override
+            public void onCreateNewChartForEvent(LogEvent event) {
             }
 
-            if (!parsed) {
-                JOptionPane.showMessageDialog(this,
-                                              "We have nothing that can decode that kind of file, did you select a binary log file?");
+            @Override
+            public void onLevelFilterChanged(int levelFilter) {
+                updateHubSideFilter(levelFilter);
+            }
+        });
+
+        if (newGoodModel.isPopoutCharting()) {
+            if (proxy.getLoggingFrontendConfiguration().isShowOldCharting()) {
+                chartingPopoutFrameOldx.getContentPane().add(chartingPanelOld);
+            }
+            chartingPopoutFrameNew.getContentPane().add(newChartingView);
+        } else {
+            if (proxy.getLoggingFrontendConfiguration().isShowOldCharting()) {
+                tabbedPane.addTab("Charting", chartingPanelOld);
+                tabbedPane.addTab("Charting (New)", newChartingView);
+            } else {
+                tabbedPane.addTab("Charting", newChartingView);
             }
         }
+
+        // Add the config tab last to make sure it appears at the end
+        tabbedPane.addTab("Configuration", configurationPanel);
+
+        // Add the help menu last so it appears at the right of the menu bar
+        setupHelpMenu(mainFrame);
+
+        setupWriteOutputLogState(firstDetailPanel);
+
+        // TODO : try and get this working, the mash up between modules and the trad style needs
+        // some work!
+        // if (environmentModel.isShowHistoryTab()) {
+        // addHistoryTab(environmentModel);
+        // }
+    }
+
+    private void setupWriteOutputLogState(DetailedLogEventTablePanel selected) {
+        if (selected.getEnvironmentModel().getOutputLogConfiguration() == null) {
+            writeOutputLog.setEnabled(false);
+            changeOutputLogDestination.setEnabled(false);
+        } else {
+            writeOutputLog.setEnabled(true);
+            writeOutputLog.setSelected(selected.getEnvironmentModel().isWriteOutputLog());
+            changeOutputLogDestination.setEnabled(true);
+        }
+    }
+
+    protected void showAbout() {
+
+        JPanel aboutPanel = new JPanel(new MigLayout());
+
+        ImageIcon image = new ImageIcon(FileUtils.readAsBytes(ResourceUtils.openStream("/icons/LoggingHubLogo.png")));
+        JLabel label = new JLabel(image);
+        aboutPanel.add(label);
+        JLabel jLabel = new JLabel("Logging Hub Viewer");
+        jLabel.setFont(Font.decode("Arial-BOLD-24"));
+        aboutPanel.add(jLabel, "wrap");
+
+        Properties p = new Properties();
+        String version;
+        try {
+            p.load(ResourceUtils.openStream("/META-INF/maven/com.logginghub/vl-logging-frontend/pom.properties"));
+            version = p.getProperty("version");
+        } catch (Exception e1) {
+            version = "Failed to load version from embedded maven properties";
+        }
+        JLabel versionLabel = new JLabel(version, JLabel.CENTER);
+
+        versionLabel.setFont(Font.decode("Arial-18"));
+        aboutPanel.add(versionLabel, "align center, span 2, wrap");
+        aboutPanel.add(new JLabel(""), "align center, span 2, wrap");
+
+        JLabel linkLabel = new JLabel("www.logginghub.com");
+        linkLabel.setOpaque(true);
+        linkLabel.setFont(Font.decode("Arial-16"));
+        linkLabel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                BrowserUtils.browseTo(URI.create("http://www.logginghub.com/"));
+            }
+        });
+        aboutPanel.add(linkLabel, "align center, span 2, wrap");
+
+        JOptionPane.showMessageDialog(this, aboutPanel, "About", JOptionPane.PLAIN_MESSAGE);
+    }
+
+    protected void showChartingEditor() {
+
+        ChartingTreeEditorView treeEditorView = new ChartingTreeEditorView();
+
+        // Creating a new controller so we dont overwrite anything in the "real"
+        // controller
+        NewChartingController temporaryController = new NewChartingController(chartingController.getModel(), timeProvider);
+
+        // Bind the new controller to the event stream
+        this.chartingController.getLogEventMultiplexer().addLogEventListener(temporaryController.getLogEventMultiplexer());
+
+        treeEditorView.bind(temporaryController);
+        JDialog dialog = new JDialog();
+        dialog.setIconImage(Icons.load("/icons/charting.png").getImage());
+        dialog.setTitle("Charting Editor");
+        dialog.add(treeEditorView);
+        int width = (int) (mainFrame.getWidth() * 0.9);
+        int height = (int) (mainFrame.getHeight() * 0.9f);
+
+        int offsetX = (int) (mainFrame.getWidth() * 0.1) / 2;
+        int offsetY = (int) (mainFrame.getHeight() * 0.1f) / 2;
+
+        dialog.setLocation(mainFrame.getX() + offsetX, mainFrame.getY() + offsetY);
+        dialog.setSize(width, height);
+        dialog.setName("Charting Editor");
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        dialog.setModal(true);
+        dialog.setVisible(true);
+
+        this.chartingController.getLogEventMultiplexer().removeLogEventListener(temporaryController.getLogEventMultiplexer());
+
+    }
+
+    protected void showConnectionManager() {
+        final JDialog dialog = new JDialog(mainFrame, "Connection manager");
+        ConnectionManagerPanel connectionManagerPanel = new ConnectionManagerPanel();
+        connectionManagerPanel.setListener(new ConnectionManagerListener() {
+            @Override
+            public void onOpenEnvironment(EnvironmentConfiguration environmentConfiguration) {
+                dialog.dispose();
+
+                ObservableList<EnvironmentModel> environments = model.getEnvironments();
+                for (EnvironmentModel environmentModel : environments) {
+                    if (environmentModel.get(EnvironmentModel.Fields.Name).equals(environmentConfiguration.getName())) {
+                        addEnvironmentLoggingDetailsTab(environmentModel);
+                        startConnections(environmentModel);
+                    }
+                }
+            }
+        });
+        connectionManagerPanel.populate(proxy.getLoggingFrontendConfiguration());
+        dialog.getContentPane().add(connectionManagerPanel);
+        dialog.setSize(500, 400);
+        dialog.setModal(true);
+        dialog.setLocationRelativeTo(mainFrame);
+        dialog.setVisible(true);
+    }
+
+    protected void showHistoryViewer() {
+        DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
+        if (currentSelectedTabx != null) {
+
+            MainFrameModule frame = new MainFrameModule();
+            frame.setName("History Viewer");
+
+            EnvironmentAdaptor adaptor = new EnvironmentAdaptor(currentSelectedTabx.getEnvironmentModel());
+
+            HistoryViewModule history = new HistoryViewModule(adaptor);
+            history.setName("History View");
+            history.setLayoutService(frame);
+
+            frame.initialise();
+            history.initialise();
+
+            frame.start();
+            history.start();
+        }
+    }
+
+    private void showModel(JComponent viewModel) {
+        tabbedPane.addTab("Log view", viewModel);
+        revalidate();
+        doLayout();
+    }
+
+    protected void showRepoSearchDialog() {
+
+        DetailedLogEventTablePanel detailPanel = getCurrentSelectedTabx();
+
+        // Workaround for single environment mode
+        if (detailPanel == null && getDetailedLogEventTablePanels().size() == 1) {
+            detailPanel = getDetailedLogEventTablePanels().get(0);
+        }
+
+        if (detailPanel != null) {
+
+            // EnvironmentModel environmentModel =
+            // detailPanel.getEnvironmentModel();
+            // NettyClientRepository repo = new NettyClientRepository();
+            // String connectionPoints =
+            // environmentModel.getRepoConnectionPoints();
+            // repo.addConnectionPoints(NetUtils.toInetSocketAddressList(connectionPoints,
+            // NettyClientRepository.defaultPort));
+            // repo.start();
+            //
+            // RepositorySearchDialog dialog = new RepositorySearchDialog();
+            // dialog.setRepositoryInterface(repo);
+            // dialog.setSize((int) (getWidth() * 0.8), (int) (getHeight() *
+            // 0.8));
+            // dialog.setModal(false);
+            // dialog.show(this);
+        }
+
     }
 
     protected void showReportsViewer() {
@@ -1223,7 +1675,8 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
 
             frame.getFrame().setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             frame.getFrame().addWindowListener(new WindowAdapter() {
-                @Override public void windowClosed(WindowEvent e) {
+                @Override
+                public void windowClosed(WindowEvent e) {
                     reports.stop();
                 }
             });
@@ -1235,6 +1688,26 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
         }
     }
 
+    protected void showStackHistoryViewer() {
+        DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
+        if (currentSelectedTabx != null) {
+
+            MainFrameModule frame = new MainFrameModule();
+            frame.setName("History Viewer");
+
+            EnvironmentAdaptor adaptor = new EnvironmentAdaptor(currentSelectedTabx.getEnvironmentModel());
+
+            HistoricalStackViewModule history = new HistoricalStackViewModule(adaptor);
+            history.setName("History View");
+            history.setLayoutService(frame);
+
+            frame.initialise();
+            history.initialise();
+
+            frame.start();
+            history.start();
+        }
+    }
 
     protected void showStackViewer() {
 
@@ -1330,254 +1803,9 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
         }
     }
 
-    protected void showHistoryViewer() {
-        DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
-        if (currentSelectedTabx != null) {
-
-            MainFrameModule frame = new MainFrameModule();
-            frame.setName("History Viewer");
-
-            EnvironmentAdaptor adaptor = new EnvironmentAdaptor(currentSelectedTabx.getEnvironmentModel());
-
-            HistoryViewModule history = new HistoryViewModule(adaptor);
-            history.setName("History View");
-            history.setLayoutService(frame);
-
-            frame.initialise();
-            history.initialise();
-
-            frame.start();
-            history.start();
-        }
-    }
-
-    protected void showStackHistoryViewer() {
-        DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
-        if (currentSelectedTabx != null) {
-
-            MainFrameModule frame = new MainFrameModule();
-            frame.setName("History Viewer");
-
-            EnvironmentAdaptor adaptor = new EnvironmentAdaptor(currentSelectedTabx.getEnvironmentModel());
-
-            HistoricalStackViewModule history = new HistoricalStackViewModule(adaptor);
-            history.setName("History View");
-            history.setLayoutService(frame);
-
-            frame.initialise();
-            history.initialise();
-
-            frame.start();
-            history.start();
-        }
-    }
-
-
-    protected void showChartingEditor() {
-
-        ChartingTreeEditorView treeEditorView = new ChartingTreeEditorView();
-
-        // Creating a new controller so we dont overwrite anything in the "real"
-        // controller
-        NewChartingController temporaryController = new NewChartingController(chartingController.getModel(),
-                                                                              timeProvider);
-
-        // Bind the new controller to the event stream
-        this.chartingController.getLogEventMultiplexer()
-                               .addLogEventListener(temporaryController.getLogEventMultiplexer());
-
-        treeEditorView.bind(temporaryController);
-        JDialog dialog = new JDialog();
-        dialog.setIconImage(Icons.load("/icons/charting.png").getImage());
-        dialog.setTitle("Charting Editor");
-        dialog.add(treeEditorView);
-        int width = (int) (mainFrame.getWidth() * 0.9);
-        int height = (int) (mainFrame.getHeight() * 0.9f);
-
-        int offsetX = (int) (mainFrame.getWidth() * 0.1) / 2;
-        int offsetY = (int) (mainFrame.getHeight() * 0.1f) / 2;
-
-        dialog.setLocation(mainFrame.getX() + offsetX, mainFrame.getY() + offsetY);
-        dialog.setSize(width, height);
-        dialog.setName("Charting Editor");
-        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-        dialog.setModal(true);
-        dialog.setVisible(true);
-
-        this.chartingController.getLogEventMultiplexer()
-                               .removeLogEventListener(temporaryController.getLogEventMultiplexer());
-
-    }
-
-    protected void changeOutputLogDestination() {
-        DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
-        if (currentSelectedTabx != null) {
-            TimestampVariableRollingFileLogger outputLogger = currentSelectedTabx.getOutputLogger();
-            if (outputLogger != null) {
-
-                existingOutputLogFilenames.add(outputLogger.getFileName());
-                DefaultComboBoxModel comboBoxModel = new DefaultComboBoxModel();
-                for (String filename : existingOutputLogFilenames) {
-                    comboBoxModel.addElement(filename);
-                }
-
-                final JComboBox combo = new JComboBox(comboBoxModel);
-                combo.setName(FILENAME_COMBO);
-                combo.setEditable(true);
-                combo.setSelectedItem(outputLogger.getFileName());
-
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override public void run() {
-                        combo.getEditor().selectAll();
-                        combo.requestFocus();
-                    }
-                });
-
-                int result = JOptionPane.showConfirmDialog(this,
-                                                           combo,
-                                                           "Choose a new log file name (without the file extention) : ",
-                                                           JOptionPane.OK_CANCEL_OPTION,
-                                                           JOptionPane.QUESTION_MESSAGE);
-
-                if (result == JOptionPane.OK_OPTION) {
-                    String filename = comboBoxModel.getSelectedItem().toString();
-                    logger.info("Changing output log filename to '{}'", filename);
-                    outputLogger.close();
-                    outputLogger.setFileName(filename);
-                    existingOutputLogFilenames.add(filename);
-                } else {
-                    logger.info("Changing output log filename was cancelled");
-                }
-            }
-        }
-    }
-
-    protected void showRepoSearchDialog() {
-
-        DetailedLogEventTablePanel detailPanel = getCurrentSelectedTabx();
-
-        // Workaround for single environment mode
-        if (detailPanel == null && getDetailedLogEventTablePanels().size() == 1) {
-            detailPanel = getDetailedLogEventTablePanels().get(0);
-        }
-
-        if (detailPanel != null) {
-
-            // EnvironmentModel environmentModel =
-            // detailPanel.getEnvironmentModel();
-            // NettyClientRepository repo = new NettyClientRepository();
-            // String connectionPoints =
-            // environmentModel.getRepoConnectionPoints();
-            // repo.addConnectionPoints(NetUtils.toInetSocketAddressList(connectionPoints,
-            // NettyClientRepository.defaultPort));
-            // repo.start();
-            //
-            // RepositorySearchDialog dialog = new RepositorySearchDialog();
-            // dialog.setRepositoryInterface(repo);
-            // dialog.setSize((int) (getWidth() * 0.8), (int) (getHeight() *
-            // 0.8));
-            // dialog.setModal(false);
-            // dialog.show(this);
-        }
-
-    }
-
-    private void setupHelpMenu(JFrame mainFrame) {
-
-        JMenu helpMenu = new JMenu("Help");
-
-        JMenuItem onlineHelp = new JMenuItem("Vertex Labs Wiki");
-        onlineHelp.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                BrowserUtils.browseTo(URI.create("http://www.vertexlabs.co.uk/vllogging/frontend"));
-            }
-        });
-        helpMenu.add(onlineHelp);
-
-        JMenuItem about = new JMenuItem("About the Logging Front End");
-        about.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                showAbout();
-            }
-        });
-        helpMenu.addSeparator();
-        helpMenu.add(about);
-
-        menuBar.add(helpMenu);
-
-        mainFrame.setJMenuBar(menuBar);
-    }
-
-    protected void showAbout() {
-
-        JPanel aboutPanel = new JPanel(new MigLayout());
-
-        ImageIcon image = new ImageIcon(FileUtils.readAsBytes(ResourceUtils.openStream("/icons/LoggingHubLogo.png")));
-        JLabel label = new JLabel(image);
-        aboutPanel.add(label);
-        JLabel jLabel = new JLabel("Logging Hub Viewer");
-        jLabel.setFont(Font.decode("Arial-BOLD-24"));
-        aboutPanel.add(jLabel, "wrap");
-
-        Properties p = new Properties();
-        String version;
-        try {
-            p.load(ResourceUtils.openStream("/META-INF/maven/com.logginghub/vl-logging-frontend/pom.properties"));
-            version = p.getProperty("version");
-        } catch (Exception e1) {
-            version = "Failed to load version from embedded maven properties";
-        }
-        JLabel versionLabel = new JLabel(version, JLabel.CENTER);
-
-        versionLabel.setFont(Font.decode("Arial-18"));
-        aboutPanel.add(versionLabel, "align center, span 2, wrap");
-        aboutPanel.add(new JLabel(""), "align center, span 2, wrap");
-
-        JLabel linkLabel = new JLabel("www.logginghub.com");
-        linkLabel.setOpaque(true);
-        linkLabel.setFont(Font.decode("Arial-16"));
-        linkLabel.addMouseListener(new MouseAdapter() {
-            @Override public void mouseReleased(MouseEvent e) {
-                BrowserUtils.browseTo(URI.create("http://www.logginghub.com/"));
-            }
-        });
-        aboutPanel.add(linkLabel, "align center, span 2, wrap");
-
-        JOptionPane.showMessageDialog(this, aboutPanel, "About", JOptionPane.PLAIN_MESSAGE);
-    }
-
-    public void setInitialPropertyValues() {
-        boolean filteringOn = proxy.getDynamicSettings().getBoolean("loggingMainPanel.hubFiltering", false);
-        hubLevelFiltering.setSelected(filteringOn);
-        setServerSideFiltering(filteringOn);
-
-        boolean autoScrollProperty = proxy.getDynamicSettings().getBoolean("loggingMainPanel.autoScroll", true);
-        autoScroll.setSelected(autoScrollProperty);
-        setAutoScroll(autoScrollProperty);
-
-        boolean horinzontalSplit = proxy.getDynamicSettings().getBoolean("loggingMainPanel.horizontalSplit", true);
-        horizontalDetailView.setSelected(horinzontalSplit);
-        setDetailViewOrientation(horinzontalSplit);
-    }
-
-    private void showModel(JComponent viewModel) {
-        tabbedPane.addTab("Log view", viewModel);
-        revalidate();
-        doLayout();
-    }
-
-    private void updateHubSideFilter(int levelFilter) {
-        if (serversideFilteringEnabled) {
-            sendFilterToHubs(levelFilter);
-        }
-    }
-
-    public void stopConnections(EnvironmentModel environmentModel) {
-        logger.info("Stopping connections for environment '{}'", environmentModel.getName());
-
-        ObservableList<HubConnectionModel> hubs = environmentModel.getHubConnectionModels();
-        for (final HubConnectionModel hubModel : hubs) {
-            hubModel.close();
+    public void start() {
+        if (chartingController != null) {
+            chartingController.start();
         }
     }
 
@@ -1615,11 +1843,24 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
                     socketClient.addConnectionPoint(address);
                 }
 
+                socketClient.getConnector().addLoggingMessageListener(new LoggingMessageListener() {
+                    @Override
+                    public void onNewLoggingMessage(LoggingMessage message) {
+                        if (message instanceof ClearEventsMessage) {
+                            SwingUtilities.invokeLater(new Runnable() {
+                                @Override
+                                public void run() {
+                                    logger.info("Clear events due to a remote clear message for enviroment '{}'", environmentModel.getName());
+                                    getDetailedLogEventTablePanelForEnvironment(environmentModel.getName()).clearEvents();
+                                }
+                            });
+                        }
+                    }
+                });
+
                 socketClientManager.addSocketClientManagerListener(new SocketClientManagerListener() {
                     public void onStateChanged(State fromState, State toState) {
-                        InetSocketAddress address = socketClient.getConnector()
-                                                                .getConnectionPointManager()
-                                                                .getCurrentConnectionPoint();
+                        InetSocketAddress address = socketClient.getConnector().getConnectionPointManager().getCurrentConnectionPoint();
                         switch (toState) {
                             case Connected:
                                 logger.info("Socket client manager - connected to '{}'", address);
@@ -1636,9 +1877,7 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
                                 break;
                         }
 
-                        ConnectionStateChangedEvent event = new ConnectionStateChangedEvent(toState,
-                                                                                            hubModel.getHost() + ":" + hubModel
-                                                                                                    .getPort());
+                        ConnectionStateChangedEvent event = new ConnectionStateChangedEvent(toState, hubModel.getHost() + ":" + hubModel.getPort());
                         environmentModel.getConnectionStateStream().send(event);
                     }
                 });
@@ -1656,195 +1895,9 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
 
     }
 
-    private void sendHistoricalIndexRequests(EnvironmentModel environmentModel) {
-        List<DetailedLogEventTablePanel> detailedLogEventTablePanels = getDetailedLogEventTablePanels();
-        for (DetailedLogEventTablePanel detailedLogEventTablePanel : detailedLogEventTablePanels) {
-            EnvironmentModel panelModel = detailedLogEventTablePanel.getEnvironmentModel();
-            if (panelModel != null && panelModel.getName().equals(environmentModel.getName())) {
-                detailedLogEventTablePanel.sendHistoricalIndexRequest();
-            }
-        }
-
-    }
-
-    private void configureAggregatedPatternDataSubscriptions() {
-        List<RemoteChartConfiguration> remoteCharting = proxy.getLoggingFrontendConfiguration().getRemoteCharting();
-        for (RemoteChartConfiguration remoteChartConfiguration : remoteCharting) {
-            configureRemoteChartingTab(remoteChartConfiguration);
-        }
-    }
-
-    protected void clearChartData() {
-        for (OldChartingPanel chartingPanel : chartingPanelsx) {
-            chartingPanel.clearChartData();
-        }
-
-        // chartingController.clearChartData();
-        newChartingView.clearChartData();
-        chartingController.clearChartData();
-    }
-
-    protected void saveChartData() {
-        for (OldChartingPanel chartingPanel : chartingPanelsx) {
-            chartingPanel.saveChartData();
-        }
-
-        newChartingView.saveChartData();
-        // chartingController.saveChartData();
-    }
-
-    protected void saveChartImages() {
-        for (OldChartingPanel chartingPanel : chartingPanelsx) {
-            chartingPanel.saveChartImages();
-        }
-
-        // chartingController.saveChartImages();
-        newChartingView.saveChartImages();
-    }
-
-    protected void setAutoLockWarning(boolean selected) {
-
-        DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
-        if (currentSelectedTabx != null) {
-            currentSelectedTabx.setAutoLockWarning(selected);
-        }
-
-        // List<DetailedLogEventTablePanel> detailedLogEventTablePanels =
-        // getDetailedLogEventTablePanels();
-        // for (DetailedLogEventTablePanel detailedLogEventTablePanel :
-        // detailedLogEventTablePanels) {
-        // detailedLogEventTablePanel.setAutoLockWarning(selected);
-        // }
-        // proxy.getDynamicSettings().set("loggingMainPanel.autoLockWarning",
-        // selected);
-    }
-
-    protected void setWriteOutputLog(boolean selected) {
-        DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
-        if (currentSelectedTabx != null) {
-            currentSelectedTabx.getEnvironmentModel().setWriteOutputLog(selected);
-            currentSelectedTabx.setWriteOutputLog(selected);
-        }
-    }
-
-    protected void setAutoScroll(boolean selected) {
-        List<DetailedLogEventTablePanel> detailedLogEventTablePanels = getDetailedLogEventTablePanels();
-        for (DetailedLogEventTablePanel detailedLogEventTablePanel : detailedLogEventTablePanels) {
-            detailedLogEventTablePanel.setAutoScroll(selected);
-        }
-        proxy.getDynamicSettings().set("loggingMainPanel.autoScroll", selected);
-    }
-
-    private void setServerSideFiltering(boolean selected) {
-        logger.info("Server side filtering menu option changed to {}", selected);
-        serversideFilteringEnabled = selected;
-
-        if (selected) {
-            if (firstDetailPanel != null) {
-                int levelFilter = firstDetailPanel.getLevelFilter();
-                sendFilterToHubs(levelFilter);
-            }
-        } else {
-            // If the item isn't selected, dont send anything to the hubs. This
-            // allows backwards compatibility
-        }
-
-        proxy.getDynamicSettings().set("loggingMainPanel.hubFiltering", selected);
-    }
-
-    private void sendFilterToHubs(int levelFilter) {
-
-        logger.info("Sending server side filtering value to hub, level is {}", Level.parse("" + levelFilter));
-
-        ObservableList<EnvironmentModel> environments = model.getEnvironments();
-        for (EnvironmentModel environmentModel : environments) {
-            ObservableList<HubConnectionModel> hubConnectionModels = environmentModel.getHubConnectionModels();
-            for (HubConnectionModel hubConnectionModel : hubConnectionModels) {
-                try {
-                    SocketClientManager socketClientManager = hubConnectionModel.getSocketClientManager();
-                    if (socketClientManager != null) {
-                        SocketClient client = socketClientManager.getClient();
-                        logger.info("Sending server side filtering value to {}",
-                                    client.getConnector().getConnectionPointManager().getCurrentConnectionPoint());
-                        client.setLevelFilter(levelFilter);
-                    } else {
-                        // Probably means this environment exists but hasn't
-                        // been started
-                    }
-                } catch (LoggingMessageSenderException e) {
-                    // Maybe we aren't connected... dont worry about this.
-                }
-            }
-        }
-    }
-
-    protected void showConnectionManager() {
-        final JDialog dialog = new JDialog(mainFrame, "Connection manager");
-        ConnectionManagerPanel connectionManagerPanel = new ConnectionManagerPanel();
-        connectionManagerPanel.setListener(new ConnectionManagerListener() {
-            @Override public void onOpenEnvironment(EnvironmentConfiguration environmentConfiguration) {
-                dialog.dispose();
-
-                ObservableList<EnvironmentModel> environments = model.getEnvironments();
-                for (EnvironmentModel environmentModel : environments) {
-                    if (environmentModel.get(EnvironmentModel.Fields.Name).equals(environmentConfiguration.getName())) {
-                        addEnvironmentLoggingDetailsTab(environmentModel);
-                        startConnections(environmentModel);
-                    }
-                }
-            }
-        });
-        connectionManagerPanel.populate(proxy.getLoggingFrontendConfiguration());
-        dialog.getContentPane().add(connectionManagerPanel);
-        dialog.setSize(500, 400);
-        dialog.setModal(true);
-        dialog.setLocationRelativeTo(mainFrame);
-        dialog.setVisible(true);
-    }
-
-    public DetailedLogEventTablePanel getFirstDetailPanel() {
-        return firstDetailPanel;
-    }
-
-    public void setConfigurationProxy(ConfigurationProxy proxy) {
-        this.proxy = proxy;
-    }
-
-    public void closeOutputLogs() {
-
-        List<DetailedLogEventTablePanel> detailedLogEventTablePanels = getDetailedLogEventTablePanels();
-        for (DetailedLogEventTablePanel detailedLogEventTablePanel : detailedLogEventTablePanels) {
-            detailedLogEventTablePanel.closeOutputLog();
-        }
-    }
-
-    public JFrame getChartingPopoutFrameOld() {
-        return chartingPopoutFrameOldx;
-    }
-
-    public JFrame getChartingPopoutFrameNew() {
-        return chartingPopoutFrameNew;
-    }
-
-    public void setMenuBar(JMenuBar menuBar) {
-        setupMenuBar();
-        mainFrame.setJMenuBar(menuBar);
-    }
-
-    public NewChartingController getChartingController() {
-        return chartingController;
-    }
-
-    @Override public void addMenuItem(String topLevel, String secondLevel, ActionListener action) {
-        // TODO : this is a hack to expose the legacy menu to the modules world
-        if (topLevel.equals("Edit")) {
-            JMenuItem item = new JMenuItem(secondLevel);
-            item.addActionListener(action);
-            editMenu.add(item);
-        } else if (topLevel.equals("View")) {
-            JMenuItem item = new JMenuItem(secondLevel);
-            item.addActionListener(action);
-            viewMenu.add(item);
+    public void stop() {
+        if (chartingController != null) {
+            chartingController.stop();
         }
     }
 
@@ -1854,28 +1907,28 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
     //        }
     //    }
 
-    public OffsetableSystemTimeProvider getTimeProvider() {
-        return timeProvider;
+    public void stopConnections(EnvironmentModel environmentModel) {
+        logger.info("Stopping connections for environment '{}'", environmentModel.getName());
+
+        ObservableList<HubConnectionModel> hubs = environmentModel.getHubConnectionModels();
+        for (final HubConnectionModel hubModel : hubs) {
+            hubModel.close();
+        }
     }
 
-    public JTabbedPane getTabbedPane() {
-        return tabbedPane;
-    }
-
-    @Override public List<SocketClient> getDirectAccess() {
-        List<SocketClient> clients = new ArrayList<SocketClient>();
+    protected void stopExportBinary() {
         DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
         if (currentSelectedTabx != null) {
-            EnvironmentModel environmentModel = currentSelectedTabx.getEnvironmentModel();
-            ObservableList<HubConnectionModel> hubConnectionModels = environmentModel.getHubConnectionModels();
-            for (HubConnectionModel hubConnectionModel : hubConnectionModels) {
-                SocketClient client = hubConnectionModel.getSocketClientManager().getClient();
-                clients.add(client);
-            }
+            currentSelectedTabx.stopBinaryExport();
+        } else {
+            JOptionPane.showMessageDialog(this, "You must have a log tab selected before you can stop exporting binary events");
         }
+    }
 
-        return clients;
-
+    private void updateHubSideFilter(int levelFilter) {
+        if (serversideFilteringEnabled) {
+            sendFilterToHubs(levelFilter);
+        }
     }
 
     public static abstract class MouseListenerWrapper implements MouseListener {
@@ -1886,11 +1939,13 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
             this.delegate = delegate;
         }
 
-        @Override public void mouseClicked(MouseEvent e) {
+        @Override
+        public void mouseClicked(MouseEvent e) {
             delegate.mouseClicked(e);
         }
 
-        @Override public void mousePressed(MouseEvent e) {
+        @Override
+        public void mousePressed(MouseEvent e) {
             if (SwingUtilities.isRightMouseButton(e)) {
                 handleRightMouse(e);
                 return;
@@ -1898,15 +1953,18 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
             delegate.mousePressed(e);
         }
 
-        @Override public void mouseReleased(MouseEvent e) {
+        @Override
+        public void mouseReleased(MouseEvent e) {
             delegate.mouseReleased(e);
         }
 
-        @Override public void mouseEntered(MouseEvent e) {
+        @Override
+        public void mouseEntered(MouseEvent e) {
             delegate.mouseEntered(e);
         }
 
-        @Override public void mouseExited(MouseEvent e) {
+        @Override
+        public void mouseExited(MouseEvent e) {
             delegate.mouseExited(e);
         }
 

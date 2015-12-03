@@ -9,7 +9,16 @@ public class LoggingFrontendModel extends ObservableModel {
     private boolean popoutCharting = false;
     
     private RowFormatModel selectedRowFormat = new RowFormatModel();
-    
+    private boolean showHubClearEvents;
+
+    public boolean isShowHubClearEvents() {
+        return showHubClearEvents;
+    }
+
+    public void setShowHubClearEvents(boolean showHubClearEvents) {
+        this.showHubClearEvents = showHubClearEvents;
+    }
+
     public enum Fields implements FieldEnumeration {
         Title, ShowDashboard;
     }

@@ -1,15 +1,14 @@
 package com.logginghub.logging.frontend.configuration;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.logginghub.logging.hub.configuration.FilterConfiguration;
+import com.logginghub.logging.hub.configuration.TimestampVariableRollingFileLoggerConfiguration;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
-
-import com.logginghub.logging.hub.configuration.FilterConfiguration;
-import com.logginghub.logging.hub.configuration.TimestampVariableRollingFileLoggerConfiguration;
+import java.util.ArrayList;
+import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD) public class EnvironmentConfiguration {
 
@@ -22,6 +21,8 @@ import com.logginghub.logging.hub.configuration.TimestampVariableRollingFileLogg
     @XmlElement private String channel;
 
     @XmlAttribute private boolean clustered=false;
+
+    @XmlAttribute private double eventMemoryMB = Double.NaN;
 
     @XmlAttribute private boolean autoLocking;
     @XmlAttribute private boolean writeOutputLog = false;
@@ -127,6 +128,10 @@ import com.logginghub.logging.hub.configuration.TimestampVariableRollingFileLogg
 
     public boolean isRepoEnabled() {
         return repoEnabled;
+    }
+
+    public double getEventMemoryMB() {
+        return eventMemoryMB;
     }
 
     public void setWriteOutputLog(boolean writeOutputLog) {

@@ -1,0 +1,1 @@
+logginghub-1.4.11/bin/hub.sh console

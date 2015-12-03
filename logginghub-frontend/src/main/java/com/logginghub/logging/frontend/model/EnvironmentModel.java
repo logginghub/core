@@ -41,6 +41,15 @@ public class EnvironmentModel extends ObservableModel implements LogEventSource,
     private ObservableInteger filterUpdateCount = new ObservableInteger(0);
 
     private FilterHelper excludeFilter = new FilterHelper();
+    private double eventMemoryMB;
+
+    public double getEventMemoryMB() {
+        return eventMemoryMB;
+    }
+
+    public void setEventMemoryMB(double eventMemoryMB) {
+        this.eventMemoryMB = eventMemoryMB;
+    }
 
     public enum Fields implements FieldEnumeration {
         Name,

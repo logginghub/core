@@ -1,12 +1,9 @@
 package com.logginghub.utils;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-
 import org.junit.Test;
 
-import com.logginghub.utils.FileUtils;
-import com.logginghub.utils.JSONWriter;
+import static org.hamcrest.MatcherAssert.*;
+import static org.hamcrest.Matchers.*;
 
 public class TestJSONWriter {
 
@@ -89,7 +86,7 @@ public class TestJSONWriter {
     }
     
     private String loadExpected(int index) {
-        return FileUtils.readAsStringArray("jsonExpected.txt")[index];
+        return FileUtils.readAsStringArray("src/test/resources/com/logginghub/utils/jsonExpected.txt")[index];
     }
 
     @Test

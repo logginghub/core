@@ -1,12 +1,5 @@
 package com.logginghub.logging.modules;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Level;
-
 import com.logginghub.logging.DefaultLogEvent;
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.generator.nextgen.SimulatorEventSource;
@@ -15,11 +8,20 @@ import com.logginghub.logging.modules.configuration.GeneratorMessageConfiguratio
 import com.logginghub.logging.modules.configuration.VariableConfiguration;
 import com.logginghub.utils.Destination;
 import com.logginghub.utils.FactoryMap;
+import com.logginghub.utils.FileUtils;
+import com.logginghub.utils.Is;
 import com.logginghub.utils.Stream;
 import com.logginghub.utils.StreamListener;
 import com.logginghub.utils.StringUtils;
 import com.logginghub.utils.module.Module;
 import com.logginghub.utils.module.ServiceDiscovery;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
 
 public class GeneratorModule implements Module<GeneratorConfiguration> {
 
@@ -30,26 +32,46 @@ public class GeneratorModule implements Module<GeneratorConfiguration> {
     private Random random = new Random();
 
     private FactoryMap<String, AtomicLong> sequences = new FactoryMap<String, AtomicLong>() {
-        @Override protected AtomicLong createEmptyValue(String key) {
+        @Override
+        protected AtomicLong createEmptyValue(String key) {
             return new AtomicLong();
         }
     };
 
-    @Override public void configure(GeneratorConfiguration configuration, ServiceDiscovery serviceDiscovery) {
+    @Override
+    public void configure(GeneratorConfiguration configuration, ServiceDiscovery serviceDiscovery) {
         Destination<LogEvent> service = serviceDiscovery.findService(Destination.class, LogEvent.class, configuration.getDestination());
         logEventStream.addDestination(service);
 
         this.configuration = configuration;
+        // Do some quick and dirty validation so we fail at configuration time is something is wrong
+        List<GeneratorMessageConfiguration> messages = configuration.getMessages();
+        for (GeneratorMessageConfiguration message : messages) {
+
+            if(StringUtils.isNotNullOrEmpty(message.getPatternFile())) {
+                message.setPattern(FileUtils.read(message.getPatternFile()));
+            }
+
+            Is.notNullOrEmpty(message.getPattern(), "Pattern must be set on the generator message configuration element");
+            Is.notNullOrEmpty(message.getLevel(), "Level must be set on the generator message configuration element");
+            Level.parse(message.getLevel());
+        }
     }
 
-    @Override public void start() {
+    public Stream<LogEvent> getLogEventStream() {
+        return logEventStream;
+    }
+
+    @Override
+    public void start() {
 
         List<GeneratorMessageConfiguration> messages = configuration.getMessages();
         for (final GeneratorMessageConfiguration generator : messages) {
 
             SimulatorEventSource source = new SimulatorEventSource(generator.isRandom(), generator.getRateMin(), generator.getRateMax());
             source.getEventStream().addListener(new StreamListener<Long>() {
-                @Override public void onNewItem(Long t) {
+                @Override
+                public void onNewItem(Long t) {
                     String message = buildMessage(t, generator);
 
                     DefaultLogEvent event = generator.getTemplate().createEvent();
@@ -80,8 +102,7 @@ public class GeneratorModule implements Module<GeneratorConfiguration> {
             if (StringUtils.isNotNullOrEmpty(type)) {
                 if (type.equalsIgnoreCase("time")) {
                     value = new Date().toString();
-                }
-                else if (type.equalsIgnoreCase("sequence")) {
+                } else if (type.equalsIgnoreCase("sequence")) {
                     value = Long.toString(sequences.get(name).incrementAndGet());
                 }
             }
@@ -128,8 +149,7 @@ public class GeneratorModule implements Module<GeneratorConfiguration> {
                 progress += weightingFactor;
 
             }
-        }
-        catch (RuntimeException e) {
+        } catch (RuntimeException e) {
             randomised = "<error in generator configuration>";
         }
 
@@ -137,11 +157,8 @@ public class GeneratorModule implements Module<GeneratorConfiguration> {
 
     }
 
-    public Stream<LogEvent> getLogEventStream() {
-        return logEventStream;
-    }
-
-    @Override public void stop() {
+    @Override
+    public void stop() {
 
         for (SimulatorEventSource simulatorEventSource : sources) {
             simulatorEventSource.stop();

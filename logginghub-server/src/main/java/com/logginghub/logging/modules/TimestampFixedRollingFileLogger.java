@@ -1,16 +1,5 @@
 package com.logginghub.logging.modules;
 
-import java.io.BufferedWriter;
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.text.ParseException;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Date;
-
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.exceptions.LoggingMessageSenderException;
 import com.logginghub.logging.hub.configuration.TimestampFixedRollingFileLoggerConfiguration;
@@ -26,6 +15,17 @@ import com.logginghub.utils.TimeProvider;
 import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.module.Module;
 import com.logginghub.utils.module.ServiceDiscovery;
+
+import java.io.BufferedWriter;
+import java.io.Closeable;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.ParseException;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Date;
 
 /**
  * Variation of the {@link RollingFileLogger} that uses timestamps to keep the files unique,
@@ -120,7 +120,7 @@ public class TimestampFixedRollingFileLogger extends BaseFileLogger implements F
     private void zipFiles() {
         File[] listFiles = getFolder().listFiles(new FileFilter() {
             @Override public boolean accept(File file) {
-                String fullTimeRegex = "{}\\.\\d{4}_\\d{2}_\\d{2}_\\d{6}(\\.\\d+)?{}";
+               String fullTimeRegex = "{}\\.\\d\\{4\\}_\\d\\{2\\}_\\d\\{2\\}_\\d\\{6\\}(\\.\\d+)?{}";
                 return StringUtils.matches(file.getName(), fullTimeRegex, getFileName(), getFileExtension());
             }
         });

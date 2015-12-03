@@ -1,21 +1,20 @@
 package com.logginghub.logging.hub.configuration;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-
 import com.logginghub.logging.messaging.SocketConnection;
 import com.logginghub.logging.servers.SocketHub;
 import com.logginghub.utils.FileUtils;
 import com.logginghub.utils.JAXBConfiguration;
 import com.logginghub.utils.VLPorts;
 import com.logginghub.utils.module.Configures;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 @Configures(SocketHub.class)
 @XmlAccessorType(XmlAccessType.FIELD) @XmlRootElement(name ="hubConfiguration")  public class SocketHubConfiguration {
@@ -30,7 +29,8 @@ import com.logginghub.utils.module.Configures;
     @XmlAttribute private String statsInterval = "1 minute";
     
     @XmlElement List<FilterConfiguration> filter = new ArrayList<FilterConfiguration>();
-    
+    @XmlAttribute private boolean allowClearEvents = false;
+
     public List<FilterConfiguration> getFilters() {
         return filter;
     }
@@ -39,7 +39,15 @@ import com.logginghub.utils.module.Configures;
         return port;
     }
 
-//    public boolean isOutputTelemetryToLoggingStream() {
+    public boolean isAllowClearEvents() {
+        return allowClearEvents;
+    }
+
+    public void setAllowClearEvents(boolean allowClearEvents) {
+        this.allowClearEvents = allowClearEvents;
+    }
+
+    //    public boolean isOutputTelemetryToLoggingStream() {
 //        return outputTelemetryToLoggingStream;
 //    }
     
