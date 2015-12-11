@@ -68,7 +68,7 @@ public class GeneratorModule implements Module<GeneratorConfiguration> {
         List<GeneratorMessageConfiguration> messages = configuration.getMessages();
         for (final GeneratorMessageConfiguration generator : messages) {
 
-            SimulatorEventSource source = new SimulatorEventSource(generator.isRandom(), generator.getRateMin(), generator.getRateMax());
+            SimulatorEventSource source = new SimulatorEventSource(generator.isRandom(), generator.getRateMin(), generator.getRateMax(), generator.getLimit());
             source.getEventStream().addListener(new StreamListener<Long>() {
                 @Override
                 public void onNewItem(Long t) {

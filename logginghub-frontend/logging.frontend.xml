@@ -1,7 +1,7 @@
 <loggingFrontendConfiguration title="Local Configuration" showHistoryViewer="true" showChartingEditor="true" showHeapSlider="false"
                               showHubClearEvents="true">
 
-    <environment name="local" showHistoryTab="true" eventMemoryMB="500">
+    <environment name="local" showHistoryTab="true" eventMemoryMB="500" autoRequestHistory="all" disableAutoScrollPauser="true">
         <hub name="local" host="localhost:9000"/>
     </environment>
 

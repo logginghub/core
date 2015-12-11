@@ -1,25 +1,16 @@
 package com.logginghub.logging.frontend.views.logeventdetail;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Point;
-import java.awt.Toolkit;
-import java.awt.datatransfer.StringSelection;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-
-import javax.swing.BorderFactory;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.text.DefaultCaret;
-
-import net.miginfocom.swing.MigLayout;
-
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.frontend.ComponentKeys;
 import com.logginghub.logging.frontend.Utils;
+import net.miginfocom.swing.MigLayout;
+
+import javax.swing.*;
+import javax.swing.text.DefaultCaret;
+import java.awt.*;
+import java.awt.datatransfer.StringSelection;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class EventDetailPanel extends JPanel {
     private JLabel timestampLabel = new JLabel();
@@ -38,19 +29,14 @@ public class EventDetailPanel extends JPanel {
     private JScrollPane exceptionScroller;
     private JScrollPane messageScroller;
 
-    // private JScrollPane exceptionAreaScroller;
-    // private JSplitPane splitPane;
-
     public EventDetailPanel() {
         setName("eventDetailPanel");
 
         setBackground(Color.white);
         migLayout = new MigLayout("insets 0, gap 0", "[grow,fill]", "[fill][grow,fill][growprio 10,grow,fill]");
-        // migLayout = new MigLayout("fill, insets 2", "[fill]", "[fill][grow,fill][fill]");
         setLayout(migLayout);
 
         JPanel topPanel = new JPanel(new MigLayout("insets 1, fill", "[][grow][][grow]", "[][][][]"));
-        // JPanel topPanel = new JPanel(new MigLayout("", "[][][][]", "[][][][]"));
 
         JLabel a = new JLabel("Received timestamp");
         JLabel b = new JLabel("Level");
@@ -116,15 +102,6 @@ public class EventDetailPanel extends JPanel {
 
         topPanel.setBackground(Color.decode("#ddeeff"));
 
-        // JScrollPane messageAreaScroller = new JScrollPane(messageArea);
-        // exceptionAreaScroller = new JScrollPane(exceptionArea);
-
-        // splitPane = new JSplitPane();
-        // splitPane.setLeftComponent(messageAreaScroller);
-        // splitPane.setRightComponent(exceptionAreaScroller);
-        // splitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
-        // splitPane.setDividerSize(2);
-
         topPanel.setBorder(BorderFactory.createTitledBorder("Summary"));
         
         messageArea.setEditable(false);
@@ -135,11 +112,6 @@ public class EventDetailPanel extends JPanel {
         messageScroller = new JScrollPane(messageArea);
         exceptionScroller = new JScrollPane(exceptionArea);
 
-//        messageScroller.setBackground(Color.white);
-//        messageScroller.setBorder(BorderFactory.createTitledBorder("Message"));
-//        exceptionScroller.setBackground(exceptionRedColour);
-//        exceptionScroller.setBorder(BorderFactory.createTitledBorder("Exception stack trace"));
-        
         // Disable auto scroll to caret in the message and exception areas
         DefaultCaret messageCaret = (DefaultCaret)messageArea.getCaret();
         messageCaret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
@@ -205,30 +177,14 @@ public class EventDetailPanel extends JPanel {
         messageArea.setCaretPosition(0);
         messageArea.getCaret().setMagicCaretPosition(new Point(0,0));
         validate();
-
-//        messageScroller.getVerticalScrollBar().setValue(0);
-//        exceptionScroller.getVerticalScrollBar().setValue(0);
-
     }
 
     private void exceptionShrunk() {
-//        exceptionArea.setVisible(false);
         exceptionScroller.setVisible(false);
-        // splitPane.setDividerLocation(1);
-        // Dimension dimension = new Dimension(0,0);
-        // exceptionArea.setSize(dimension);
-        // exceptionArea.setMaximumSize(dimension);
-        // exceptionArea.setMinimumSize(dimension);
-        // exceptionArea.setPreferredSize(dimension);
     }
 
     private void exceptionNormalSize() {
-//        exceptionArea.setVisible(true);
         exceptionScroller.setVisible(true);
-        // splitPane.setDividerLocation(0.5);
-        // exceptionArea.setMaximumSize(null);
-        // exceptionArea.setMinimumSize(null);
-        // exceptionArea.setPreferredSize(null);
     }
 
     public void clear() {

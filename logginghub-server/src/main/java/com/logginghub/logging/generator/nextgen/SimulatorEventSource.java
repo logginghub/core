@@ -1,7 +1,5 @@
 package com.logginghub.logging.generator.nextgen;
 
-import java.util.Random;
-
 import com.logginghub.utils.DoubleValueGenerator;
 import com.logginghub.utils.RandomWithAcceleration;
 import com.logginghub.utils.Stream;
@@ -9,9 +7,12 @@ import com.logginghub.utils.ThreadUtils;
 import com.logginghub.utils.WorkerThread;
 import com.logginghub.utils.logging.Logger;
 
+import java.util.Random;
+
 public class SimulatorEventSource {
 
     private static final Logger logger = Logger.getLoggerFor(SimulatorEventSource.class);
+    private final int limit;
     private RandomWithAcceleration rate;
     private WorkerThread workerThread;
     private Stream<Long> eventStream = new Stream<Long>();
@@ -20,6 +21,11 @@ public class SimulatorEventSource {
     private double accumulation = 0;
 
     public SimulatorEventSource(boolean useRandom, final double minPerSecond, final double maxPerSecond) {
+        this(useRandom, minPerSecond, maxPerSecond, -1);
+    }
+
+    public SimulatorEventSource(boolean useRandom, final double minPerSecond, final double maxPerSecond, final int limit) {
+        this.limit = limit;
 
         // TODO : we need to pass the trend length in as well!
         
@@ -106,6 +112,10 @@ public class SimulatorEventSource {
 
                 // TODO : this is going to make quite jagged load if we look closely enough
                 ThreadUtils.sleep(sleepTime);
+
+                if(limit > 0 && count >= limit){
+                    throw new WorkerThread.StopRunningException();
+                }
             }
         });
 

@@ -1,9 +1,5 @@
 package com.logginghub.logging.frontend.model;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.logginghub.logging.DefaultLogEvent;
 import com.logginghub.logging.LevelConstants;
 import com.logginghub.logging.LogEvent;
@@ -19,6 +15,10 @@ import com.logginghub.utils.Stream;
 import com.logginghub.utils.StreamListener;
 import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.observable.ObservableInteger;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class EnvironmentModel extends ObservableModel implements LogEventSource, LogEventListener, StreamListener<LogEvent> {
 
@@ -42,9 +42,27 @@ public class EnvironmentModel extends ObservableModel implements LogEventSource,
 
     private FilterHelper excludeFilter = new FilterHelper();
     private double eventMemoryMB;
+    private String autoRequestHistory= "";
+    private boolean disableAutoScrollPauser = false;
 
     public double getEventMemoryMB() {
         return eventMemoryMB;
+    }
+
+    public String isAutoRequestHistory() {
+        return autoRequestHistory;
+    }
+
+    public boolean isDisableAutoScrollPauser() {
+        return disableAutoScrollPauser;
+    }
+
+    public void setAutoRequestHistory(String autoRequestHistory) {
+        this.autoRequestHistory = autoRequestHistory;
+    }
+
+    public void setDisableAutoScrollPauser(boolean disableAutoScrollPauser) {
+        this.disableAutoScrollPauser = disableAutoScrollPauser;
     }
 
     public void setEventMemoryMB(double eventMemoryMB) {

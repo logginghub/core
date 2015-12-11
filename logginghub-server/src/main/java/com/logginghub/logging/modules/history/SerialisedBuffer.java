@@ -20,6 +20,11 @@ public class SerialisedBuffer implements EventBuffer {
     private SerialisationStrategy serialisationStrategy;
     private int blockSize;
     private int highWaterMark;
+    private long watermark = 0;
+    private int count = 0;
+    private int currentCount = 0;
+    private ByteBuffer currentBlock;
+    private List<Pair<Integer, ByteBuffer>> historicalBlocks = new ArrayList<Pair<Integer, ByteBuffer>>();
 
     public SerialisedBuffer(SerialisationStrategy serialisationStrategy, int blockSize, final int highWaterMark) {
         this.serialisationStrategy = serialisationStrategy;
@@ -27,48 +32,8 @@ public class SerialisedBuffer implements EventBuffer {
         this.highWaterMark = highWaterMark;
     }
 
-    @Override public String toString() {
-        return "[" + serialisationStrategy.toString() + ", blockSize=" + blockSize + "]";
-    }
-
-    private long watermark = 0;
-    private int count = 0;
-    private int currentCount = 0;
-
-    private ByteBuffer currentBlock;
-    private List<Pair<Integer, ByteBuffer>> historicalBlocks = new ArrayList<Pair<Integer, ByteBuffer>>();
-
-    @Override public int countEvents() {
-        return count;
-    }
-
-    @Override public int countBetween(long start, long end) {
-
-        int count = 0;
-        for (Pair<Integer, ByteBuffer> pair : historicalBlocks) {
-
-            ByteBuffer data = pair.getB();
-            while (data.hasRemaining()) {
-                LogEvent deserialise;
-                try {
-                    deserialise = (LogEvent) serialisationStrategy.deserialise(data);
-                    long time = deserialise.getOriginTime();
-                    if (time >= start && time < end) {
-                        count++;
-                    }
-                }
-                catch (IOException e) {
-                    throw new FormattedRuntimeException(e);
-                }
-            }
-        }
-
-        // TODO : have a look in the current buffer!
-
-        return count;
-    }
-
-    @Override public void addEvent(DefaultLogEvent t) {
+    @Override
+    public void addEvent(DefaultLogEvent t) {
 
         if (currentBlock == null) {
             currentBlock = createNewBuffer();
@@ -85,15 +50,13 @@ public class SerialisedBuffer implements EventBuffer {
                 watermark += length;
                 count++;
                 currentCount++;
-            }
-            catch (BufferOverflowException overflow) {
+            } catch (BufferOverflowException overflow) {
                 currentBlock.reset();
                 currentBlock.flip();
                 historicalBlocks.add(new Pair<Integer, ByteBuffer>(currentCount, currentBlock));
                 currentCount = 0;
                 currentBlock = createNewBuffer();
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 throw new FormattedRuntimeException(e, "Failed to encode");
             }
         }
@@ -110,6 +73,11 @@ public class SerialisedBuffer implements EventBuffer {
     }
 
     @Override
+    public void clear() {
+        // TODO : implement me
+    }
+
+    @Override
     public int sizeof(DefaultLogEvent t) {
         ByteBuffer tempBuffer = ByteBuffer.allocate((int) ByteUtils.megabytes(1));
         try {
@@ -120,30 +88,77 @@ public class SerialisedBuffer implements EventBuffer {
         return tempBuffer.position();
     }
 
+    @Override
+    public int countEvents() {
+        return count;
+    }
+
+    @Override
+    public int countBetween(long start, long end) {
+
+        int count = 0;
+        for (Pair<Integer, ByteBuffer> pair : historicalBlocks) {
+
+            ByteBuffer data = pair.getB();
+            while (data.hasRemaining()) {
+                LogEvent deserialise;
+                try {
+                    deserialise = (LogEvent) serialisationStrategy.deserialise(data);
+                    long time = deserialise.getOriginTime();
+                    if (time >= start && time < end) {
+                        count++;
+                    }
+                } catch (IOException e) {
+                    throw new FormattedRuntimeException(e);
+                }
+            }
+        }
+
+        // TODO : have a look in the current buffer!
+
+        return count;
+    }
+
+    @Override
+    public long getWatermark() {
+        return watermark;
+    }
+
+    @Override
+    public int size() {
+        return 0;
+
+    }
+
+    @Override
+    public void extractEventsBetween(List<LogEvent> matchingEvents, long start, long end) {
+    }
+
+    @Override
+    public void extractIndexBetween(List<HistoricalIndexElement> index, long start, long end) {
+    }
+
+    @Override
+    public void extractEventsBetween(Destination<LogEvent> visitor, long start, long end) {
+    }
+
+    @Override
+    public int getBlockSequence() {
+        return 0;
+
+    }
+
+    @Override
+    public void addIndexListener(Destination<HistoricalIndexElement> destination) {
+    }
+
     private ByteBuffer createNewBuffer() {
         ByteBuffer buffer = ByteBuffer.allocate(blockSize);
         return buffer;
     }
 
-    @Override public long getWatermark() {
-        return watermark;
+    @Override
+    public String toString() {
+        return "[" + serialisationStrategy.toString() + ", blockSize=" + blockSize + "]";
     }
-
-    @Override public int size() {
-        return 0;
-         
-    }
-
-    @Override public void extractIndexBetween(List<HistoricalIndexElement> index, long start, long end) {}
-
-    @Override public void extractEventsBetween(Destination<LogEvent> visitor, long start, long end) {}
-
-    @Override public void extractEventsBetween(List<LogEvent> matchingEvents, long start, long end) {}
-
-    @Override public int getBlockSequence() {
-        return 0;
-         
-    }
-
-    @Override public void addIndexListener(Destination<HistoricalIndexElement> destination) {}
 }

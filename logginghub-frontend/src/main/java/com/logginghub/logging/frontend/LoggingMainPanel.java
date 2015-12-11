@@ -55,6 +55,7 @@ import com.logginghub.utils.OffsetableSystemTimeProvider;
 import com.logginghub.utils.ProcessUtils;
 import com.logginghub.utils.ResourceUtils;
 import com.logginghub.utils.StreamListener;
+import com.logginghub.utils.StringUtils;
 import com.logginghub.utils.WorkerThread;
 import com.logginghub.utils.Xml;
 import com.logginghub.utils.logging.Logger;
@@ -847,6 +848,21 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
             EnvironmentModel panelModel = detailedLogEventTablePanel.getEnvironmentModel();
             if (panelModel != null && panelModel.getName().equals(environmentModel.getName())) {
                 detailedLogEventTablePanel.sendHistoricalIndexRequest();
+            }
+        }
+
+    }
+
+    private void sendHistoricalDataRequests(EnvironmentModel environmentModel) {
+
+        String autoRequestHistory = environmentModel.isAutoRequestHistory();
+        if(StringUtils.isNotNullOrEmpty(autoRequestHistory)) {
+            List<DetailedLogEventTablePanel> detailedLogEventTablePanels = getDetailedLogEventTablePanels();
+            for (DetailedLogEventTablePanel detailedLogEventTablePanel : detailedLogEventTablePanels) {
+                EnvironmentModel panelModel = detailedLogEventTablePanel.getEnvironmentModel();
+                if (panelModel != null && panelModel.getName().equals(environmentModel.getName())) {
+                    detailedLogEventTablePanel.sendHistoricalDataRequest(autoRequestHistory);
+                }
             }
         }
 
@@ -1866,6 +1882,7 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
                                 logger.info("Socket client manager - connected to '{}'", address);
                                 hubModel.setConnectionState(HubConnectionModel.ConnectionState.Connected);
                                 sendHistoricalIndexRequests(environmentModel);
+                                sendHistoricalDataRequests(environmentModel);
                                 break;
                             case Connecting:
                                 logger.fine("Socket client manager - connecting to '{}'", address);

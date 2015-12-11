@@ -34,7 +34,7 @@ Hub configuration - you need to set *allowClearEvents=true* on the socketHub ele
 
      <container>
 
-         <socketHub port="15000" allowClearEvents="true"/>
+         <socketHub allowClearEvents="true"/>
 
      </container>
 
@@ -44,7 +44,7 @@ Frontend configuration - you need to set
     <loggingFrontendConfiguration title="Example Configuration" showHubClearEvents="true">
 
         <environment name="local">
-            <hub name="local" host="localhost:15000"/>
+            <hub name="local" host="localhost"/>
         </environment>
 
     </loggingFrontendConfiguration>
@@ -52,6 +52,14 @@ Frontend configuration - you need to set
 With those two settings you should get an options in the Frontend:
 
 ![Hub clear events screenshot](hub_clear_events.png "Hub clear events")
+
+Clearing events pragmatically
+--------------------------------
+
+If you want to fire off the clear events message programatically, all you need to do is send the message to the hub from the SocketClient:
+
+    socketClient.send(new ClearEventsMessage());
+
 
 Ensuring enough buffer space for your events
 --------------------------------------------
@@ -81,3 +89,63 @@ The default heap size (how much memory is available inside the JVM) is quite com
     java -Xmx1024M -cp logginghub-frontend-1.4.11.jar com.logginghub.logging.frontend.SwingFrontEnd
 
 This would start the JVM with 1 GB of heap, and combined with our frontend configuration would leave a very generous 500MB of heap once the event buffer was full.
+
+# Storing events in the Hub using In-Memory storage
+
+If you want to avoid having to re-import your events each time a new user connects their frontend, you'll need to store events on the Hub side. There are two different options for this - the In-Memory storage (very fast, limited in how many events you can store) and the Disk storage (slower, only limited by disk space) modules. We'll start using the In-Memory option to benefit from its performance.
+
+## Configuring the Hub
+
+The simplest configuration is:
+
+    <container>
+        <socketHub />
+        <inMemoryHistory />
+    </container>
+
+This will give you an in-memory storage based on 1/4 of your Java heap.
+
+## Configuring the Frontend to request history on startup
+
+If you add *autoRequestHistory="all"* to your environment configuration, the frontend will request all events from the hub when it establishes a connection. Building on the configuration we used earlier, we should end up with something along these lines:
+
+     <loggingFrontendConfiguration title="Example Configuration">
+
+         <environment name="local" eventMemoryMB="500" autoRequestHistory="all">
+             <hub name="local" host="localhost:15000"/>
+         </environment>
+
+     </loggingFrontendConfiguration>
+
+*all* is a magic value that requests events from the beginning of time until the current time. If you want to restrict this time range, you can provide any time interval, for example:
+
+* "10 minutes"
+* "2 days"
+* "4 hours 20 minutes"
+
+This will result in a request with the start time constrained to request events in the range
+
+     (now - timeInterval) -> now
+
+## Configuring the hub to clear the In-Memory storage
+
+When you are running with In-Memory storage, you need a way to reset the contents of the storage if you want to republish the data set. If you are using the Clear Events Message described earlier, you can add a setting to the hub so that it will also clear its storage in preparation for a new data import.  All we need to do is enable the *allowClearEvents=true* setting on the inMemoryStorage element in the hub configuration:
+
+    <container>
+        <socketHub allowClearEvents="true"/>
+        <inMemoryHistory allowClearEvents="true" />
+    </container>
+
+Note that you do need it in both places for it to work.
+
+# Turning off the event automatic pausing feature
+
+When you are running in blotter mode, the feature that automatically pauses the event stream when you scroll or select an item is more a hinderance than a help. You can now disable this feature on a per-environment basis. Add *disableAutoScrollPauser="true"* to your frontend configuration - our example configuration becomes:
+
+    <loggingFrontendConfiguration title="Example Configuration">
+
+        <environment name="local" eventMemoryMB="500" autoRequestHistory="all" disableAutoScrollPauser="true">
+            <hub name="local" host="localhost:15000"/>
+        </environment>
+
+    </loggingFrontendConfiguration>

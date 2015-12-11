@@ -51,6 +51,11 @@ public class PlainEventBuffer implements EventBuffer {
     }
 
     @Override
+    public void clear() {
+        events.clear();
+    }
+
+    @Override
     public int sizeof(DefaultLogEvent t) {
         return 0;
     }

@@ -2,6 +2,9 @@
 
     <socketHub port="9000" allowClearEvents="true"/>
 
+    <channelSubscriptions />
+    <inMemoryHistory />
+
     <timestampFixedRollingFileLogger folder="/tmp/"
                                      filename="hub"
                                      extension=".log"
@@ -13,7 +16,7 @@
                                      asynchronousQueueWarningSize="10000"/>
 
     <generator>
-        <message rateMin="5000" rateMax="5000" trendMin="1" trendMax="1" random="false" level="INFO" patternFile="message.template"/>
+        <message limit="100000" rateMin="5000" rateMax="5000" trendMin="1" trendMax="1" random="false" level="INFO" patternFile="message.template"/>
     </generator>
 
 </container>

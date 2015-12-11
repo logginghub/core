@@ -1,19 +1,17 @@
 package com.logginghub.logging.modules.history;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import org.junit.Test;
-
 import com.logginghub.logging.DefaultLogEvent;
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.LogEventBuilder;
 import com.logginghub.logging.messages.HistoricalIndexElement;
-import com.logginghub.logging.modules.history.EventBuffer;
 import com.logginghub.utils.logging.Logger;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.hamcrest.MatcherAssert.*;
+import static org.hamcrest.Matchers.*;
 
 
 public abstract class AbstractEventBufferTest {
@@ -147,7 +145,36 @@ public abstract class AbstractEventBufferTest {
 
     }
 
+    @Test public void test_clear() throws Exception {
 
-    
+        DefaultLogEvent event1 = LogEventBuilder.create(0, Logger.info, "event1");
+        DefaultLogEvent event2 = LogEventBuilder.create(500, Logger.warning, "event2");
+        DefaultLogEvent event3 = LogEventBuilder.create(1000, Logger.severe, "event3");
+        DefaultLogEvent event4 = LogEventBuilder.create(1999, Logger.info, "event4");
+        DefaultLogEvent event5 = LogEventBuilder.create(2000, Logger.debug, "event5");
+
+        buffer.addEvent(event1);
+        buffer.addEvent(event2);
+        buffer.addEvent(event3);
+        buffer.addEvent(event4);
+        buffer.addEvent(event5);
+
+        List<LogEvent> events = new ArrayList<LogEvent>();
+        buffer.extractEventsBetween(events, 1000, 10000);
+        assertThat(events.size(), is(3));
+        assertThat(events.get(0), is((LogEvent)event3));
+        assertThat(events.get(1), is((LogEvent)event4));
+        assertThat(events.get(2), is((LogEvent)event5));
+
+        // when: I clear the events from the buffer
+        buffer.clear();
+
+        // and: I request the same event query again
+        events.clear();
+        buffer.extractEventsBetween(events, 1000, 10000);
+
+        // then: the event list is empty
+        assertThat(events.size(), is(0));
+    }
 
 }

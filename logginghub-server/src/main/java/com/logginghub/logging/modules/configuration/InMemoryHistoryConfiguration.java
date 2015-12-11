@@ -1,12 +1,12 @@
 package com.logginghub.logging.modules.configuration;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
-
 import com.logginghub.logging.modules.InMemoryHistoryModule;
 import com.logginghub.utils.ByteUtils;
 import com.logginghub.utils.module.Configures;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
 
 @Configures(InMemoryHistoryModule.class) @XmlAccessorType(XmlAccessType.FIELD) public class InMemoryHistoryConfiguration {
     
@@ -18,6 +18,7 @@ import com.logginghub.utils.module.Configures;
     
     @XmlAttribute private boolean disableSafetyChecks = false;
     @XmlAttribute private String indexBatcherTimeout = "1 second";
+    @XmlAttribute private boolean allowClearEvents = false;
 
     public String getLogEventSourceRef() {
         return logEventSourceRef;
@@ -33,6 +34,10 @@ import com.logginghub.utils.module.Configures;
         long maxMemory = Runtime.getRuntime().maxMemory();
         long dataSize = maxMemory / 4 / 10;
         return ByteUtils.format(dataSize);
+    }
+
+    public boolean isAllowClearEvents() {
+        return allowClearEvents;
     }
 
     public void setLogEventSourceRef(String logEventSourceRef) {

@@ -45,6 +45,8 @@ public class ModelBuilder {
         environmentConfiguration.setupDefaultLogConfiguration();
         environmentModel.setClustered(environmentConfiguration.isClustered());
         environmentModel.setEventMemoryMB(environmentConfiguration.getEventMemoryMB());
+        environmentModel.setAutoRequestHistory(environmentConfiguration.getAutoRequestHistory());
+        environmentModel.setDisableAutoScrollPauser(environmentConfiguration.getDisableAutoScrollPauser());
 
         environmentModel.setOutputLogConfiguration(environmentConfiguration.getOutputLogConfiguration());
         environmentModel.setWriteOutputLog(environmentConfiguration.isWriteOutputLog());

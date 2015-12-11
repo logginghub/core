@@ -11,6 +11,7 @@ import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD) public class GeneratorMessageConfiguration {
 
+    @XmlAttribute private int limit = Integer.MAX_VALUE;
     @XmlAttribute private double rateMin = 10;
     @XmlAttribute private double rateMax = 20;
     @XmlAttribute private int trendMin = 10;
@@ -22,6 +23,14 @@ import java.util.List;
 
     @XmlElement private List<VariableConfiguration> variable = new ArrayList<VariableConfiguration>();
     @XmlAttribute private String level = "INFO";
+
+    public void setLimit(int limit) {
+        this.limit = limit;
+    }
+
+    public int getLimit() {
+        return limit;
+    }
 
     public String getPatternFile() {
         return patternFile;

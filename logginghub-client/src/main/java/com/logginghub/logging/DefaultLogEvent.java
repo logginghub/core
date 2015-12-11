@@ -1,5 +1,13 @@
 package com.logginghub.logging;
 
+import com.logginghub.utils.Metadata;
+import com.logginghub.utils.TimeProvider;
+import com.logginghub.utils.logging.Logger;
+import com.logginghub.utils.sof.SerialisableObject;
+import com.logginghub.utils.sof.SofException;
+import com.logginghub.utils.sof.SofReader;
+import com.logginghub.utils.sof.SofWriter;
+
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringWriter;
@@ -8,14 +16,6 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
-
-import com.logginghub.utils.Metadata;
-import com.logginghub.utils.TimeProvider;
-import com.logginghub.utils.logging.Logger;
-import com.logginghub.utils.sof.SerialisableObject;
-import com.logginghub.utils.sof.SofException;
-import com.logginghub.utils.sof.SofReader;
-import com.logginghub.utils.sof.SofWriter;
 
 /**
  * The main model that represents a single item of logging.
@@ -127,8 +127,17 @@ public class DefaultLogEvent implements LogEvent, Serializable, SerialisableObje
         this.threadName = threadName;
     }
 
+    /**
+     * @deprecated  Use setOriginTime instead - it sets the same field. This accessor is here for backwards compatibility and will be removed.
+     * @param localCreationTimeMillis
+     */
+    @Deprecated
     public void setLocalCreationTimeMillis(long localCreationTimeMillis) {
         this.originTime = localCreationTimeMillis;
+    }
+
+    public void setOriginTime(long originTime) {
+        this.originTime = originTime;
     }
 
     public void setLoggerName(String loggerName) {

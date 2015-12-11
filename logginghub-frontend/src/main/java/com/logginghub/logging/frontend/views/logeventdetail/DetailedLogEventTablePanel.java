@@ -1,5 +1,6 @@
 package com.logginghub.logging.frontend.views.logeventdetail;
 
+import com.logginghub.logging.DefaultLogEvent;
 import com.logginghub.logging.DemoLogEventProducer;
 import com.logginghub.logging.DummyLogEventProducer;
 import com.logginghub.logging.LogEvent;
@@ -14,22 +15,44 @@ import com.logginghub.logging.frontend.components.QuickFilterHistoryController;
 import com.logginghub.logging.frontend.configuration.RowFormatConfiguration;
 import com.logginghub.logging.frontend.images.Icons;
 import com.logginghub.logging.frontend.images.Icons.IconIdentifier;
-import com.logginghub.logging.frontend.model.*;
+import com.logginghub.logging.frontend.model.EnvironmentModel;
+import com.logginghub.logging.frontend.model.HighlighterModel;
+import com.logginghub.logging.frontend.model.HubConnectionModel;
+import com.logginghub.logging.frontend.model.LogEventContainer;
+import com.logginghub.logging.frontend.model.LogEventContainerController;
+import com.logginghub.logging.frontend.model.LogEventContainerListener;
+import com.logginghub.logging.frontend.model.ObservableField;
+import com.logginghub.logging.frontend.model.QuickFilterController;
+import com.logginghub.logging.frontend.model.QuickFilterModel;
+import com.logginghub.logging.frontend.model.RowFormatModel;
 import com.logginghub.logging.frontend.views.logeventdetail.time.TimeController;
 import com.logginghub.logging.frontend.views.logeventdetail.time.TimeModel;
 import com.logginghub.logging.frontend.views.logeventdetail.time.TimeView;
-import com.logginghub.logging.frontend.views.timetravel.TimeTravelPanel;
 import com.logginghub.logging.hub.configuration.TimestampVariableRollingFileLoggerConfiguration;
 import com.logginghub.logging.listeners.LogEventListener;
 import com.logginghub.logging.listeners.LoggingMessageListener;
+import com.logginghub.logging.messages.HistoricalDataRequest;
+import com.logginghub.logging.messages.HistoricalDataResponse;
 import com.logginghub.logging.messages.HistoricalIndexResponse;
 import com.logginghub.logging.messages.LoggingMessage;
+import com.logginghub.logging.messages.RequestResponseMessage;
 import com.logginghub.logging.messaging.SocketClient;
 import com.logginghub.logging.messaging.SocketClientManager;
 import com.logginghub.logging.modules.TimestampVariableRollingFileLogger;
 import com.logginghub.logging.repository.LocalDiskRepository;
 import com.logginghub.logging.repository.config.LocalDiskRepositoryConfiguration;
-import com.logginghub.utils.*;
+import com.logginghub.utils.ColourUtils;
+import com.logginghub.utils.FormattedRuntimeException;
+import com.logginghub.utils.MemorySnapshot;
+import com.logginghub.utils.Metadata;
+import com.logginghub.utils.MovingAverage;
+import com.logginghub.utils.Stopwatch;
+import com.logginghub.utils.Throttler;
+import com.logginghub.utils.TimeProvider;
+import com.logginghub.utils.TimeUtils;
+import com.logginghub.utils.TimerUtils;
+import com.logginghub.utils.VisualStopwatchController;
+import com.logginghub.utils.WorkerThread;
 import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.module.ProxyServiceDiscovery;
 import com.logginghub.utils.observable.Binder2;
@@ -43,8 +66,15 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.Dialog.ModalityType;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -63,41 +93,34 @@ import java.util.logging.Level;
  */
 public class DetailedLogEventTablePanel extends JPanel implements LogEventListener {
 
+    private static final int dummyEventsDelayMS = 100;
+    private static final Logger logger = Logger.getLoggerFor(DetailedLogEventTablePanel.class);
+    private static final long serialVersionUID = 1L;
+    private final static long quickFilterTimeout = 200;
+    private final static int eventBatchSizeWarningLevel = 100000;
+    private static int nextDummyApplicationIndex;
+    private final ObservableField<Integer> highestLevelSinceLastSelected = new ObservableField<Integer>(0);
+    private final Object incommingEventBatchLock = new Object();
+    private MouseWheelListener mouseWheelPauser;
     private boolean autoScroll = true;
     private JLabel autoScrollButton;
-
     private Metadata dynamicSettings;
     private EnvironmentModel environmentModel;
-    private static final int dummyEventsDelayMS = 100;
-
     private LogEventContainerController eventController = new LogEventContainerController();
     private EventDetailPanel eventDetailPanel = new EventDetailPanel();
     private int eventsReceived = 0;
     private TimerTask executeQuickFilter = null;
     private int filterCount = 1;
-
-    private ObservableField<Integer> highestLevelSinceLastSelected = new ObservableField<Integer>(0);
     private volatile LogEventContainer incommingEventBatch = new LogEventContainer();
-
-    private Object incommingEventBatchLock = new Object();
-
     private String lastSearchTerm = "";
-
     private List<DetailedLogEventPanelListener> listeners = new CopyOnWriteArrayList<DetailedLogEventPanelListener>();
-
     private MemorySnapshot memorySnapshot = MemorySnapshot.createSnapshot();
-
     private MovingAverage movingAverage = new MovingAverage(5);
-
     private int nextFilterID = 0;
     private TimestampVariableRollingFileLogger outputLogger;
     private LogEventContainerListener outputLogListener = new LogEventContainerListener() {
         @Override
         public void onAdded(LogEvent event) {
-        }
-
-        @Override
-        public void onCleared() {
         }
 
         @Override
@@ -109,66 +132,49 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         @Override
         public void onRemoved(LogEvent removed) {
         }
+
+        @Override
+        public void onCleared() {
+        }
     };
     private ImageIcon pauseIcon;
     private ImageIcon playIcon;
     private boolean playing = true;
-
     private JPanel quickFilterContainerPanel;
     private List<QuickFilterRowPanel> quickFilterRowPanels = new CopyOnWriteArrayList<QuickFilterRowPanel>();
-    private long quickFilterTimeout = 200;
     private Timer quickFilterTimer = new Timer("QuickFilterTimerThread", true);
     private LevelHighlighter rowHighlighter = new LevelHighlighter(RowFormatModel.fromConfiguration(new RowFormatConfiguration()));
     private JLabel statusText;
     private DetailedLogEventTable table;
     private DetailedLogEventTableModel tableModel;
-
     private JScrollPane tableScrollPane;
-
     private boolean writeOutputLog = false;
     private QuickFilterController quickFilterController;
     private JLabel timeTravelButton;
-
-    private static final Logger logger = Logger.getLoggerFor(DetailedLogEventTablePanel.class);
-
-    private static final long serialVersionUID = 1L;
     private TimeController timeController;
     private JSplitPane timeSplitter;
     private int previousTimeSplitterLocation;
-    // TODO : make configurable
-    private int eventBatchSizeWarningLevel = 100000;
     private Throttler eventBatchWarningThrottle = new Throttler(1, TimeUnit.SECONDS);
     private MouseAdapter autoPauser;
     private Binder2 timeModelBinder = new Binder2();
     private LocalDiskRepository binaryExporter;
-
     private DummyLogEventProducer dummyLogEventProducerx;
     private DemoLogEventProducer demoLogEventProducer;
     private boolean historicalView = false;
-    private static int nextDummyApplicationIndex;
     private TimeView timeView;
     private JSplitPane eventDetailsSplitPane;
 
-    public DetailedLogEventTablePanel() {
-        setLayout(new BorderLayout());
-    }
-
-    public DetailedLogEventTablePanel(JMenuBar menuBar, String propertiesName, final LogEventContainerController eventController, TimeProvider
-            timeProvider, boolean showHeapSlider) {
+    public DetailedLogEventTablePanel(JMenuBar menuBar,
+                                      String propertiesName,
+                                      final LogEventContainerController eventController,
+                                      TimeProvider timeProvider,
+                                      boolean showHeapSlider) {
         this();
 
         this.eventController = eventController;
 
         tableModel = new DetailedLogEventTableModel(eventController);
         table = new DetailedLogEventTable(tableModel, rowHighlighter, propertiesName);
-
-        // table.addComponentListener(new ComponentAdapter() {
-        // public void componentResized(ComponentEvent e) {
-        // if (playing && autoScroll) {
-        // scrollToBottom();
-        // }
-        // }
-        // });
 
         table.setName("logEventTable");
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
@@ -177,12 +183,13 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
 
         tableScrollPane = new JScrollPane(table);
 
-        tableScrollPane.addMouseWheelListener(new MouseWheelListener() {
+        mouseWheelPauser = new MouseWheelListener() {
             @Override
             public void mouseWheelMoved(MouseWheelEvent e) {
                 pause();
             }
-        });
+        };
+        tableScrollPane.addMouseWheelListener(mouseWheelPauser);
 
         autoPauser = new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
@@ -198,8 +205,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
             bottomButton.addMouseListener(autoPauser);
         } catch (Exception e) {
             // This goes bang on macs - need an alternative approach
-
-            tableScrollPane.getVerticalScrollBar().addMouseListener(new MouseAdapter() {
+            autoPauser = new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
                     pause();
@@ -214,9 +220,8 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
                 public void mouseDragged(MouseEvent e) {
                     pause();
                 }
-            });
-
-
+            };
+            tableScrollPane.getVerticalScrollBar().addMouseListener(autoPauser);
         }
 
         JPanel filtersAndButtonsPanel = new JPanel();
@@ -282,56 +287,13 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         filtersAndButtonsPanel.add(eastPanel, BorderLayout.EAST);
 
         quickFilterContainerPanel = new JPanel(new MigLayout("gap 2, ins 2", "[fill, grow]", "[fill, grow]"));
-        // quickFilterPanel.add(new JLabel("Quick filter"), BorderLayout.WEST);
-
-        // quickFilterTextField = new QuickFilterHistoryTextField();
-        // quickFilterPanel.add(quickFilterTextField, BorderLayout.CENTER);
 
         QuickFilterRowPanel quickFilterRowPanel = createQuickFilterRow();
         quickFilterRowPanel.setAndOrVisible(false);
         quickFilterContainerPanel.add(quickFilterRowPanel, "wrap");
         quickFilterRowPanels.add(quickFilterRowPanel);
 
-        // regexRadioButton = new JRadioButton("Regex");
-        // regexRadioButton.setSelected(false);
-        // quickFilterPanel.add(regexRadioButton, BorderLayout.EAST);
-
         filtersAndButtonsPanel.add(quickFilterContainerPanel, BorderLayout.CENTER);
-
-        // JPanel quickLevelFilterPanel = new JPanel(new BorderLayout());
-        // Level[] levels = new Level[] { Level.SEVERE, Level.WARNING,
-        // Level.INFO, Level.CONFIG, Level.FINE, Level.FINER, Level.FINEST,
-        // Level.ALL };
-        // quickLevelFilterCombo = new JComboBox(levels);
-        // quickLevelFilterCombo.setName("quickLevelFilterCombo");
-        // quickLevelFilterCombo.setSelectedItem(Level.ALL);
-        // quickLevelFilterCombo.addItemListener(new ItemListener() {
-        // public void itemStateChanged(ItemEvent e) {
-        // if (e.getStateChange() == ItemEvent.SELECTED) {
-        // onQuickLevelFilterComboChange();
-        // }
-        // }
-        // });
-        // quickLevelFilterPanel.add(quickLevelFilterCombo,
-        // BorderLayout.CENTER);
-
-        // topPanel.add(quickLevelFilterPanel, BorderLayout.WEST);
-
-        // getFirstQuickFilter().getSelectedLevel().addListenerAndNotifyCurrent(new
-        // ObservablePropertyListener<Level>() {
-        // @Override public void onPropertyChanged(Level oldValue, Level
-        // newValue) {
-        // onQuickLevelFilterComboChange();
-        // }
-        // });
-        //
-        // getFirstQuickFilter().getIsRegex().addListener(new
-        // ObservablePropertyListener<Boolean>() {
-        // @Override public void onPropertyChanged(Boolean oldValue, Boolean
-        // newValue) {
-        // updateQuickFilterTimer();
-        // }
-        // });
 
         eventDetailsSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         eventDetailsSplitPane.setName("eventDetailsSplitPane");
@@ -339,16 +301,11 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         eventDetailsSplitPane.setDividerSize(2);
         eventDetailsSplitPane.setDividerLocation(300);
 
-        // textAreaScrollPane = new JScrollPane(eventDetailPanel);
-        // textAreaScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        // textAreaScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-
         eventDetailsSplitPane.setRightComponent(eventDetailPanel);
 
         final TimeModel model = new TimeModel();
         timeController = new TimeController(model, eventController);
         long now = System.currentTimeMillis();
-        // model.getEnd().set(TimeUtils.before(now, "1 hour"));
         model.getViewStart().set(TimeUtils.before(now, "1 minute"));
 
         timeView = new TimeView();
@@ -457,12 +414,95 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         });
     }
 
-    public void setDetailPaneOrientation(boolean horizontal) {
-        if (horizontal) {
-            eventDetailsSplitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
-        } else {
-            eventDetailsSplitPane.setOrientation(JSplitPane.HORIZONTAL_SPLIT);
+    public DetailedLogEventTablePanel() {
+        setLayout(new BorderLayout());
+    }
+
+    private void setupMenuBar(JMenuBar menuBar) {
+
+        MenuElement[] subElements = menuBar.getSubElements();
+        for (MenuElement menuElement : subElements) {
+            Component component = menuElement.getComponent();
+            if (component instanceof JMenu) {
+                JMenu jMenu = (JMenu) component;
+                if (jMenu.getText().equals("Search")) {
+                    // Already have a menu attacked
+                    return;
+                }
+            }
         }
+
+        JMenu searchMenu = new JMenu("Search");
+        menuBar.add(searchMenu);
+
+        JMenuItem toggleScrolling = new JMenuItem("Toggle scrolling");
+        toggleScrolling.addActionListener(new ReflectionDispatchActionListener("toggleScrolling", this));
+        toggleScrolling.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
+        searchMenu.add(toggleScrolling);
+
+        JMenuItem clearEvents = new JMenuItem("Clear events");
+        clearEvents.addActionListener(new ReflectionDispatchActionListener("clearEvents", this));
+        clearEvents.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_MASK));
+        searchMenu.add(clearEvents);
+        searchMenu.addSeparator();
+
+        JMenuItem findForwards = new JMenuItem("Find fowards");
+        JMenuItem findForwardsAgain = new JMenuItem("Find forwards again");
+        JMenuItem findBackwards = new JMenuItem("Find backwards");
+        JMenuItem findBackwardsAgain = new JMenuItem("Find backwards again");
+
+        findForwards.addActionListener(new ReflectionDispatchActionListener("findForwards", this));
+        findForwardsAgain.addActionListener(new ReflectionDispatchActionListener("findForwardsAgain", this));
+        findBackwards.addActionListener(new ReflectionDispatchActionListener("findBackwards", this));
+        findBackwardsAgain.addActionListener(new ReflectionDispatchActionListener("findBackwardsAgain", this));
+
+        findForwards.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_MASK));
+        findForwardsAgain.setAccelerator(KeyStroke.getKeyStroke('f'));
+
+        findBackwards.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.CTRL_MASK));
+        findBackwardsAgain.setAccelerator(KeyStroke.getKeyStroke('b'));
+
+        searchMenu.add(findForwards);
+        searchMenu.add(findForwardsAgain);
+        searchMenu.add(findBackwards);
+        searchMenu.add(findBackwardsAgain);
+        searchMenu.addSeparator();
+
+        int bookmarks = 9;
+        for (int i = 1; i < bookmarks; i++) {
+            JMenuItem bookmark = new JMenuItem("Add bookmark " + i);
+            bookmark.addActionListener(new ReflectionDispatchActionListener("addBookmark", new Object[]{i}, this));
+            bookmark.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_0 + i, InputEvent.CTRL_MASK));
+            searchMenu.add(bookmark);
+        }
+
+        searchMenu.addSeparator();
+
+        for (int i = 1; i < bookmarks; i++) {
+            JMenuItem bookmark = new JMenuItem("Go to bookmark " + i);
+            bookmark.addActionListener(new ReflectionDispatchActionListener("gotoBookmark", new Object[]{i}, this));
+            bookmark.setAccelerator(KeyStroke.getKeyStroke((char) ('0' + i)));
+            searchMenu.add(bookmark);
+        }
+
+        JMenu levelMenu = new JMenu("Levels");
+        menuBar.add(levelMenu);
+
+        addLevelFilterMenuOption(levelMenu, Level.SEVERE, KeyEvent.VK_F8);
+        addLevelFilterMenuOption(levelMenu, Level.WARNING, KeyEvent.VK_F7);
+        addLevelFilterMenuOption(levelMenu, Level.INFO, KeyEvent.VK_F6);
+        addLevelFilterMenuOption(levelMenu, Level.CONFIG, KeyEvent.VK_F5);
+        addLevelFilterMenuOption(levelMenu, Level.FINE, KeyEvent.VK_F4);
+        addLevelFilterMenuOption(levelMenu, Level.FINER, KeyEvent.VK_F3);
+        addLevelFilterMenuOption(levelMenu, Level.FINEST, KeyEvent.VK_F2);
+        addLevelFilterMenuOption(levelMenu, Level.ALL, KeyEvent.VK_F1);
+
+    }
+
+    protected void pause() {
+        tableModel.pause();
+        playing = false;
+        autoScrollButton.setIcon(playIcon);
     }
 
     protected void toggleTimeViewer() {
@@ -482,23 +522,243 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         }
     }
 
+    public void clearEvents() {
+        eventController.clear();
+        eventDetailPanel.clear();
+        tableModel.fireTableDataChanged();
+        System.gc();
+        updateStatusText();
+    }
+
+    public void togglePlaying() {
+        if (playing) {
+            pause();
+        } else {
+            play();
+        }
+    }
+
+    protected void addQuickFilter() {
+
+        if (filterCount == 1) {
+            // Convert the undecorated filter into a row with a delete button
+            QuickFilterRowPanel existing = (QuickFilterRowPanel) quickFilterContainerPanel.getComponent(0);
+            JPanel existingWrapped = createWrapperPanel(existing);
+            quickFilterContainerPanel.removeAll();
+            quickFilterContainerPanel.add(existingWrapped, "wrap");
+
+            // Add the and/or control
+            existing.setAndOrVisible(true);
+        }
+
+        QuickFilterModel quickFilterModel = new QuickFilterModel();
+        environmentModel.getQuickFilterModels().add(quickFilterModel);
+        QuickFilterRowPanel quickFilterRowPanel = createQuickFilterRow();
+
+        QuickFilterHistoryController quickFilterHistoryController = new QuickFilterHistoryController(environmentModel.getQuickFilterHistoryModel());
+        quickFilterRowPanel.bind(quickFilterHistoryController, quickFilterModel, quickFilterController.getIsAndFilter());
+
+        final JPanel wrapperPanel = createWrapperPanel(quickFilterRowPanel);
+
+        filterCount++;
+
+        quickFilterContainerPanel.add(wrapperPanel, "wrap");
+        quickFilterContainerPanel.validate();
+
+        quickFilterModel.getLevelFilter().get().getSelectedLevel().addListener(new ObservablePropertyListener<Level>() {
+            @Override
+            public void onPropertyChanged(Level oldValue, Level newValue) {
+                notifyLevelChanges();
+            }
+        });
+    }
+
+    private QuickFilterRowPanel createQuickFilterRow() {
+        QuickFilterRowPanel quickFilterRowPanel = new QuickFilterRowPanel();
+        quickFilterRowPanel.setName("quickFilter-" + nextFilterID++);
+        return quickFilterRowPanel;
+    }
+
+    public void updateStatusText() {
+
+        movingAverage.addValue(eventsReceived);
+        eventsReceived = 0;
+
+        memorySnapshot.refreshSnapshot();
+
+        int eventQueueCount;
+        int eventQueueProcessed;
+
+        EventQueue systemEventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
+        if (systemEventQueue instanceof CountingEventQueue) {
+            CountingEventQueue eventQueue = (CountingEventQueue) systemEventQueue;
+            eventQueueCount = eventQueue.getCount();
+            eventQueueProcessed = eventQueue.getProcessedSinceLastCheck();
+        } else {
+            eventQueueCount = 0;
+            eventQueueProcessed = 0;
+        }
+
+        boolean detailed = Boolean.getBoolean("detailedLogEventTablePanel.detailedStatus");
+
+        if (detailed) {
+            statusText.setText(String.format(
+                    "%d events | %d filtered | event buffer %.1f %%  | memory usage %.1f %%  | %.0f events/sec | %d events in next batch | Awt " +
+                    "queue size %d | Awt processed %d",
+                    eventController.getLiveEventsThatPassFilter().size(),
+                    eventController.getLiveEventsThatFailedFilter().size(),
+                    eventController.getUsedPercentage(),
+                    memorySnapshot.getAvailableMemoryPercentage(),
+                    movingAverage.calculateMovingAverage(),
+                    incommingEventBatch.size(),
+                    eventQueueCount,
+                    eventQueueProcessed));
+        } else {
+            statusText.setText(String.format("%d events | %d filtered | %.0f events/sec | event buffer %.1f %%  | memory usage %.1f %%",
+                                             eventController.getLiveEventsThatPassFilter().size(),
+                                             eventController.getLiveEventsThatFailedFilter().size(),
+                                             movingAverage.calculateMovingAverage(),
+                                             eventController.getUsedPercentage(),
+                                             memorySnapshot.getAvailableMemoryPercentage()));
+        }
+    }
+
+    private void scrollToBottom() {
+
+        // Out.out("Model row count at scroll time is {}", table.getRowCount());
+
+        int row = table.getRowCount() - 2;
+
+        // Out.out("Row count -1 is {}", row);
+
+        Rectangle cellRect = table.getCellRect(row, 0, true);
+
+        // Out.out("Cell rect is {}", cellRect);
+        table.scrollRectToVisible(cellRect);
+    }
+
+    private void addLevelFilterMenuOption(JMenu levelMenu, final Level level, int key) {
+        JMenuItem levelItem = new JMenuItem(level.getLocalizedName());
+        levelItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                getFirstQuickFilter().getModel().getLevelFilter().get().getSelectedLevel().set(level);
+                // quickLevelFilterCombo.setSelectedItem(level);
+            }
+        });
+        levelItem.setAccelerator(KeyStroke.getKeyStroke(key, InputEvent.CTRL_MASK));
+        levelMenu.add(levelItem);
+    }
+
     private boolean isTimeViewerVisible() {
         return previousTimeSplitterLocation == 0;
     }
 
-    public void addBookmark(Integer bookmark) {
-        table.addBookmark(bookmark.intValue());
+    protected void play() {
+        tableModel.play();
+        playing = true;
+        autoScrollButton.setIcon(pauseIcon);
+    }
+
+    private JPanel createWrapperPanel(final QuickFilterRowPanel quickFilterRowPanel) {
+        final JPanel wrapperPanel = new JPanel(new MigLayout("gap 0, ins 0", "[grow, fill][shrink, fill]", "[grow,fill]"));
+
+        JLabel removeButton = new JLabel();
+        removeButton.setIcon(Icons.get(IconIdentifier.Delete));
+        removeButton.setToolTipText("Remove this quick filter");
+        removeButton.addMouseListener(new MouseAdapter() {
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                quickFilterContainerPanel.remove(wrapperPanel);
+                quickFilterContainerPanel.validate();
+                filterCount--;
+
+                environmentModel.getQuickFilterModels().remove(quickFilterRowPanel.getModel());
+
+                if (filterCount == 1) {
+                    updateFirstFilterState();
+                }
+            }
+        });
+
+        removeButton.setName(quickFilterRowPanel.getName() + ".remove");
+
+        wrapperPanel.add(quickFilterRowPanel);
+        wrapperPanel.add(removeButton);
+        return wrapperPanel;
+    }
+
+    protected void notifyLevelChanges() {
+
+        int lowestLevel = Level.SEVERE.intValue();
+        ObservableList<QuickFilterModel> quickFilterModels = environmentModel.getQuickFilterModels();
+        for (QuickFilterModel model : quickFilterModels) {
+            lowestLevel = Math.min(lowestLevel, model.getLevelFilter().get().getSelectedLevel().get().intValue());
+        }
+
+        for (DetailedLogEventPanelListener detailedLogEventPanelListener : listeners) {
+            detailedLogEventPanelListener.onLevelFilterChanged(lowestLevel);
+        }
+
+        saveQuickFilterLevel(Level.parse("" + lowestLevel));
+    }
+
+    public QuickFilterRowPanel getFirstQuickFilter() {
+        return quickFilterRowPanels.get(0);
+    }
+
+    protected void updateFirstFilterState() {
+        if (filterCount == 1) {
+            JComponent remainingWrapper = (JComponent) quickFilterContainerPanel.getComponent(0);
+            QuickFilterRowPanel existing = (QuickFilterRowPanel) remainingWrapper.getComponent(0);
+
+            // Forceably re-enabled the filter
+            existing.getModel().getIsEnabled().set(true);
+
+            // Chop off the and/or button
+            existing.setAndOrVisible(false);
+
+            // Clear and re-add the undecorated panel
+            quickFilterContainerPanel.removeAll();
+            quickFilterContainerPanel.add(existing, "wrap");
+            quickFilterContainerPanel.validate();
+
+        }
+    }
+
+    protected void saveQuickFilterLevel(Level selectedLevel) {
+        if (dynamicSettings != null) {
+            dynamicSettings.put("detailedLogEventTablePanel.quickFilterLevel", selectedLevel.getName());
+        }
+    }
+
+    public synchronized void activateDemoSource() {
+        logger.info("Activating demo source");
+        if (demoLogEventProducer == null) {
+            demoLogEventProducer = new DemoLogEventProducer();
+            demoLogEventProducer.produceEventsOnTimer(1, dummyEventsDelayMS, 5);
+            demoLogEventProducer.addLogEventListener(environmentModel);
+        } else {
+            demoLogEventProducer.produceEventsOnTimer(1, dummyEventsDelayMS, 5);
+        }
+    }
+
+    public synchronized void activateDummySource() {
+        logger.info("Activating dummy source");
+        if (dummyLogEventProducerx == null) {
+
+            String appName = "TestApplication-" + nextDummyApplicationIndex++;
+            dummyLogEventProducerx = new DummyLogEventProducer(appName);
+            dummyLogEventProducerx.produceEventsOnTimer(1, dummyEventsDelayMS, 5);
+
+            dummyLogEventProducerx.addLogEventListener(environmentModel);
+        } else {
+            dummyLogEventProducerx.produceEventsOnTimer(1, dummyEventsDelayMS, 5);
+        }
     }
 
     public void addChartCreationRequestListener(DetailedLogEventPanelListener listener) {
         listeners.add(listener);
-    }
-
-    public void addHighlighter(com.logginghub.logging.frontend.model.HighlighterModel phraseHighlighterModel) {
-        final PhraseHighlighter highlighter = new PhraseHighlighter(phraseHighlighterModel.getString(HighlighterModel.Fields.Phrase));
-        Color background = ColourUtils.parseColor(phraseHighlighterModel.getString(HighlighterModel.Fields.ColourHex));
-        highlighter.setHighlightBackgroundColour(background);
-        table.addHighlighter(highlighter);
     }
 
     @Override
@@ -568,632 +828,9 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
                 }
             }
         });
-    }
 
-    protected void navigateToTime(long time) {
-        int row = tableModel.findFirstTime(time);
-        logger.fine("Navigating to time '{}' - found row index '{}'", Logger.toDateString(time), row);
-        if (row != -1) {
-            table.changeSelection(row, -1, false, false);
-            Rectangle cellRect = table.getCellRect(row, 0, true);
-            logger.fine("CellRect is '{}'", cellRect);
-
-            scrollToCenter(table, row, 0);
-        }
-    }
-
-    public static void scrollToCenter(JTable table, int rowIndex, int vColIndex) {
-        if (!(table.getParent() instanceof JViewport)) {
-            return;
-        }
-        JViewport viewport = (JViewport) table.getParent();
-        Rectangle rect = table.getCellRect(rowIndex, vColIndex, true);
-        Rectangle viewRect = viewport.getViewRect();
-        rect.setLocation(rect.x - viewRect.x, rect.y - viewRect.y);
-
-        int centerX = (viewRect.width - rect.width) / 2;
-        int centerY = (viewRect.height - rect.height) / 2;
-        if (rect.x < centerX) {
-            centerX = -centerX;
-        }
-        if (rect.y < centerY) {
-            centerY = -centerY;
-        }
-        rect.translate(centerX, centerY);
-        viewport.scrollRectToVisible(rect);
-    }
-
-    public void clearEvents() {
-        eventController.clear();
-        eventDetailPanel.clear();
-        tableModel.fireTableDataChanged();
-        System.gc();
-        updateStatusText();
-    }
-
-    public void closeOutputLog() {
-        if (outputLogger != null) {
-            outputLogger.close();
-        }
-    }
-
-    public void findBackwards() {
-        String term = JOptionPane.showInputDialog(getTopLevelAncestor(), "Find backwards", lastSearchTerm);
-        if (term != null) {
-            findBackwards(term);
-        }
-    }
-
-    public void findBackwardsAgain() {
-        if (lastSearchTerm.length() > 0) {
-            findBackwards(lastSearchTerm);
-        } else {
-            findBackwards();
-        }
-    }
-
-    public void findForwards() {
-        String term = JOptionPane.showInputDialog(getTopLevelAncestor(), "Find forwards", lastSearchTerm);
-        if (term != null) {
-            findForwards(term);
-        }
-    }
-
-    public void findForwardsAgain() {
-        if (lastSearchTerm.length() > 0) {
-            findForwards(lastSearchTerm);
-        } else {
-            findForwards();
-        }
-    }
-
-    public int getCurrentBatchSize() {
-        return incommingEventBatch.size();
-    }
-
-    public EnvironmentModel getEnvironmentModel() {
-        return environmentModel;
-    }
-
-    public QuickFilterRowPanel getFirstQuickFilter() {
-        return quickFilterRowPanels.get(0);
-    }
-
-    public ObservableField<Integer> getHighestStateSinceLastSelected() {
-        return highestLevelSinceLastSelected;
-    }
-
-    public int getLevelFilter() {
-        int intValue = getFirstQuickFilter().getModel().getLevelFilter().get().getSelectedLevel().get().intValue();
-        // int intValue = ((Level)
-        // quickLevelFilterCombo.getSelectedItem()).intValue();
-        return intValue;
-    }
-
-    public DetailedLogEventTableModel getTableModel() {
-        return tableModel;
-    }
-
-    public void gotoBookmark(Integer bookmark) {
-        table.gotoBookmark(bookmark.intValue());
-    }
-
-    public void onNewLogEvent(final LogEvent event) {
-        logger.fine("New event received in logeventdetail panel '{}'", event);
-        Stopwatch sw = Stopwatch.start("DetailedLogEventPanel.onNewLogEvent");
-        eventsReceived++;
-
-        synchronized (highestLevelSinceLastSelected) {
-            highestLevelSinceLastSelected.setIfGreater(event.getLevel());
-        }
-
-        synchronized (incommingEventBatchLock) {
-            // jshaw : not sure what I was trying to do here, its just discarding events if they
-            // arrive to quickly. This should be a) configurable, and b) done somewhere higher up
-            // the chain?
-            // if (incommingEventBatch.size() < 10000) {
-            // incommingEventBatch.add(event);
-            // }
-
-            incommingEventBatch.add(event);
-            if (incommingEventBatch.size() > eventBatchSizeWarningLevel && eventBatchWarningThrottle.isOkToFire()) {
-                logger.warn("The incoming event batch contains '{}' items (over warning level of '{}')",
-                            incommingEventBatch.size(),
-                            eventBatchSizeWarningLevel);
-            }
-        }
-
-        sw.stop();
-        VisualStopwatchController.getInstance().add(sw);
-    }
-
-    public void removeChartCreationRequestListener(DetailedLogEventPanelListener listener) {
-        listeners.remove(listener);
-    }
-
-    public void setAutoLockWarning(boolean selected) {
-        environmentModel.setAutoLockWarning(selected);
-    }
-
-    public void setAutoScroll(boolean selected) {
-        autoScroll = selected;
-        if (selected) {
-            // scrollToBottom();
-        }
-    }
-
-    public void setDynamicSettings(Metadata dynamicSettings) {
-        this.dynamicSettings = dynamicSettings;
-        initialiseFromSettings(dynamicSettings);
-    }
-
-    public void setEnvironmentModel(EnvironmentModel environmentModel) {
-        this.environmentModel = environmentModel;
-        loadFromModel(environmentModel);
-    }
-
-    public void setQuickLevelFilter(Level level) {
-        // quickLevelFilterCombo.setSelectedItem(level);
-        getFirstQuickFilter().getModel().getLevelFilter().get().getSelectedLevel().set(level);
-    }
-
-    public void setRepositoryClient(/* KryoRepositoryClient repositoryClient */) {
-        // this.repositoryClient = repositoryClient;
-    }
-
-    public void setSelectedRowFormat(RowFormatModel selectedRowFormat) {
-        rowHighlighter.setSelectedRowFormat(selectedRowFormat);
-    }
-
-    public void setWriteOutputLog(boolean selected) {
-        if (writeOutputLog != selected) {
-            writeOutputLog = selected;
-
-            if (writeOutputLog) {
-                eventController.addLogEventContainerListener(outputLogListener);
-            } else {
-                eventController.removeLogEventContainerListener(outputLogListener);
-            }
-        }
-    }
-
-    public void togglePlaying() {
-        if (playing) {
-            pause();
-        } else {
-            play();
-        }
-    }
-
-    public void updateStatusText() {
-
-        movingAverage.addValue(eventsReceived);
-        eventsReceived = 0;
-
-        memorySnapshot.refreshSnapshot();
-
-        int eventQueueCount;
-        int eventQueueProcessed;
-
-        EventQueue systemEventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-        if (systemEventQueue instanceof CountingEventQueue) {
-            CountingEventQueue eventQueue = (CountingEventQueue) systemEventQueue;
-            eventQueueCount = eventQueue.getCount();
-            eventQueueProcessed = eventQueue.getProcessedSinceLastCheck();
-        } else {
-            eventQueueCount = 0;
-            eventQueueProcessed = 0;
-        }
-
-        boolean detailed = Boolean.getBoolean("detailedLogEventTablePanel.detailedStatus");
-
-        if (detailed) {
-            statusText.setText(String.format(
-                    "%d events | %d filtered | event buffer %.1f %%  | memory usage %.1f %%  | %.0f events/sec | %d events in next batch | Awt " +
-                    "queue size %d | Awt processed %d",
-                    eventController.getLiveEventsThatPassFilter().size(),
-                    eventController.getLiveEventsThatFailedFilter().size(),
-                    eventController.getUsedPercentage(),
-                    memorySnapshot.getAvailableMemoryPercentage(),
-                    movingAverage.calculateMovingAverage(),
-                    incommingEventBatch.size(),
-                    eventQueueCount,
-                    eventQueueProcessed));
-        } else {
-            statusText.setText(String.format("%d events | %d filtered | %.0f events/sec | event buffer %.1f %%  | memory usage %.1f %%",
-                                             eventController.getLiveEventsThatPassFilter().size(),
-                                             eventController.getLiveEventsThatFailedFilter().size(),
-                                             movingAverage.calculateMovingAverage(),
-                                             eventController.getUsedPercentage(),
-                                             memorySnapshot.getAvailableMemoryPercentage()));
-        }
-    }
-
-    private void addLevelFilterMenuOption(JMenu levelMenu, final Level level, int key) {
-        JMenuItem levelItem = new JMenuItem(level.getLocalizedName());
-        levelItem.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                getFirstQuickFilter().getModel().getLevelFilter().get().getSelectedLevel().set(level);
-                // quickLevelFilterCombo.setSelectedItem(level);
-            }
-        });
-        levelItem.setAccelerator(KeyStroke.getKeyStroke(key, Event.CTRL_MASK));
-        levelMenu.add(levelItem);
-    }
-
-    private QuickFilterRowPanel createQuickFilterRow() {
-        QuickFilterRowPanel quickFilterRowPanel = new QuickFilterRowPanel();
-        quickFilterRowPanel.setName("quickFilter-" + nextFilterID++);
-        return quickFilterRowPanel;
-    }
-
-    private JPanel createWrapperPanel(final QuickFilterRowPanel quickFilterRowPanel) {
-        final JPanel wrapperPanel = new JPanel(new MigLayout("gap 0, ins 0", "[grow, fill][shrink, fill]", "[grow,fill]"));
-
-        JLabel removeButton = new JLabel();
-        removeButton.setIcon(Icons.get(IconIdentifier.Delete));
-        removeButton.setToolTipText("Remove this quick filter");
-        removeButton.addMouseListener(new MouseAdapter() {
-
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                quickFilterContainerPanel.remove(wrapperPanel);
-                quickFilterContainerPanel.validate();
-                filterCount--;
-
-                environmentModel.getQuickFilterModels().remove(quickFilterRowPanel.getModel());
-
-                if (filterCount == 1) {
-                    updateFirstFilterState();
-                }
-            }
-        });
-
-        removeButton.setName(quickFilterRowPanel.getName() + ".remove");
-
-        wrapperPanel.add(quickFilterRowPanel);
-        wrapperPanel.add(removeButton);
-        return wrapperPanel;
-    }
-
-    private void findBackwards(String term) {
-        int selectedRow = table.getSelectedRow();
-        if (selectedRow == -1 || selectedRow == 0) {
-            selectedRow = 1;
-        }
-
-        MessageContainsFilter filter = new MessageContainsFilter(term);
-
-        int row = tableModel.findPreviousEvent(selectedRow - 1, filter);
-        if (row != -1) {
-            table.changeSelection(row, -1, false, false);
-        }
-
-        lastSearchTerm = term;
-    }
-
-    private void findForwards(String term) {
-        int selectedRow = table.getSelectedRow();
-        if (selectedRow == -1) {
-            selectedRow = 0;
-        }
-
-        MessageContainsFilter filter = new MessageContainsFilter(term);
-
-        int row = tableModel.findNextEvent(selectedRow + 1, filter);
-        if (row != -1) {
-            table.changeSelection(row, -1, false, false);
-        }
-
-        lastSearchTerm = term;
-    }
-
-    private void initialiseFromSettings(Metadata dynamicSettings) {
-        String level = dynamicSettings.getString("detailedLogEventTablePanel.quickFilterLevel", Level.INFO.getName());
-        setQuickLevelFilter(Level.parse(level));
-        // filterRowPanel.getSelectedLevel().set(Level.parse(level));
-        // quickLevelFilterCombo.setSelectedItem();
-
-        int timeSplitterPosition = dynamicSettings.getInt("timeSplitterPosition", 40);
-        previousTimeSplitterLocation = dynamicSettings.getInt("previousTimeSplitterLocation", 0);
-
-        logger.fine("Initialising the time splitter : position is '{}' and previous location is '{}'",
-                    timeSplitterPosition,
-                    previousTimeSplitterLocation);
-        timeSplitter.setDividerLocation(timeSplitterPosition);
-    }
-
-    private void loadFromModel(EnvironmentModel model) {
-        List<com.logginghub.logging.frontend.model.HighlighterModel> highlighters = model.getHighlighters();
-        for (com.logginghub.logging.frontend.model.HighlighterModel highlighterModel : highlighters) {
-            addHighlighter(highlighterModel);
-        }
-
-        setAutoLockWarning(model.isAutoLocking());
-
-        TimestampVariableRollingFileLoggerConfiguration outputLogConfiguration = model.getOutputLogConfiguration();
-        if (outputLogConfiguration != null) {
-            setupOutputLog(outputLogConfiguration);
-        }
-
-        setWriteOutputLog(model.isWriteOutputLog());
-    }
-
-    private void onQuickLevelFilterComboChange() {
-        // TODO : some of this might have been important
-
-        // Level selectedLevel = getFirstQuickFilter().getSelectedLevel().get();
-        //
-        // // Level selectedLevel = (Level)
-        // // quickLevelFilterCombo.getSelectedItem();
-        // Tracer.trace("Quick level filter changed to '{}'", selectedLevel);
-        //
-        // if (quickLevelFilter == null) {
-        // quickLevelFilter = new SeverityFilter(selectedLevel.intValue());
-        // tableModel.addFilter(quickLevelFilter, null);
-        // }
-        // else {
-        // quickLevelFilter.setSeverity(selectedLevel.intValue());
-        // tableModel.refreshFilters(null);
-        // }
-        //
-        // for (DetailedLogEventPanelListener detailedLogEventPanelListener :
-        // listeners) {
-        // detailedLogEventPanelListener.onLevelFilterChanged(selectedLevel.intValue());
-        // }
-        // saveQuickFilterLevel(selectedLevel);
-    }
-
-    private void scrollToBottom() {
-
-        // Out.out("Model row count at scroll time is {}", table.getRowCount());
-
-        int row = table.getRowCount() - 2;
-
-        // Out.out("Row count -1 is {}", row);
-
-        Rectangle cellRect = table.getCellRect(row, 0, true);
-
-        // Out.out("Cell rect is {}", cellRect);
-        table.scrollRectToVisible(cellRect);
-    }
-
-    private void setupMenuBar(JMenuBar menuBar) {
-
-        MenuElement[] subElements = menuBar.getSubElements();
-        for (MenuElement menuElement : subElements) {
-            Component component = menuElement.getComponent();
-            if (component instanceof JMenu) {
-                JMenu jMenu = (JMenu) component;
-                if (jMenu.getText().equals("Search")) {
-                    // Already have a menu attacked
-                    return;
-                }
-            }
-        }
-
-        JMenu searchMenu = new JMenu("Search");
-        menuBar.add(searchMenu);
-
-        JMenuItem toggleScrolling = new JMenuItem("Toggle scrolling");
-        toggleScrolling.addActionListener(new ReflectionDispatchActionListener("toggleScrolling", this));
-        toggleScrolling.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Event.CTRL_MASK));
-        searchMenu.add(toggleScrolling);
-
-        JMenuItem clearEvents = new JMenuItem("Clear events");
-        clearEvents.addActionListener(new ReflectionDispatchActionListener("clearEvents", this));
-        clearEvents.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, Event.CTRL_MASK));
-        searchMenu.add(clearEvents);
-        searchMenu.addSeparator();
-
-        JMenuItem findForwards = new JMenuItem("Find fowards");
-        JMenuItem findForwardsAgain = new JMenuItem("Find forwards again");
-        JMenuItem findBackwards = new JMenuItem("Find backwards");
-        JMenuItem findBackwardsAgain = new JMenuItem("Find backwards again");
-
-        findForwards.addActionListener(new ReflectionDispatchActionListener("findForwards", this));
-        findForwardsAgain.addActionListener(new ReflectionDispatchActionListener("findForwardsAgain", this));
-        findBackwards.addActionListener(new ReflectionDispatchActionListener("findBackwards", this));
-        findBackwardsAgain.addActionListener(new ReflectionDispatchActionListener("findBackwardsAgain", this));
-
-        findForwards.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, Event.CTRL_MASK));
-        findForwardsAgain.setAccelerator(KeyStroke.getKeyStroke('f'));
-
-        findBackwards.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, Event.CTRL_MASK));
-        findBackwardsAgain.setAccelerator(KeyStroke.getKeyStroke('b'));
-
-        searchMenu.add(findForwards);
-        searchMenu.add(findForwardsAgain);
-        searchMenu.add(findBackwards);
-        searchMenu.add(findBackwardsAgain);
-        searchMenu.addSeparator();
-
-        int bookmarks = 9;
-        for (int i = 1; i < bookmarks; i++) {
-            JMenuItem bookmark = new JMenuItem("Add bookmark " + i);
-            bookmark.addActionListener(new ReflectionDispatchActionListener("addBookmark", new Object[]{i}, this));
-            bookmark.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_0 + i, Event.CTRL_MASK));
-            searchMenu.add(bookmark);
-        }
-
-        searchMenu.addSeparator();
-
-        for (int i = 1; i < bookmarks; i++) {
-            JMenuItem bookmark = new JMenuItem("Go to bookmark " + i);
-            bookmark.addActionListener(new ReflectionDispatchActionListener("gotoBookmark", new Object[]{i}, this));
-            bookmark.setAccelerator(KeyStroke.getKeyStroke((char) ('0' + i)));
-            searchMenu.add(bookmark);
-        }
-
-        JMenu levelMenu = new JMenu("Levels");
-        menuBar.add(levelMenu);
-
-        addLevelFilterMenuOption(levelMenu, Level.SEVERE, KeyEvent.VK_F8);
-        addLevelFilterMenuOption(levelMenu, Level.WARNING, KeyEvent.VK_F7);
-        addLevelFilterMenuOption(levelMenu, Level.INFO, KeyEvent.VK_F6);
-        addLevelFilterMenuOption(levelMenu, Level.CONFIG, KeyEvent.VK_F5);
-        addLevelFilterMenuOption(levelMenu, Level.FINE, KeyEvent.VK_F4);
-        addLevelFilterMenuOption(levelMenu, Level.FINER, KeyEvent.VK_F3);
-        addLevelFilterMenuOption(levelMenu, Level.FINEST, KeyEvent.VK_F2);
-        addLevelFilterMenuOption(levelMenu, Level.ALL, KeyEvent.VK_F1);
-
-    }
-
-    private void setupOutputLog(TimestampVariableRollingFileLoggerConfiguration outputLogConfiguration) {
-        outputLogger = new TimestampVariableRollingFileLogger();
-        outputLogger.configure(outputLogConfiguration, new ProxyServiceDiscovery());
-    }
-
-    protected void addChartForEvent(LogEvent logEventAtRow) {
-        JDialog dialog = new JDialog();
-
-        JEditorPane editorPane = new JEditorPane();
-        editorPane.setContentType("text/html");
-        editorPane.setEditable(false);
-        // editorPane.addHyperlinkListener(new HyperlinkListener() {
-        // public void hyperlinkUpdate(HyperlinkEvent hyperlink) {
-        // EventType eventType = hyperlink.getEventType();
-        // if (eventType == eventType.ACTIVATED) {
-        // String description = hyperlink.getDescription();
-        //
-        // }
-        // }
-        // });
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("<html>");
-        sb.append("<head>");
-        sb.append("<style type='text/css'>");
-        sb.append("a { text-decoration: none; }");
-        sb.append("</style>");
-
-        sb.append("</head>");
-        sb.append("<body>");
-
-        String[] words = logEventAtRow.getMessage().split(" ");
-        for (String word : words) {
-            sb.append("<a href='" + word + "'>" + word + "</a> ");
-        }
-
-        sb.append("</html></body>");
-
-        editorPane.setText(sb.toString());
-
-        dialog.add(editorPane);
-        dialog.setSize(200, 100);
-        dialog.setVisible(true);
-    }
-
-    protected void addQuickFilter() {
-
-        if (filterCount == 1) {
-            // Convert the undecorated filter into a row with a delete button
-            QuickFilterRowPanel existing = (QuickFilterRowPanel) quickFilterContainerPanel.getComponent(0);
-            JPanel existingWrapped = createWrapperPanel(existing);
-            quickFilterContainerPanel.removeAll();
-            quickFilterContainerPanel.add(existingWrapped, "wrap");
-
-            // Add the and/or control
-            existing.setAndOrVisible(true);
-        }
-
-        QuickFilterModel quickFilterModel = new QuickFilterModel();
-        environmentModel.getQuickFilterModels().add(quickFilterModel);
-        QuickFilterRowPanel quickFilterRowPanel = createQuickFilterRow();
-
-        QuickFilterHistoryController quickFilterHistoryController = new QuickFilterHistoryController(environmentModel.getQuickFilterHistoryModel());
-        quickFilterRowPanel.bind(quickFilterHistoryController, quickFilterModel, quickFilterController.getIsAndFilter());
-
-        final JPanel wrapperPanel = createWrapperPanel(quickFilterRowPanel);
-
-        filterCount++;
-
-        quickFilterContainerPanel.add(wrapperPanel, "wrap");
-        quickFilterContainerPanel.validate();
-
-        quickFilterModel.getLevelFilter().get().getSelectedLevel().addListener(new ObservablePropertyListener<Level>() {
-            @Override
-            public void onPropertyChanged(Level oldValue, Level newValue) {
-                notifyLevelChanges();
-            }
-        });
-    }
-
-    protected void notifyLevelChanges() {
-
-        int lowestLevel = Level.SEVERE.intValue();
-        ObservableList<QuickFilterModel> quickFilterModels = environmentModel.getQuickFilterModels();
-        for (QuickFilterModel model : quickFilterModels) {
-            lowestLevel = Math.min(lowestLevel, model.getLevelFilter().get().getSelectedLevel().get().intValue());
-        }
-
-        for (DetailedLogEventPanelListener detailedLogEventPanelListener : listeners) {
-            detailedLogEventPanelListener.onLevelFilterChanged(lowestLevel);
-        }
-
-        saveQuickFilterLevel(Level.parse("" + lowestLevel));
-    }
-
-    protected void executeQuickFilter() {
-        tableModel.refreshFilters(null);
-    }
-
-    protected void pause() {
-        tableModel.pause();
-        playing = false;
-        autoScrollButton.setIcon(playIcon);
-    }
-
-    protected void play() {
-
-        tableModel.play();
-
-        if (autoScroll) {
-            // scrollToBottom();
-        }
-
-        playing = true;
-        autoScrollButton.setIcon(pauseIcon);
-    }
-
-    protected void saveQuickFilterLevel(Level selectedLevel) {
-        if (dynamicSettings != null) {
-            dynamicSettings.put("detailedLogEventTablePanel.quickFilterLevel", selectedLevel.getName());
-        }
-    }
-
-    protected void showTimeTravelDialogue() {
-
-        JDialog dialog = new JDialog();
-        dialog.setModalityType(ModalityType.APPLICATION_MODAL);
-
-        TimeTravelPanel timeTravelPanel = new TimeTravelPanel(/* repositoryClient */);
-        dialog.add(timeTravelPanel);
-        dialog.setSize(800, 500);
-        dialog.setLocationRelativeTo(this);
-
-        dialog.setVisible(true);
-
-    }
-
-    protected void updateFirstFilterState() {
-        if (filterCount == 1) {
-            JComponent remainingWrapper = (JComponent) quickFilterContainerPanel.getComponent(0);
-            QuickFilterRowPanel existing = (QuickFilterRowPanel) remainingWrapper.getComponent(0);
-
-            // Forceably re-enabled the filter
-            existing.getModel().getIsEnabled().set(true);
-
-            // Chop off the and/or button
-            existing.setAndOrVisible(false);
-
-            // Clear and re-add the undecorated panel
-            quickFilterContainerPanel.removeAll();
-            quickFilterContainerPanel.add(existing, "wrap");
-            quickFilterContainerPanel.validate();
-
-        } else {
-
+        if (environmentModel.isDisableAutoScrollPauser()) {
+            disableScrollerAutoPause();
         }
     }
 
@@ -1221,33 +858,64 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         quickFilterTimer.schedule(executeQuickFilter, quickFilterTimeout);
     }
 
-    protected void writeOutputLog(LogEvent event) {
-        if (outputLogger == null) {
-            JOptionPane.showMessageDialog(this,
-                                          "You haven't provided an output log configuration, this should have been picked up earlier [this message " +
-                                          "" + "will repeat for each event]");
-        } else {
-            try {
-                outputLogger.write(event);
-            } catch (LoggingMessageSenderException e) {
-                throw new RuntimeException(e);
-            }
+    public static void scrollToCenter(JTable table, int rowIndex, int vColIndex) {
+        if (!(table.getParent() instanceof JViewport)) {
+            return;
+        }
+        JViewport viewport = (JViewport) table.getParent();
+        Rectangle rect = table.getCellRect(rowIndex, vColIndex, true);
+        Rectangle viewRect = viewport.getViewRect();
+        rect.setLocation(rect.x - viewRect.x, rect.y - viewRect.y);
+
+        int centerX = (viewRect.width - rect.width) / 2;
+        int centerY = (viewRect.height - rect.height) / 2;
+        if (rect.x < centerX) {
+            centerX = -centerX;
+        }
+        if (rect.y < centerY) {
+            centerY = -centerY;
+        }
+        rect.translate(centerX, centerY);
+        viewport.scrollRectToVisible(rect);
+    }
+
+    protected void navigateToTime(long time) {
+        int row = tableModel.findFirstTime(time);
+        logger.fine("Navigating to time '{}' - found row index '{}'", Logger.toDateString(time), row);
+        if (row != -1) {
+            table.changeSelection(row, -1, false, false);
+            Rectangle cellRect = table.getCellRect(row, 0, true);
+            logger.fine("CellRect is '{}'", cellRect);
+
+            scrollToCenter(table, row, 0);
         }
     }
 
-    public TimestampVariableRollingFileLogger getOutputLogger() {
-        return outputLogger;
+    private void disableScrollerAutoPause() {
+
+        tableScrollPane.removeMouseWheelListener(mouseWheelPauser);
+
+        try {
+            Component topButton = tableScrollPane.getVerticalScrollBar().getComponent(0);
+            Component bottomButton = tableScrollPane.getVerticalScrollBar().getComponent(1);
+            topButton.removeMouseListener(autoPauser);
+            bottomButton.removeMouseListener(autoPauser);
+
+            tableScrollPane.getVerticalScrollBar().removeMouseListener(autoPauser);
+        } catch (Exception e) {
+            // The first bit goes bang on macs - need an alternative approach
+            tableScrollPane.getVerticalScrollBar().removeMouseListener(autoPauser);
+        }
     }
 
-    public TimeController getTimeFilterController() {
-        return timeController;
+    protected void executeQuickFilter() {
+        tableModel.refreshFilters(null);
     }
 
     /**
-     * Binds an import hahdler to this panel, enalbing the time view to control the import of
-     * historical data
+     * Binds an import handler to this panel, enalbing the time view to control the import of historical data
      *
-     * @param importHandler
+     * @param importHandler The import handler to bind to; this will be the only source of events displayed in this panel
      */
     public void bind(final ImportController importHandler) {
         final TimeModel timeModel = timeController.getModel();
@@ -1330,15 +998,26 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         });
     }
 
-    private void disableScrollerAutoPause() {
-        try {
-            Component topButton = tableScrollPane.getVerticalScrollBar().getComponent(0);
-            Component bottomButton = tableScrollPane.getVerticalScrollBar().getComponent(1);
-            tableScrollPane.getVerticalScrollBar().removeMouseListener(autoPauser);
-            topButton.removeMouseListener(autoPauser);
-            bottomButton.removeMouseListener(autoPauser);
-        } catch (Exception e) {
-            logger.warn(e, "Failed to disable scroll bar listeners");
+    public void close() {
+    }
+
+    public void closeOutputLog() {
+        if (outputLogger != null) {
+            outputLogger.close();
+        }
+    }
+
+    public synchronized void deactivateDemoSource() {
+        if (demoLogEventProducer != null) {
+            demoLogEventProducer.stop();
+            demoLogEventProducer = null;
+        }
+    }
+
+    public synchronized void deactivateDummySource() {
+        if (dummyLogEventProducerx != null) {
+            dummyLogEventProducerx.stop();
+            dummyLogEventProducerx = null;
         }
     }
 
@@ -1368,67 +1047,199 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
     }
 
     public String getBinaryFileSettingsKey() {
-        String settingsKey = "binaryFolder-" + environmentModel.getName();
-        return settingsKey;
+        return "binaryFolder-" + environmentModel.getName();
     }
 
-    public synchronized void stopBinaryExport() {
-        if (binaryExporter != null) {
-            getEnvironmentModel().removeLogEventListener(binaryExporter);
-            binaryExporter.close();
-            binaryExporter = null;
+    public EnvironmentModel getEnvironmentModel() {
+        return environmentModel;
+    }
+
+    public void setEnvironmentModel(EnvironmentModel environmentModel) {
+        this.environmentModel = environmentModel;
+        loadFromModel(environmentModel);
+    }
+
+    private void loadFromModel(EnvironmentModel model) {
+        List<com.logginghub.logging.frontend.model.HighlighterModel> highlighters = model.getHighlighters();
+        for (com.logginghub.logging.frontend.model.HighlighterModel highlighterModel : highlighters) {
+            addHighlighter(highlighterModel);
+        }
+
+        setAutoLockWarning(model.isAutoLocking());
+
+        TimestampVariableRollingFileLoggerConfiguration outputLogConfiguration = model.getOutputLogConfiguration();
+        if (outputLogConfiguration != null) {
+            setupOutputLog(outputLogConfiguration);
+        }
+
+        setWriteOutputLog(model.isWriteOutputLog());
+    }
+
+    public void addHighlighter(com.logginghub.logging.frontend.model.HighlighterModel phraseHighlighterModel) {
+        final PhraseHighlighter highlighter = new PhraseHighlighter(phraseHighlighterModel.getString(HighlighterModel.Fields.Phrase));
+        Color background = ColourUtils.parseColor(phraseHighlighterModel.getString(HighlighterModel.Fields.ColourHex));
+        highlighter.setHighlightBackgroundColour(background);
+        table.addHighlighter(highlighter);
+    }
+
+    public void setAutoLockWarning(boolean selected) {
+        environmentModel.setAutoLockWarning(selected);
+    }
+
+    private void setupOutputLog(TimestampVariableRollingFileLoggerConfiguration outputLogConfiguration) {
+        outputLogger = new TimestampVariableRollingFileLogger();
+        outputLogger.configure(outputLogConfiguration, new ProxyServiceDiscovery());
+    }
+
+    public void setWriteOutputLog(boolean selected) {
+        if (writeOutputLog != selected) {
+            writeOutputLog = selected;
+
+            if (writeOutputLog) {
+                eventController.addLogEventContainerListener(outputLogListener);
+            } else {
+                eventController.removeLogEventContainerListener(outputLogListener);
+            }
         }
     }
 
-    public synchronized boolean isExportingBinary() {
-        return binaryExporter != null;
+    public void findBackwardsAgain() {
+        if (lastSearchTerm.length() > 0) {
+            findBackwards(lastSearchTerm);
+        } else {
+            findBackwards();
+        }
+    }
+
+    private void findBackwards(String term) {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow == -1 || selectedRow == 0) {
+            selectedRow = 1;
+        }
+
+        MessageContainsFilter filter = new MessageContainsFilter(term);
+
+        int row = tableModel.findPreviousEvent(selectedRow - 1, filter);
+        if (row != -1) {
+            table.changeSelection(row, -1, false, false);
+        }
+
+        lastSearchTerm = term;
+    }
+
+    public void findBackwards() {
+        String term = JOptionPane.showInputDialog(getTopLevelAncestor(), "Find backwards", lastSearchTerm);
+        if (term != null) {
+            findBackwards(term);
+        }
+    }
+
+    public void findForwardsAgain() {
+        if (lastSearchTerm.length() > 0) {
+            findForwards(lastSearchTerm);
+        } else {
+            findForwards();
+        }
+    }
+
+    private void findForwards(String term) {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow == -1) {
+            selectedRow = 0;
+        }
+
+        MessageContainsFilter filter = new MessageContainsFilter(term);
+
+        int row = tableModel.findNextEvent(selectedRow + 1, filter);
+        if (row != -1) {
+            table.changeSelection(row, -1, false, false);
+        }
+
+        lastSearchTerm = term;
+    }
+
+    public void findForwards() {
+        String term = JOptionPane.showInputDialog(getTopLevelAncestor(), "Find forwards", lastSearchTerm);
+        if (term != null) {
+            findForwards(term);
+        }
+    }
+
+    public int getCurrentBatchSize() {
+        return incommingEventBatch.size();
+    }
+
+    public ObservableField<Integer> getHighestStateSinceLastSelected() {
+        return highestLevelSinceLastSelected;
+    }
+
+    public int getLevelFilter() {
+        return getFirstQuickFilter().getModel().getLevelFilter().get().getSelectedLevel().get().intValue();
+    }
+
+    public TimestampVariableRollingFileLogger getOutputLogger() {
+        return outputLogger;
+    }
+
+    //    public DetailedLogEventTableModel getTableModel() {
+    //        return tableModel;
+    //    }
+
+    public TimeController getTimeFilterController() {
+        return timeController;
+    }
+
+    public TimeView getTimeView() {
+        return timeView;
+    }
+
+    //    public void gotoBookmark(Integer bookmark) {
+    //        table.gotoBookmark(bookmark.intValue());
+    //    }
+
+    public synchronized boolean isDemoSourceActive() {
+        return demoLogEventProducer != null;
     }
 
     public synchronized boolean isDummySourceActive() {
         return dummyLogEventProducerx != null;
     }
 
-    public synchronized boolean isDemoSourceActive() {
-        return demoLogEventProducer != null;
+    public synchronized boolean isExportingBinary() {
+        return binaryExporter != null;
     }
 
-    public synchronized void activateDummySource() {
-        logger.info("Activating dummy source");
-        if (dummyLogEventProducerx == null) {
-
-            String appName = "TestApplication-" + nextDummyApplicationIndex++;
-            dummyLogEventProducerx = new DummyLogEventProducer(appName);
-            dummyLogEventProducerx.produceEventsOnTimer(1, dummyEventsDelayMS, 5);
-
-            dummyLogEventProducerx.addLogEventListener(environmentModel);
-        } else {
-            dummyLogEventProducerx.produceEventsOnTimer(1, dummyEventsDelayMS, 5);
-        }
+    public boolean isHistoricalView() {
+        return historicalView;
     }
 
-    public synchronized void activateDemoSource() {
-        logger.info("Activating demo source");
-        if (demoLogEventProducer == null) {
-            demoLogEventProducer = new DemoLogEventProducer();
-            demoLogEventProducer.produceEventsOnTimer(1, dummyEventsDelayMS, 5);
-            demoLogEventProducer.addLogEventListener(environmentModel);
-        } else {
-            demoLogEventProducer.produceEventsOnTimer(1, dummyEventsDelayMS, 5);
-        }
-    }
+    public void onNewLogEvent(final LogEvent event) {
+        logger.fine("New event received in logeventdetail panel '{}'", event);
+        Stopwatch sw = Stopwatch.start("DetailedLogEventPanel.onNewLogEvent");
+        eventsReceived++;
 
-    public synchronized void deactivateDummySource() {
-        if (dummyLogEventProducerx != null) {
-            dummyLogEventProducerx.stop();
-            dummyLogEventProducerx = null;
+        synchronized (highestLevelSinceLastSelected) {
+            highestLevelSinceLastSelected.setIfGreater(event.getLevel());
         }
-    }
 
-    public synchronized void deactivateDemoSource() {
-        if (demoLogEventProducer != null) {
-            demoLogEventProducer.stop();
-            demoLogEventProducer = null;
+        synchronized (incommingEventBatchLock) {
+            // jshaw : not sure what I was trying to do here, its just discarding events if they
+            // arrive to quickly. This should be a) configurable, and b) done somewhere higher up
+            // the chain?
+            // if (incommingEventBatch.size() < 10000) {
+            // incommingEventBatch.add(event);
+            // }
+
+            incommingEventBatch.add(event);
+            if (incommingEventBatch.size() > eventBatchSizeWarningLevel && eventBatchWarningThrottle.isOkToFire()) {
+                logger.warn("The incoming event batch contains '{}' items (over warning level of '{}')",
+                            incommingEventBatch.size(),
+                            eventBatchSizeWarningLevel);
+            }
         }
+
+        sw.stop();
+        VisualStopwatchController.getInstance().add(sw);
     }
 
     public void openBinaryFolder() {
@@ -1445,11 +1256,70 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         }
     }
 
-    public void close() {
-    }
 
-    public boolean isHistoricalView() {
-        return historicalView;
+    public void sendHistoricalDataRequest(String autoRequestHistory) {
+
+        com.logginghub.logging.frontend.model.ObservableList<HubConnectionModel> hubConnectionModels = environmentModel.getHubConnectionModels();
+        for (HubConnectionModel hubConnectionModel : hubConnectionModels) {
+            SocketClientManager socketClientManager = hubConnectionModel.getSocketClientManager();
+            final SocketClient client = socketClientManager.getClient();
+
+            final HistoricalDataRequest request = new HistoricalDataRequest();
+
+            long start;
+            long end;
+
+            if (autoRequestHistory.equalsIgnoreCase("all")) {
+                start = 0;
+                end = System.currentTimeMillis();
+            } else {
+                start = TimeUtils.before(System.currentTimeMillis(), autoRequestHistory);
+                end = System.currentTimeMillis();
+            }
+
+            request.setStart(start);
+            request.setEnd(end);
+            request.setLevelFilter(Level.ALL.intValue());
+            request.setQuickfilter("");
+            request.setMostRecentFirst(false);
+            request.setCorrelationID(client.getNextCorrelationID());
+
+            LoggingMessageListener listener = new LoggingMessageListener() {
+                @Override
+                public void onNewLoggingMessage(LoggingMessage message) {
+                    if (message instanceof RequestResponseMessage) {
+                        RequestResponseMessage requestResponseMessage = (RequestResponseMessage) message;
+                        if (requestResponseMessage.getCorrelationID() == request.getCorrelationID()) {
+
+                            HistoricalDataResponse response = (HistoricalDataResponse) requestResponseMessage;
+                            logger.fine("Streaming event data received : {} events", response.getEvents().length);
+                            final DefaultLogEvent[] events = response.getEvents();
+
+                            SwingUtilities.invokeLater(new Runnable() {
+                                @Override
+                                public void run() {
+                                    for (DefaultLogEvent defaultLogEvent : events) {
+                                        if (defaultLogEvent != null) {
+                                            environmentModel.onNewLogEvent(defaultLogEvent);
+                                        } else {
+                                            logger.warn("Null log event returned");
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    }
+                }
+            };
+
+            try {
+                client.addLoggingMessageListener(listener);
+                client.send(request);
+            } catch (LoggingMessageSenderException e) {
+                throw new FormattedRuntimeException(e, "Failed to send message");
+            }
+
+        }
     }
 
     public void sendHistoricalIndexRequest() {
@@ -1477,7 +1347,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
                     try {
                         client.sendHistoricalIndexRequest(viewStart, viewEnd);
                     } catch (Exception e) {
-
+                        logger.info(e, "Failed to request historical index");
                     }
                 }
             });
@@ -1485,7 +1355,80 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         }
     }
 
-    public TimeView getTimeView() {
-        return timeView;
+    public void setAutoScroll(boolean selected) {
+        autoScroll = selected;
+    }
+
+    public void setDetailPaneOrientation(boolean horizontal) {
+        if (horizontal) {
+            eventDetailsSplitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
+        } else {
+            eventDetailsSplitPane.setOrientation(JSplitPane.HORIZONTAL_SPLIT);
+        }
+    }
+
+    public void setDynamicSettings(Metadata dynamicSettings) {
+        this.dynamicSettings = dynamicSettings;
+        initialiseFromSettings(dynamicSettings);
+    }
+
+    private void initialiseFromSettings(Metadata dynamicSettings) {
+        String level = dynamicSettings.getString("detailedLogEventTablePanel.quickFilterLevel", Level.INFO.getName());
+        setQuickLevelFilter(Level.parse(level));
+        // filterRowPanel.getSelectedLevel().set(Level.parse(level));
+        // quickLevelFilterCombo.setSelectedItem();
+
+        int timeSplitterPosition = dynamicSettings.getInt("timeSplitterPosition", 40);
+        previousTimeSplitterLocation = dynamicSettings.getInt("previousTimeSplitterLocation", 0);
+
+        logger.fine("Initialising the time splitter : position is '{}' and previous location is '{}'",
+                    timeSplitterPosition,
+                    previousTimeSplitterLocation);
+        timeSplitter.setDividerLocation(timeSplitterPosition);
+    }
+
+    public void setQuickLevelFilter(Level level) {
+        getFirstQuickFilter().getModel().getLevelFilter().get().getSelectedLevel().set(level);
+    }
+
+
+    public void setSelectedRowFormat(RowFormatModel selectedRowFormat) {
+        rowHighlighter.setSelectedRowFormat(selectedRowFormat);
+    }
+
+    //    protected void showTimeTravelDialogue() {
+    //
+    //        JDialog dialog = new JDialog();
+    //        dialog.setModalityType(ModalityType.APPLICATION_MODAL);
+    //
+    //        TimeTravelPanel timeTravelPanel = new TimeTravelPanel(/* repositoryClient */);
+    //        dialog.add(timeTravelPanel);
+    //        dialog.setSize(800, 500);
+    //        dialog.setLocationRelativeTo(this);
+    //
+    //        dialog.setVisible(true);
+    //
+    //    }
+
+    public synchronized void stopBinaryExport() {
+        if (binaryExporter != null) {
+            getEnvironmentModel().removeLogEventListener(binaryExporter);
+            binaryExporter.close();
+            binaryExporter = null;
+        }
+    }
+
+    protected void writeOutputLog(LogEvent event) {
+        if (outputLogger == null) {
+            JOptionPane.showMessageDialog(this,
+                                          "You haven't provided an output log configuration, this should have been picked up earlier [this message " +
+                                          "" + "will repeat for each event]");
+        } else {
+            try {
+                outputLogger.write(event);
+            } catch (LoggingMessageSenderException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 }

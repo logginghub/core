@@ -10,6 +10,8 @@ import java.util.List;
 public interface EventBuffer {
     void addEvent(DefaultLogEvent t);
 
+    void clear();
+
     int sizeof(DefaultLogEvent t);
 
     int countEvents();

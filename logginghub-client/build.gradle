@@ -25,3 +25,18 @@ dependencies {
     provided("ch.qos.logback:logback-core:1.0.7")
     provided("ch.qos.logback:logback-classic:1.0.7")
 }
+
+task fatJar(type: Jar) {
+    baseName = project.name + '-all'
+    classifier = "all"
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+configurations {
+    fatJar
+}
+
+artifacts {
+    archives fatJar
+}

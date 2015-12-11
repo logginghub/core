@@ -6,6 +6,7 @@ import com.logginghub.logging.exceptions.LoggingMessageSenderException;
 import com.logginghub.logging.interfaces.QueueAwareLoggingMessageSender;
 import com.logginghub.logging.messages.ChannelMessage;
 import com.logginghub.logging.messages.Channels;
+import com.logginghub.logging.messages.ClearEventsMessage;
 import com.logginghub.logging.messages.HistoricalDataRequest;
 import com.logginghub.logging.messages.HistoricalDataResponse;
 import com.logginghub.logging.messages.HistoricalIndexElement;
@@ -42,13 +43,10 @@ import java.util.concurrent.TimeUnit;
 
 public class InMemoryHistoryModule implements Module<InMemoryHistoryConfiguration> {
 
-    private EventBuffer events;
-
     // private CircularArray<DefaultLogEvent> events;
     private static final Logger logger = Logger.getLoggerFor(InMemoryHistoryModule.class);
-
     private static final Logger safeLogger = Logger.getSafeLoggerFor(InMemoryHistoryModule.class);
-
+    private EventBuffer events;
     private InMemoryHistoryConfiguration configuration;
 
     private ExecutorService threadPool = Executors.newCachedThreadPool(new NamedThreadFactory("LoggingHub-InMemoryHistoryWorker-"));
@@ -57,7 +55,9 @@ public class InMemoryHistoryModule implements Module<InMemoryHistoryConfiguratio
 
     private Batcher<HistoricalIndexElement> batcher;
 
-    @SuppressWarnings("unchecked") @Override public void configure(InMemoryHistoryConfiguration configuration, ServiceDiscovery discovery) {
+    @SuppressWarnings("unchecked")
+    @Override
+    public void configure(final InMemoryHistoryConfiguration configuration, ServiceDiscovery discovery) {
         this.configuration = configuration;
         if (!configuration.isDisableSafetyChecks()) {
             Is.greaterThanZero(ByteUtils.parse(configuration.getBlockSize()),
@@ -87,9 +87,10 @@ public class InMemoryHistoryModule implements Module<InMemoryHistoryConfiguratio
                         ByteUtils.format(Runtime.getRuntime().maxMemory()));
 
             if (ByteUtils.parse(configuration.getBlockSize()) * 2 > ByteUtils.parse(configuration.getMaximumSize())) {
-                logger.warning("The current block size '{}' and maximum size '{}' mean you'll only ever have one block active - this will effectively means you'll never store more than the block size, so it might mean you've misconfigured the maximumMemory",
-                               configuration.getBlockSize(),
-                               configuration.getMaximumSize());
+                logger.warning(
+                        "The current block size '{}' and maximum size '{}' mean you'll only ever have one block active - this will effectively means you'll never store more than the block size, so it might mean you've misconfigured the maximumMemory",
+                        configuration.getBlockSize(),
+                        configuration.getMaximumSize());
             }
         }
 
@@ -102,7 +103,8 @@ public class InMemoryHistoryModule implements Module<InMemoryHistoryConfiguratio
         batcher = new Batcher<HistoricalIndexElement>(timeout);
 
         batcher.addDestination(new Destination<List<HistoricalIndexElement>>() {
-            @Override public void send(List<HistoricalIndexElement> t) {
+            @Override
+            public void send(List<HistoricalIndexElement> t) {
                 HistoricalIndexResponse response = new HistoricalIndexResponse();
                 response.setElements(t.toArray(new HistoricalIndexElement[t.size()]));
                 response.setCorrelationID(-1);
@@ -112,7 +114,8 @@ public class InMemoryHistoryModule implements Module<InMemoryHistoryConfiguratio
         });
 
         events.addIndexListener(new Destination<HistoricalIndexElement>() {
-            @Override public void send(HistoricalIndexElement t) {
+            @Override
+            public void send(HistoricalIndexElement t) {
                 batcher.send(t);
             }
         });
@@ -124,9 +127,11 @@ public class InMemoryHistoryModule implements Module<InMemoryHistoryConfiguratio
         SocketHubInterface socketHub = discovery.findService(SocketHubInterface.class);
 
         socketHub.addMessageListener(HistoricalDataRequest.class, new SocketHubMessageHandler() {
-            @Override public void handle(final LoggingMessage message, final SocketConnectionInterface source) {
+            @Override
+            public void handle(final LoggingMessage message, final SocketConnectionInterface source) {
                 threadPool.execute(new Runnable() {
-                    @Override public void run() {
+                    @Override
+                    public void run() {
                         handleDataRequest((HistoricalDataRequest) message, source);
                     }
                 });
@@ -134,20 +139,36 @@ public class InMemoryHistoryModule implements Module<InMemoryHistoryConfiguratio
         });
 
         socketHub.addMessageListener(HistoricalIndexRequest.class, new SocketHubMessageHandler() {
-            @Override public void handle(final LoggingMessage message, final SocketConnectionInterface source) {
+            @Override
+            public void handle(final LoggingMessage message, final SocketConnectionInterface source) {
                 threadPool.execute(new Runnable() {
-                    @Override public void run() {
+                    @Override
+                    public void run() {
                         handleIndexRequest((HistoricalIndexRequest) message, source);
                     }
                 });
             }
         });
 
-        @SuppressWarnings("unchecked") Source<LogEvent> eventSource = discovery.findService(Source.class,
-                                                                                            LogEvent.class,
-                                                                                            configuration.getLogEventSourceRef());
+        socketHub.addMessageListener(ClearEventsMessage.class, new SocketHubMessageHandler() {
+            @Override
+            public void handle(final LoggingMessage message, final SocketConnectionInterface source) {
+                threadPool.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        if(configuration.isAllowClearEvents()) {
+                            logger.info("Clear events from the in memory history module as we've received a ClearEventsMessage");
+                            clearEvents();
+                        }
+                    }
+                });
+            }
+        });
+
+        @SuppressWarnings("unchecked") Source<LogEvent> eventSource = discovery.findService(Source.class, LogEvent.class, configuration.getLogEventSourceRef());
         eventSource.addDestination(new Destination<LogEvent>() {
-            @Override public void send(LogEvent t) {
+            @Override
+            public void send(LogEvent t) {
                 handleNewEvent(t);
             }
         });
@@ -163,6 +184,10 @@ public class InMemoryHistoryModule implements Module<InMemoryHistoryConfiguratio
         // configuration.getCircularBufferSize());
     }
 
+    private void clearEvents() {
+        events.clear();
+    }
+
     // public List<LogEvent> getEvents() {
     //
     // List<LogEvent> events = new ArrayList<LogEvent>();
@@ -175,6 +200,133 @@ public class InMemoryHistoryModule implements Module<InMemoryHistoryConfiguratio
     // return events;
     //
     // }
+
+    private void handleDataRequest(HistoricalDataRequest message, QueueAwareLoggingMessageSender source) {
+        handleDataRequestStreaming(message, source);
+    }
+
+    private void handleIndexRequest(HistoricalIndexRequest message, QueueAwareLoggingMessageSender source) {
+        Stopwatch sw = Stopwatch.start("");
+        HistoricalIndexResponse response = handleIndexRequest(message);
+
+        try {
+            source.send(response);
+            logger.info("Index request successfully processed in {} ms : responding to requestID '{}' with '{}' elements",
+                        sw.stopAndGetFormattedDurationMillis(),
+                        response.getCorrelationID(),
+                        response.getElements().length);
+        } catch (LoggingMessageSenderException e) {
+            logger.warning(e,
+                           "Index request failed in {} ms : responding to requestID '{}' with '{}' elements",
+                           sw.stopAndGetFormattedDurationMillis(),
+                           response.getCorrelationID(),
+                           response.getElements().length);
+        }
+    }
+
+    public void handleNewEvent(LogEvent t) {
+        safeLogger.finest("Handing new log event : {}", t);
+        if (t instanceof DefaultLogEvent) {
+            DefaultLogEvent defaultLogEvent = (DefaultLogEvent) t;
+            events.addEvent(defaultLogEvent);
+        } else {
+            logger.fine("Ignoring non-default log event '{}'", t);
+        }
+    }
+
+    public void handleDataRequestStreaming(final HistoricalDataRequest message, final QueueAwareLoggingMessageSender source) {
+
+        int size = events.size();
+        logger.fine("Handling data request : from '{}' to '{}' : we have '{}' events in the buffer",
+                    Logger.toDateString(message.getStart()),
+                    Logger.toDateString(message.getEnd()),
+                    size);
+
+        final List<LogEvent> batch = new ArrayList<LogEvent>();
+
+        Destination<LogEvent> visitor = new Destination<LogEvent>() {
+
+            @Override
+            public void send(LogEvent t) {
+                batch.add(t);
+                if (batch.size() == configuration.getStreamingBatchSize()) {
+                    sendBatch(batch, message, source, false);
+                    batch.clear();
+                }
+            }
+
+        };
+
+        events.extractEventsBetween(visitor, message.getStart(), message.getEnd());
+
+        sendBatch(batch, message, source, true);
+
+    }
+
+    public HistoricalIndexResponse handleIndexRequest(HistoricalIndexRequest message) {
+        int size = events.size();
+
+        logger.fine("Handling index request : from '{}' to '{}' : we have '{}' events in the buffer",
+                    Logger.toDateString(message.getStart()),
+                    Logger.toDateString(message.getEnd()),
+                    size);
+
+        List<HistoricalIndexElement> index = new ArrayList<HistoricalIndexElement>();
+
+        events.extractIndexBetween(index, message.getStart(), message.getEnd());
+
+        // // TODO : support other periods
+        // Indexifier model = new Indexifier(1000);
+        //
+        // for (int i = 0; i < size; i++) {
+        // LogEvent event = events.get(i);
+        // long time = event.getOriginTime();
+        // if (time >= message.getStart() && time < message.getEnd()) {
+        // model.addEvent(event);
+        // }
+        // }
+
+        HistoricalIndexResponse response = new HistoricalIndexResponse();
+        response.setElements(index.toArray(new HistoricalIndexElement[index.size()]));
+        response.setCorrelationID(message.getCorrelationID());
+
+        return response;
+    }
+
+    private void sendBatch(List<LogEvent> eventBatch,
+                           final HistoricalDataRequest message,
+                           final QueueAwareLoggingMessageSender source,
+                           boolean lastBatch) {
+
+        DefaultLogEvent[] responseEvents = eventBatch.toArray(new DefaultLogEvent[eventBatch.size()]);
+        HistoricalDataResponse response = new HistoricalDataResponse();
+        response.setEvents(responseEvents);
+        response.setCorrelationID(message.getCorrelationID());
+        response.setLastBatch(lastBatch);
+
+        try {
+            while (!source.isSendQueueEmpty()) {
+                ThreadUtils.sleep(10);
+            }
+            logger.fine("Sending batch of {} items to source {}", eventBatch.size(), source);
+            source.send(response);
+        } catch (LoggingMessageSenderException e) {
+            logger.warning(e,
+                           "Data request failed in {} ms : responding to requestID '{}' with '{}' elements",
+                           "?",
+                           response.getCorrelationID(),
+                           response.getEvents().length);
+        }
+
+    }
+
+    public int getBlockSequence() {
+        return events.getBlockSequence();
+    }
+
+    public EventBuffer getEventBuffer() {
+        return events;
+    }
 
     public HistoricalDataResponse handleDataRequest(HistoricalDataRequest message) {
 
@@ -212,147 +364,19 @@ public class InMemoryHistoryModule implements Module<InMemoryHistoryConfiguratio
         return response;
     }
 
-    public void handleDataRequestStreaming(final HistoricalDataRequest message, final QueueAwareLoggingMessageSender source) {
-
-        int size = events.size();
-        logger.fine("Handling data request : from '{}' to '{}' : we have '{}' events in the buffer",
-                    Logger.toDateString(message.getStart()),
-                    Logger.toDateString(message.getEnd()),
-                    size);
-
-        final List<LogEvent> batch = new ArrayList<LogEvent>();
-
-        Destination<LogEvent> visitor = new Destination<LogEvent>() {
-
-            @Override public void send(LogEvent t) {
-                batch.add(t);
-                if (batch.size() == configuration.getStreamingBatchSize()) {
-                    sendBatch(batch, message, source, false);
-                    batch.clear();
-                }
-            }
-
-        };
-
-        events.extractEventsBetween(visitor, message.getStart(), message.getEnd());
-
-        sendBatch(batch, message, source, true);
-
-    }
-
-    private void sendBatch(List<LogEvent> eventBatch,
-                           final HistoricalDataRequest message,
-                           final QueueAwareLoggingMessageSender source,
-                           boolean lastBatch) {
-
-        DefaultLogEvent[] responseEvents = eventBatch.toArray(new DefaultLogEvent[eventBatch.size()]);
-        HistoricalDataResponse response = new HistoricalDataResponse();
-        response.setEvents(responseEvents);
-        response.setCorrelationID(message.getCorrelationID());
-        response.setLastBatch(lastBatch);
-
-        try {
-            while (!source.isSendQueueEmpty()) {
-                ThreadUtils.sleep(10);
-            }
-            logger.fine("Sending batch of {} items to source {}", eventBatch.size(), source);
-            source.send(response);
-        }
-        catch (LoggingMessageSenderException e) {
-            logger.warning(e,
-                           "Data request failed in {} ms : responding to requestID '{}' with '{}' elements",
-                           "?",
-                           response.getCorrelationID(),
-                           response.getEvents().length);
-        }
-
-    }
-
-    public HistoricalIndexResponse handleIndexRequest(HistoricalIndexRequest message) {
-        int size = events.size();
-
-        logger.fine("Handling index request : from '{}' to '{}' : we have '{}' events in the buffer",
-                    Logger.toDateString(message.getStart()),
-                    Logger.toDateString(message.getEnd()),
-                    size);
-
-        List<HistoricalIndexElement> index = new ArrayList<HistoricalIndexElement>();
-
-        events.extractIndexBetween(index, message.getStart(), message.getEnd());
-
-        // // TODO : support other periods
-        // Indexifier model = new Indexifier(1000);
-        //
-        // for (int i = 0; i < size; i++) {
-        // LogEvent event = events.get(i);
-        // long time = event.getOriginTime();
-        // if (time >= message.getStart() && time < message.getEnd()) {
-        // model.addEvent(event);
-        // }
-        // }
-
-        HistoricalIndexResponse response = new HistoricalIndexResponse();
-        response.setElements(index.toArray(new HistoricalIndexElement[index.size()]));
-        response.setCorrelationID(message.getCorrelationID());
-
-        return response;
-    }
-
-    @Override public void start() {
+    @Override
+    public void start() {
         stop();
         if (batcher != null) {
             batcher.start();
         }
     }
 
-    @Override public void stop() {
+    @Override
+    public void stop() {
         if (batcher != null) {
             batcher.stop();
         }
-    }
-
-    private void handleDataRequest(HistoricalDataRequest message, QueueAwareLoggingMessageSender source) {
-        handleDataRequestStreaming(message, source);
-    }
-
-    private void handleIndexRequest(HistoricalIndexRequest message, QueueAwareLoggingMessageSender source) {
-        Stopwatch sw = Stopwatch.start("");
-        HistoricalIndexResponse response = handleIndexRequest(message);
-
-        try {
-            source.send(response);
-            logger.info("Index request successfully processed in {} ms : responding to requestID '{}' with '{}' elements",
-                        sw.stopAndGetFormattedDurationMillis(),
-                        response.getCorrelationID(),
-                        response.getElements().length);
-        }
-        catch (LoggingMessageSenderException e) {
-            logger.warning(e,
-                           "Index request failed in {} ms : responding to requestID '{}' with '{}' elements",
-                           sw.stopAndGetFormattedDurationMillis(),
-                           response.getCorrelationID(),
-                           response.getElements().length);
-        }
-    }
-
-    public void handleNewEvent(LogEvent t) {
-        safeLogger.finest("Handing new log event : {}", t);
-        if (t instanceof DefaultLogEvent) {
-            DefaultLogEvent defaultLogEvent = (DefaultLogEvent) t;
-            events.addEvent(defaultLogEvent);
-        }
-        else {
-            logger.fine("Ignoring non-default log event '{}'", t);
-        }
-    }
-
-    public int getBlockSequence() {
-        return events.getBlockSequence();
-    }
-
-
-    public EventBuffer getEventBuffer() {
-        return events;
     }
 }
 

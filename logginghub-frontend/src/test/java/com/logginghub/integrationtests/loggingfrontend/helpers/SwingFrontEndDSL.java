@@ -20,7 +20,6 @@ import com.logginghub.logging.utils.LogEventBucket;
 import com.logginghub.utils.FileUtils;
 import com.logginghub.utils.Metadata;
 import com.logginghub.utils.ThreadUtils;
-import com.logginghub.utils.Tracer;
 import org.fest.swing.core.KeyPressInfo;
 import org.fest.swing.core.MouseButton;
 import org.fest.swing.core.MouseClickInfo;
@@ -42,11 +41,8 @@ import org.fest.swing.fixture.JTabbedPaneFixture;
 import org.fest.swing.fixture.JTableFixture;
 import org.fest.swing.fixture.JTextComponentFixture;
 
-import javax.swing.Icon;
-import javax.swing.JOptionPane;
-import javax.swing.JTabbedPane;
-import javax.swing.SwingUtilities;
-import java.awt.Point;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetSocketAddress;
@@ -54,8 +50,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.MatcherAssert.*;
+import static org.hamcrest.Matchers.*;
 
 public class SwingFrontEndDSL {
 
@@ -192,7 +188,7 @@ public class SwingFrontEndDSL {
     public void publishEvent(String environment, long time, String message) {
         DefaultLogEvent event = LogEventFactory.createFullLogEvent1();
         event.setMessage(message);
-        event.setLocalCreationTimeMillis(time);
+        event.setOriginTime(time);
         LoggingMainPanel mainPanel = swingFrontEnd.getMainPanel();
         mainPanel.getModel().getEnvironment(environment).onNewLogEvent(event);
     }
@@ -416,7 +412,6 @@ public class SwingFrontEndDSL {
 
             sender.send(new LogEventMessage(logEvent));
             receiverBucket.waitForMessages(1);
-            Tracer.trace("Log event sent to hub and confirmed published");
         }
         catch (ConnectorException e) {
             throw new RuntimeException(String.format("Failed to connect to hub"), e);

@@ -31,14 +31,32 @@ import java.util.List;
 
     @XmlAttribute private boolean repoEnabled = false;
     @XmlAttribute private String repoConnectionPoints = "localhost:58780";
+    @XmlAttribute private String autoRequestHistory = null;
+    @XmlAttribute private boolean disableAutoScrollPauser = false;
 
     @XmlElement List<FilterConfiguration> filter = new ArrayList<FilterConfiguration>();
-    
+
     @XmlElement private TimestampVariableRollingFileLoggerConfiguration outputLogConfiguration = new TimestampVariableRollingFileLoggerConfiguration();
     private boolean stillUsingdefaultOutputLogConfiuguration = true;
 
     public EnvironmentConfiguration() {
         setupOutputLogConfiguration();
+    }
+
+    public String getAutoRequestHistory() {
+        return autoRequestHistory;
+    }
+
+    public boolean getDisableAutoScrollPauser() {
+        return disableAutoScrollPauser;
+    }
+
+    public boolean isDisableAutoScrollPauser() {
+        return disableAutoScrollPauser;
+    }
+
+    public void setAutoRequestHistory(String autoRequestHistory) {
+        this.autoRequestHistory = autoRequestHistory;
     }
 
     public void setChannel(String channel) {
@@ -48,7 +66,11 @@ import java.util.List;
     public String getChannel() {
         return channel;
     }
-    
+
+    public void setDisableAutoScrollPauser(boolean disableAutoScrollPauser) {
+        this.disableAutoScrollPauser = disableAutoScrollPauser;
+    }
+
     private void setupOutputLogConfiguration() {
         // Provide some better defaults for the output log configuration - the
         // defaults are originally for the logging hub
