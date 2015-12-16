@@ -1,5 +1,6 @@
 package com.logginghub.logging.frontend.components;
 
+import com.logginghub.logging.frontend.model.LevelNamesModel;
 import com.logginghub.utils.ColourUtils;
 import com.logginghub.utils.OSUtils;
 import com.logginghub.utils.logging.Logger;
@@ -18,6 +19,7 @@ import java.util.Map;
 import java.util.logging.Level;
 
 public class LevelsCheckboxListView extends JPanel {
+    private final LevelNamesModel levelNamesModel;
     private JLabel xlabel;
     private Dimension preferredSize = new Dimension(150, 18);
     private JPopupMenu popupMenu;
@@ -46,7 +48,8 @@ public class LevelsCheckboxListView extends JPanel {
         }
     }
 
-    public LevelsCheckboxListView() {
+    public LevelsCheckboxListView(LevelNamesModel levelNamesModel) {
+        this.levelNamesModel = levelNamesModel;
         if(OSUtils.isMac()) {
             setLayout(new MigLayout("fill, inset 0, gap 0", "[grow,fill][fill, 20px:20:20px]", "[grow,fill]"));
         }else{
@@ -71,7 +74,7 @@ public class LevelsCheckboxListView extends JPanel {
         Level[] levels = new Level[] { Level.SEVERE, Level.WARNING, Level.INFO, Level.CONFIG, Level.FINE, Level.FINER, Level.FINEST };
 
         for (final Level level : levels) {
-            final Row row = new Row(level.getLocalizedName());
+            final Row row = new Row(levelNamesModel.getLevelName(level.intValue()));
 
             row.label.addMouseListener(new MouseAdapter() {
                 @Override public void mouseClicked(MouseEvent e) {
@@ -187,13 +190,17 @@ public class LevelsCheckboxListView extends JPanel {
     private void resetBackgrounds() {
         for (Row row : rows) {
 
-            if (row.label.getText().equals(selectedLevel.getLocalizedName())) {
+            if (row.label.getText().equals(getLevelName(selectedLevel))) {
                 highlightRow(row);
             }
             else {
                 removeHightlightFromRow(row);
             }
         }
+    }
+
+    private String getLevelName(Level level) {
+        return levelNamesModel.getLevelName(level.intValue());
     }
 
     @Override public Dimension getPreferredSize() {
@@ -218,7 +225,7 @@ public class LevelsCheckboxListView extends JPanel {
     private void updateSelectedLabel() {
         SwingUtilities.invokeLater(new Runnable() {
             @Override public void run() {
-                xlabel.setText(selectedLevel.getLocalizedName());        
+                xlabel.setText(getLevelName(selectedLevel));
             }
         });
     }

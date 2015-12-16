@@ -2,7 +2,8 @@ package com.logginghub.logging.frontend.modules;
 
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.frontend.model.EnvironmentModel;
-import com.logginghub.logging.frontend.model.EventTableModel;
+import com.logginghub.logging.frontend.model.EventTableColumnModel;
+import com.logginghub.logging.frontend.model.LevelNamesModel;
 import com.logginghub.logging.frontend.model.LogEventContainerController;
 import com.logginghub.logging.frontend.modules.configuration.RealtimeViewConfiguration;
 import com.logginghub.logging.frontend.services.LayoutService;
@@ -25,58 +26,71 @@ public class RealtimeViewModule implements Module<RealtimeViewConfiguration> {
     private EnvironmentMessagingService messagingService;
     private LogEventContainerController eventController;
     private TimeProvider timeProvider = new SystemTimeProvider();
-    
+
     public RealtimeViewModule() {
         JMenuBar menuBar = new JMenuBar();
         String propertiesName = "realtimeView";
         eventController = new LogEventContainerController();
 
-        EventTableModel eventTableModel = new EventTableModel();
+        EventTableColumnModel eventTableColumnModel = new EventTableColumnModel();
 
-        detailedLogEventTablePanel = new DetailedLogEventTablePanel(menuBar, propertiesName, eventTableModel, eventController, timeProvider, false);
+        detailedLogEventTablePanel = new DetailedLogEventTablePanel(menuBar,
+                                                                    propertiesName,
+                                                                    eventTableColumnModel,
+                                                                    new LevelNamesModel(),
+                                                                    eventController,
+                                                                    timeProvider,
+                                                                    false);
     }
-    
-    public void setName(String name) {
-        this.name = name;
-    }
-    
-    public void setLayout(String layout) {
-        this.layout = layout;
-    }
-    
-    @Inject
-    public void setLayoutService(LayoutService layoutService) {
-        this.layoutService = layoutService;
-    }
-    
-    @Inject
-    public void setMessagingService(EnvironmentMessagingService messagingService) {
-        this.messagingService = messagingService;
-    }
-    
-    @Override public void configure(RealtimeViewConfiguration configuration, ServiceDiscovery discovery) {
+
+    @Override
+    public void configure(RealtimeViewConfiguration configuration, ServiceDiscovery discovery) {
         layoutService = discovery.findService(LayoutService.class);
         messagingService = discovery.findService(EnvironmentMessagingService.class);
     }
-    
+
     public void initialise() {
         detailedLogEventTablePanel.setName(name);
         detailedLogEventTablePanel.bind(new EnvironmentModel());
-        
+
         layoutService.add(detailedLogEventTablePanel, layout);
-        
+
         messagingService.addLogEventListener(new LogEventListener() {
-            @Override public void onNewLogEvent(LogEvent event) {
+            @Override
+            public void onNewLogEvent(LogEvent event) {
                 detailedLogEventTablePanel.onNewLogEvent(event);
             }
         });
     }
 
-    @Override public void start() {}
+    public void setLayout(String layout) {
+        this.layout = layout;
+    }
 
-    @Override public void stop() {}
+    @Inject
+    public void setLayoutService(LayoutService layoutService) {
+        this.layoutService = layoutService;
+    }
 
-    @Override public String toString() {
+    @Inject
+    public void setMessagingService(EnvironmentMessagingService messagingService) {
+        this.messagingService = messagingService;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public void start() {
+    }
+
+    @Override
+    public void stop() {
+    }
+
+    @Override
+    public String toString() {
         return "RealtimeViewModule [name=" +
                name +
                ", layout=" +
@@ -87,9 +101,6 @@ public class RealtimeViewModule implements Module<RealtimeViewConfiguration> {
                messagingService +
                "]";
     }
-    
-    
-    
-    
+
 
 }

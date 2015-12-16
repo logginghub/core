@@ -5,10 +5,10 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 
 /**
- * XML configuration mapping object for being able to rename columns in the event detail view
+ * XML configuration mapping object for being able to rename things (column names, level names etc)
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public class ColumnMappingConfiguration {
+public class NameMappingConfiguration {
     @XmlAttribute private String from;
     @XmlAttribute private String to;
 

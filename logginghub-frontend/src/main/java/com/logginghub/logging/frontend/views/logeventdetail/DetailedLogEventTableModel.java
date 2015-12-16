@@ -7,7 +7,8 @@ import com.logginghub.logging.filters.MessageContainsFilter;
 import com.logginghub.logging.frontend.Utils;
 import com.logginghub.logging.frontend.images.Icons;
 import com.logginghub.logging.frontend.images.Icons.IconIdentifier;
-import com.logginghub.logging.frontend.model.EventTableModel;
+import com.logginghub.logging.frontend.model.EventTableColumnModel;
+import com.logginghub.logging.frontend.model.LevelNamesModel;
 import com.logginghub.logging.frontend.model.LogEventContainer;
 import com.logginghub.logging.frontend.model.LogEventContainerController;
 import com.logginghub.logging.listeners.LogEventListener;
@@ -42,29 +43,23 @@ public class DetailedLogEventTableModel extends DefaultTableModel implements Log
     public static final int NUMBER_OF_COLUMNS = 11;
 
     private static final String BLANK = "";
-//    private static final String[] columnNames = new String[] { "Time", "Source", "Host", "Level", "Thread", "Method", "Message", "DC", "", "PID", "Channel" };
 
     private CompositeAndFilter filters = new CompositeAndFilter();
 
-    private final EventTableModel eventTableModel;
+    private final EventTableColumnModel eventTableColumnModel;
+    private final LevelNamesModel levelNamesModel;
     private LogEventContainerController eventController;
 
     private boolean isPlaying = true;
-//    private IntegerStat gets;
 
-    public DetailedLogEventTableModel(EventTableModel eventTableModel, LogEventContainerController eventController) {
-        this.eventTableModel = eventTableModel;
-
-        //        StatBundle bundle = new StatBundle();
-//        gets = bundle.createIncremental("gets");
-//        bundle.startPerSecond(logger);
-        
+    public DetailedLogEventTableModel(EventTableColumnModel eventTableColumnModel, LevelNamesModel levelNamesModel, LogEventContainerController eventController) {
+        this.eventTableColumnModel = eventTableColumnModel;
+        this.levelNamesModel = levelNamesModel;
         this.eventController = eventController;
-
     }
 
     @Override public String getColumnName(int column) {
-        return eventTableModel.getColumnNameMappings().get(column);
+        return eventTableColumnModel.getColumnNameMappings().get(column);
     }
 
     @Override public int getColumnCount() {
@@ -85,15 +80,12 @@ public class DetailedLogEventTableModel extends DefaultTableModel implements Log
     }
 
     public LogEvent getLogEventAtRow(int rowIndex) {
-//        gets.increment();
-//        Is.swingEventThread();
         synchronized (eventLock) {
             return eventController.getLiveEventsThatPassFilter().get(rowIndex);
         }
     }
 
     public int getVisibleIndexForEvent(LogEvent event) {
-//        Is.swingEventThread();
         synchronized (eventLock) {
             int index = eventController.getLiveEventsThatPassFilter().indexOf(event);
             return index;
@@ -102,7 +94,6 @@ public class DetailedLogEventTableModel extends DefaultTableModel implements Log
 
     @Override public Object getValueAt(int row, int column) {
         LogEvent logEvent;
-//        Is.swingEventThread();
         synchronized (eventLock) {
             logEvent = eventController.getLiveEventsThatPassFilter().get(row);
         }
@@ -171,7 +162,7 @@ public class DetailedLogEventTableModel extends DefaultTableModel implements Log
                 break;
             }
             case COLUMN_LEVEL: {
-                value = logEvent.getLevelDescription();
+                value = levelNamesModel.getLevelName(logEvent.getLevel());
                 break;
             }
             case COLUMN_DIAGNOSTIC_CONTEXT: {
@@ -222,22 +213,16 @@ public class DetailedLogEventTableModel extends DefaultTableModel implements Log
 
     public void addFilter(Filter<LogEvent> filter, LogEvent currentSelection) {
         filters.addFilter(filter);
-        // int newSelectionPosition =
         refilter(currentSelection);
-        // return newSelectionPosition;
     }
 
     public void refreshFilters(LogEvent currentSelection) {
-        // int refilter =
         refilter(currentSelection);
-        // return refilter;
     }
 
     public void removeFilter(Filter<LogEvent> filter, LogEvent currentSelection) {
         filters.removeFilter(filter);
-        // int newSelectionPosition = refilter(currentSelection);
         refilter(currentSelection);
-        // return newSelectionPosition;
     }
 
     public void clear() {
@@ -254,7 +239,6 @@ public class DetailedLogEventTableModel extends DefaultTableModel implements Log
                 fireTableDataChanged();
             }
         });
-        // return newSelectionPosition;
     }
 
     // //////////////////////////////////////////////////////////////////
@@ -291,14 +275,12 @@ public class DetailedLogEventTableModel extends DefaultTableModel implements Log
         if (isPlaying) {
 
             if (removedRows > 0) {
-//                Out.out("Rows delete from {} to {}", 0, removedRows -1);
                 fireTableRowsDeleted(0, removedRows - 1);
             }
 
             // We've just got rid of some, so we need to offset the added rows back
             startAddedRow -= removedRows;
             endAddedRow -= removedRows;
-//            Out.out("Rows inserted from {} to {}", startAddedRow, endAddedRow);
             fireTableRowsInserted(startAddedRow, endAddedRow);
         }
     }

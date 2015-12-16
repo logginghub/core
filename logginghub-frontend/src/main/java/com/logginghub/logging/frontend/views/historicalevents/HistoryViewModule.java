@@ -3,7 +3,8 @@ package com.logginghub.logging.frontend.views.historicalevents;
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.frontend.binary.ImportController;
 import com.logginghub.logging.frontend.model.EnvironmentModel;
-import com.logginghub.logging.frontend.model.EventTableModel;
+import com.logginghub.logging.frontend.model.EventTableColumnModel;
+import com.logginghub.logging.frontend.model.LevelNamesModel;
 import com.logginghub.logging.frontend.modules.EnvironmentMessagingService;
 import com.logginghub.logging.frontend.modules.configuration.HistoryViewConfiguration;
 import com.logginghub.logging.frontend.services.LayoutService;
@@ -82,11 +83,13 @@ public class HistoryViewModule implements Module<HistoryViewConfiguration> {
         // jshaw - due to convoluted legacy issues, the events take a detour through the table panel on their way through
         // to the actual event controller in the model.
 
-        EventTableModel eventTableModel = new EventTableModel();
+        EventTableColumnModel eventTableColumnModel = new EventTableColumnModel();
+        LevelNamesModel levelNamesModel = new LevelNamesModel();
 
         detailedLogEventTablePanel = new DetailedLogEventTablePanel(menuBar,
                                                                     propertiesName,
-                                                                    eventTableModel,
+                                                                    eventTableColumnModel,
+                                                                    levelNamesModel,
                                                                     historicalSearchModel.getEvents(),
                                                                     timeProvider,
                                                                     false);

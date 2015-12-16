@@ -1,26 +1,22 @@
 package com.logginghub.logging.frontend.views.logeventdetail;
 
-import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-
-import net.miginfocom.swing.MigLayout;
-
 import com.logginghub.logging.frontend.components.LevelsCheckboxListView;
 import com.logginghub.logging.frontend.components.QuickFilterHistoryController;
 import com.logginghub.logging.frontend.components.QuickFilterHistoryTextField;
+import com.logginghub.logging.frontend.model.LevelNamesModel;
 import com.logginghub.logging.frontend.model.QuickFilterModel;
 import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.observable.Binder;
 import com.logginghub.utils.observable.ObservableProperty;
 import com.logginghub.utils.observable.ObservablePropertyListener;
+import net.miginfocom.swing.MigLayout;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.HashMap;
+import java.util.Map;
 
 public class QuickFilterRowPanel extends JPanel {
     private static final long serialVersionUID = 1L;
@@ -41,7 +37,7 @@ public class QuickFilterRowPanel extends JPanel {
 
 //    private LevelsCheckboxModel levelsCheckboxModel;
 
-    public QuickFilterRowPanel() {
+    public QuickFilterRowPanel(LevelNamesModel levelNamesModel) {
         setLayout(new MigLayout(layoutConstraints, "[][][][grow,fill][]", "[grow,fill]"));
 
      /*   Level[] levels = new Level[] { Level.SEVERE, Level.WARNING, Level.INFO, Level.CONFIG, Level.FINE, Level.FINER, Level.FINEST, Level.ALL };
@@ -71,7 +67,7 @@ public class QuickFilterRowPanel extends JPanel {
 
 //        levelsCheckboxModel = new LevelsCheckboxModel();
         
-        quickLevelFilterCombo = new LevelsCheckboxListView();
+        quickLevelFilterCombo = new LevelsCheckboxListView(levelNamesModel);
         quickLevelFilterCombo.setName("quickLevelFilterCombo");
 //        quickLevelFilterCombo.setSelectedItem(Level.ALL);
 

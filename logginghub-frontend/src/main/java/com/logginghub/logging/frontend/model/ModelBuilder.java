@@ -1,7 +1,7 @@
 package com.logginghub.logging.frontend.model;
 
 import com.logginghub.logging.frontend.components.QuickFilterHistoryEntryModel;
-import com.logginghub.logging.frontend.configuration.ColumnMappingConfiguration;
+import com.logginghub.logging.frontend.configuration.NameMappingConfiguration;
 import com.logginghub.logging.frontend.configuration.EnvironmentConfiguration;
 import com.logginghub.logging.frontend.configuration.HighlighterConfiguration;
 import com.logginghub.logging.frontend.configuration.HubConfiguration;
@@ -94,23 +94,38 @@ public class ModelBuilder {
 
         environmentModel.addFilters(environmentConfiguration);
 
-        Map<Integer, String> columnNameMappings = environmentModel.getEventTableModel().getColumnNameMappings();
-        List<ColumnMappingConfiguration> columnMappings = environmentConfiguration.getColumnMappings();
-        for (ColumnMappingConfiguration columnMapping : columnMappings) {
+        loadColumnNameMappings(environmentConfiguration, environmentModel);
+        loadLevelNameMappings(environmentConfiguration, environmentModel);
+
+        return environmentModel;
+    }
+
+    private void loadColumnNameMappings(EnvironmentConfiguration environmentConfiguration, EnvironmentModel environmentModel) {
+        Map<Integer, String> columnNameMappings = environmentModel.getEventTableColumnModel().getColumnNameMappings();
+        List<NameMappingConfiguration> columnMappings = environmentConfiguration.getColumnMappings();
+        processMappings(columnNameMappings, columnMappings);
+    }
+
+    private void loadLevelNameMappings(EnvironmentConfiguration environmentConfiguration, EnvironmentModel environmentModel) {
+        Map<Integer, String> levelNameMappings = environmentModel.getLevelNamesModel().getLevelNames();
+        List<NameMappingConfiguration> columnMappings = environmentConfiguration.getLevelMappings();
+        processMappings(levelNameMappings, columnMappings);
+    }
+
+    private void processMappings(Map<Integer, String> levelNameMappings, List<NameMappingConfiguration> columnMappings) {
+        for (NameMappingConfiguration columnMapping : columnMappings) {
 
             String from = columnMapping.getFrom();
             String to = columnMapping.getTo();
 
-            for (Entry<Integer, String> mappingEntry : columnNameMappings.entrySet()) {
+            for (Entry<Integer, String> mappingEntry : levelNameMappings.entrySet()) {
                 if(mappingEntry.getValue().equalsIgnoreCase(from)) {
                     int columnIndex = mappingEntry.getKey();
-                    columnNameMappings.put(columnIndex, to);
+                    levelNameMappings.put(columnIndex, to);
                 }
             }
 
         }
-
-        return environmentModel;
     }
 
     private HighlighterModel buildModel(HighlighterConfiguration highlighterConfiguration) {

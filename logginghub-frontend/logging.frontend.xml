@@ -4,7 +4,10 @@
     <environment name="local" showHistoryTab="true" eventMemoryMB="500" autoRequestHistory="all" disableAutoScrollPauser="true">
         <hub name="local" host="localhost:9000"/>
 
-        <columnMapping from="Message" to="Foo"/>
+        <columnMapping from="Message" to="Order details"/>
+        <columnMapping from="Level" to="Status"/>
+
+        <levelMapping from="Info" to="New Order"/>
 
     </environment>
 

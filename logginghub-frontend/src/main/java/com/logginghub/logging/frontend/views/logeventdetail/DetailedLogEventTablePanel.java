@@ -16,9 +16,10 @@ import com.logginghub.logging.frontend.configuration.RowFormatConfiguration;
 import com.logginghub.logging.frontend.images.Icons;
 import com.logginghub.logging.frontend.images.Icons.IconIdentifier;
 import com.logginghub.logging.frontend.model.EnvironmentModel;
-import com.logginghub.logging.frontend.model.EventTableModel;
+import com.logginghub.logging.frontend.model.EventTableColumnModel;
 import com.logginghub.logging.frontend.model.HighlighterModel;
 import com.logginghub.logging.frontend.model.HubConnectionModel;
+import com.logginghub.logging.frontend.model.LevelNamesModel;
 import com.logginghub.logging.frontend.model.LogEventContainer;
 import com.logginghub.logging.frontend.model.LogEventContainerController;
 import com.logginghub.logging.frontend.model.LogEventContainerListener;
@@ -107,8 +108,9 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
     private JLabel autoScrollButton;
     private Metadata dynamicSettings;
     private EnvironmentModel environmentModel;
+    private JMenuBar menuBar;
     private LogEventContainerController eventController = new LogEventContainerController();
-    private EventDetailPanel eventDetailPanel = new EventDetailPanel();
+    private EventDetailPanel eventDetailPanel;
     private int eventsReceived = 0;
     private TimerTask executeQuickFilter = null;
     private int filterCount = 1;
@@ -164,24 +166,27 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
     private boolean historicalView = false;
     private TimeView timeView;
     private JSplitPane eventDetailsSplitPane;
+    private LevelNamesModel levelNamesModel;
 
     public DetailedLogEventTablePanel(JMenuBar menuBar,
                                       String propertiesName,
-                                      EventTableModel eventTableModel,
+                                      EventTableColumnModel eventTableColumnModel,
+                                      LevelNamesModel levelNamesModel,
                                       final LogEventContainerController eventController,
                                       TimeProvider timeProvider,
                                       boolean showHeapSlider) {
         this();
+        this.menuBar = menuBar;
+        this.levelNamesModel = levelNamesModel;
 
         this.eventController = eventController;
+        this.eventDetailPanel = new EventDetailPanel(levelNamesModel, eventTableColumnModel);
 
-        tableModel = new DetailedLogEventTableModel(eventTableModel, eventController);
+        tableModel = new DetailedLogEventTableModel(eventTableColumnModel, levelNamesModel, eventController);
         table = new DetailedLogEventTable(tableModel, rowHighlighter, propertiesName);
 
         table.setName("logEventTable");
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-
-        setupMenuBar(menuBar);
 
         tableScrollPane = new JScrollPane(table);
 
@@ -576,7 +581,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
     }
 
     private QuickFilterRowPanel createQuickFilterRow() {
-        QuickFilterRowPanel quickFilterRowPanel = new QuickFilterRowPanel();
+        QuickFilterRowPanel quickFilterRowPanel = new QuickFilterRowPanel(levelNamesModel);
         quickFilterRowPanel.setName("quickFilter-" + nextFilterID++);
         return quickFilterRowPanel;
     }
@@ -640,7 +645,10 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
     }
 
     private void addLevelFilterMenuOption(JMenu levelMenu, final Level level, int key) {
-        JMenuItem levelItem = new JMenuItem(level.getLocalizedName());
+
+        String name = levelNamesModel.getLevelName(level.intValue());
+
+        JMenuItem levelItem = new JMenuItem(name);
         levelItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 getFirstQuickFilter().getModel().getLevelFilter().get().getSelectedLevel().set(level);
@@ -772,6 +780,8 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
 
     public void bind(EnvironmentModel environmentModel) {
         this.environmentModel = environmentModel;
+
+        setupMenuBar(menuBar);
 
         QuickFilterModel quickFilterModel = new QuickFilterModel();
         environmentModel.getQuickFilterModels().add(quickFilterModel);

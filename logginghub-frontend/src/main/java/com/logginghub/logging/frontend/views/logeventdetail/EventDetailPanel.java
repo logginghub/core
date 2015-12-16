@@ -3,6 +3,8 @@ package com.logginghub.logging.frontend.views.logeventdetail;
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.frontend.ComponentKeys;
 import com.logginghub.logging.frontend.Utils;
+import com.logginghub.logging.frontend.model.EventTableColumnModel;
+import com.logginghub.logging.frontend.model.LevelNamesModel;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
@@ -28,8 +30,13 @@ public class EventDetailPanel extends JPanel {
     private MigLayout migLayout;
     private JScrollPane exceptionScroller;
     private JScrollPane messageScroller;
+    private final LevelNamesModel levelNamesModel;
+    private final EventTableColumnModel eventTableColumnModel;
 
-    public EventDetailPanel() {
+    public EventDetailPanel(LevelNamesModel levelNamesModel, EventTableColumnModel eventTableColumnModel) {
+        this.levelNamesModel = levelNamesModel;
+        this.eventTableColumnModel = eventTableColumnModel;
+
         setName("eventDetailPanel");
 
         setBackground(Color.white);
@@ -38,13 +45,14 @@ public class EventDetailPanel extends JPanel {
 
         JPanel topPanel = new JPanel(new MigLayout("insets 1, fill", "[][grow][][grow]", "[][][][]"));
 
-        JLabel a = new JLabel("Received timestamp");
-        JLabel b = new JLabel("Level");
-        JLabel c = new JLabel("Source application");
-        JLabel d = new JLabel("Source host");
+        // TODO : class, method and logger need to be columns really - there is a leaky abstraction on the columns vs the actual event fields.
+        JLabel a = new JLabel(eventTableColumnModel.getColumnName(DetailedLogEventTableModel.COLUMN_TIME));
+        JLabel b = new JLabel(eventTableColumnModel.getColumnName(DetailedLogEventTableModel.COLUMN_LEVEL));
+        JLabel c = new JLabel(eventTableColumnModel.getColumnName(DetailedLogEventTableModel.COLUMN_SOURCE));
+        JLabel d = new JLabel(eventTableColumnModel.getColumnName(DetailedLogEventTableModel.COLUMN_HOST));
         JLabel e = new JLabel("Class");
         JLabel f = new JLabel("Method");
-        JLabel g = new JLabel("Thread");
+        JLabel g = new JLabel(eventTableColumnModel.getColumnName(DetailedLogEventTableModel.COLUMN_THREAD));
         JLabel h = new JLabel("Logger");
 
         addCopyListener(timestampLabel);
@@ -156,7 +164,7 @@ public class EventDetailPanel extends JPanel {
     public void update(LogEvent event) {
 
         timestampLabel.setText(Utils.formatTime(event.getOriginTime()));
-        levelLabel.setText(event.getLevelDescription());
+        levelLabel.setText(levelNamesModel.getLevelName(event.getLevel()));
         sourceApplicationLabel.setText(event.getSourceApplication());
         sourceHostLabel.setText(event.getSourceHost() + " (" + event.getSourceAddress() + ")");
         classLabel.setText(event.getSourceClassName());

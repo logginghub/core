@@ -443,7 +443,8 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
 
         final DetailedLogEventTablePanel tablePanel = new DetailedLogEventTablePanel(menuBar,
                                                                                      environmentModel.getName(),
-                                                                                     environmentModel.getEventTableModel(),
+                                                                                     environmentModel.getEventTableColumnModel(),
+                                                                                     environmentModel.getLevelNamesModel(),
                                                                                      environmentModel.getEventController(),
                                                                                      timeProvider,
                                                                                      proxy.getLoggingFrontendConfiguration().isShowHeapSlider());

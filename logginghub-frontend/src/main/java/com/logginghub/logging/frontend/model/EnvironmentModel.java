@@ -44,14 +44,20 @@ public class EnvironmentModel extends ObservableModel implements LogEventSource,
     private double eventMemoryMB;
     private String autoRequestHistory= "";
     private boolean disableAutoScrollPauser = false;
-    private EventTableModel eventTableModel = new EventTableModel();
+
+    private EventTableColumnModel eventTableColumnModel = new EventTableColumnModel();
+    private LevelNamesModel levelNamesModel = new LevelNamesModel();
 
     public double getEventMemoryMB() {
         return eventMemoryMB;
     }
 
-    public EventTableModel getEventTableModel() {
-        return eventTableModel;
+    public LevelNamesModel getLevelNamesModel() {
+        return levelNamesModel;
+    }
+
+    public EventTableColumnModel getEventTableColumnModel() {
+        return eventTableColumnModel;
     }
 
     public String isAutoRequestHistory() {

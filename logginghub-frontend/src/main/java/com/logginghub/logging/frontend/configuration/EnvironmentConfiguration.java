@@ -36,7 +36,8 @@ import java.util.List;
 
     @XmlElement List<FilterConfiguration> filter = new ArrayList<FilterConfiguration>();
 
-    @XmlElement List<ColumnMappingConfiguration> columnMapping = new ArrayList<ColumnMappingConfiguration>();
+    @XmlElement List<NameMappingConfiguration> columnMapping = new ArrayList<NameMappingConfiguration>();
+    @XmlElement private List<NameMappingConfiguration> levelMapping = new ArrayList<NameMappingConfiguration>();
 
     @XmlElement private TimestampVariableRollingFileLoggerConfiguration outputLogConfiguration = new TimestampVariableRollingFileLoggerConfiguration();
     private boolean stillUsingdefaultOutputLogConfiuguration = true;
@@ -45,7 +46,7 @@ import java.util.List;
         setupOutputLogConfiguration();
     }
 
-    public List<ColumnMappingConfiguration> getColumnMappings() {
+    public List<NameMappingConfiguration> getColumnMappings() {
         return columnMapping;
     }
 
@@ -55,6 +56,10 @@ import java.util.List;
 
     public boolean getDisableAutoScrollPauser() {
         return disableAutoScrollPauser;
+    }
+
+    public List<NameMappingConfiguration> getLevelMappings() {
+        return levelMapping;
     }
 
     public boolean isDisableAutoScrollPauser() {
@@ -75,6 +80,10 @@ import java.util.List;
 
     public void setDisableAutoScrollPauser(boolean disableAutoScrollPauser) {
         this.disableAutoScrollPauser = disableAutoScrollPauser;
+    }
+
+    public void setLevelMappings(List<NameMappingConfiguration> levelMappings) {
+        this.levelMapping = levelMappings;
     }
 
     private void setupOutputLogConfiguration() {

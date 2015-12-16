@@ -8,11 +8,11 @@ import java.util.Map;
 /**
  * Encapsulates the configuration and model attributes needed for the event display table.
  */
-public class EventTableModel {
+public class EventTableColumnModel {
 
     private Map<Integer, String> columnNameMappings = new HashMap<Integer, String>();
 
-    public EventTableModel() {
+    public EventTableColumnModel() {
         // Add the default column name mappings
 
         columnNameMappings.put(DetailedLogEventTableModel.COLUMN_TIME, "Time");
@@ -26,6 +26,10 @@ public class EventTableModel {
         columnNameMappings.put(DetailedLogEventTableModel.COLUMN_LOCKED, "Locked");
         columnNameMappings.put(DetailedLogEventTableModel.COLUMN_PID, "PID");
         columnNameMappings.put(DetailedLogEventTableModel.COLUMN_CHANNEL, "Channel");
+    }
+
+    public String getColumnName(int columnIndex) {
+        return columnNameMappings.get(columnIndex);
     }
 
     public Map<Integer, String> getColumnNameMappings() {
