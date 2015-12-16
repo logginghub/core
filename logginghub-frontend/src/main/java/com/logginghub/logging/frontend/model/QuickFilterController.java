@@ -1,10 +1,7 @@
 package com.logginghub.logging.frontend.model;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.logging.Level;
-
 import com.logginghub.logging.filters.CompositeAndFilter;
+import com.logginghub.logging.filters.FilterFactory;
 import com.logginghub.logging.filters.LevelCheckFilter;
 import com.logginghub.logging.filters.LogEventLevelFilter;
 import com.logginghub.logging.filters.MultipleEventContainsFilter;
@@ -15,7 +12,13 @@ import com.logginghub.utils.observable.ObservableListListener;
 import com.logginghub.utils.observable.ObservableProperty;
 import com.logginghub.utils.observable.ObservablePropertyListener;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.logging.Level;
+
 public class QuickFilterController {
+
+    private final FilterFactory filterFactory;
 
     class FilterWrapper {
         public LogEventLevelFilter severityFilter;
@@ -34,6 +37,7 @@ public class QuickFilterController {
     public QuickFilterController(final EnvironmentModel environmentModel) {
         
         this.environmentModel = environmentModel;
+        this.filterFactory = new FilterFactory(environmentModel.isFilterCaseSensitive(), environmentModel.isFilterUnicode());
         
         isAndFilter.addListenerAndNotifyCurrent(new ObservablePropertyListener<Boolean>() {
             @Override public void onPropertyChanged(Boolean oldValue, Boolean newValue) {
@@ -56,7 +60,7 @@ public class QuickFilterController {
             @Override public void onAdded(QuickFilterModel t) {
 
                 final FilterWrapper wrapper = new FilterWrapper();
-                wrapper.messageFilter = new MultipleEventContainsFilter("", false);
+                wrapper.messageFilter = new MultipleEventContainsFilter("", false, filterFactory);
                 wrapper.severityFilter = new LogEventLevelFilter(0);
                 wrapper.specificLevelFilter = new LevelCheckFilter();
                 wrapper.compositeFilter = new CompositeAndFilter(wrapper.messageFilter, wrapper.severityFilter, wrapper.specificLevelFilter);

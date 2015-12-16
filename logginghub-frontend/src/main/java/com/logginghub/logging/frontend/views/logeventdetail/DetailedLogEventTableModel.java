@@ -15,6 +15,7 @@ import com.logginghub.logging.listeners.LogEventListener;
 import com.logginghub.utils.Is;
 import com.logginghub.utils.Metadata;
 import com.logginghub.utils.Pair;
+import com.logginghub.utils.Stopwatch;
 import com.logginghub.utils.filter.Filter;
 import com.logginghub.utils.logging.Logger;
 
@@ -233,7 +234,9 @@ public class DetailedLogEventTableModel extends DefaultTableModel implements Log
         SwingUtilities.invokeLater(new Runnable() {
             @Override public void run() {
                 synchronized (eventLock) {
+                    Stopwatch refiltering = Stopwatch.start("Refiltering");
                     eventController.refilter(filters);
+                    logger.info(refiltering);
                     eventController.getLiveEventsThatPassFilter().indexOf(currentSelection);
                 }
                 fireTableDataChanged();

@@ -1,9 +1,5 @@
 package com.logginghub.logging.frontend.model;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-
 import com.logginghub.logging.DefaultLogEvent;
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.utils.LoggingUtils;
@@ -14,38 +10,31 @@ import com.logginghub.utils.VisualStopwatchController;
 import com.logginghub.utils.filter.Filter;
 import com.logginghub.utils.logging.Logger;
 
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 /**
- * Whilst figuring out the new discard strategy for incoming events, it became
- * clear there are four buckets:
- * <ol>
- * <li>1. live events that pass filter</li>
- * <li>2. live events that failed filter</li>
- * <li>3. paused events that pass filter</li>
- * <li>4. paused events that failed filter</li>
+ * Whilst figuring out the new discard strategy for incoming events, it became clear there are four buckets: <ol> <li>1. live events that pass
+ * filter</li> <li>2. live events that failed filter</li> <li>3. paused events that pass filter</li> <li>4. paused events that failed filter</li>
  * </ol>
- * 
- * The new strategy is based around knowing exactly how many bytes we've
- * allocated to events, so someone needs to keep a track and decide which bucket
+ * <p/>
+ * The new strategy is based around knowing exactly how many bytes we've allocated to events, so someone needs to keep a track and decide which bucket
  * is going get the bad news.
- * 
+ *
  * @author James
- * 
  */
 public class LogEventContainerController {
 
+    private static final Logger logger = Logger.getLoggerFor(LogEventContainerController.class);
+    private final List<LogEventContainerListener> logEventContainerListeners = new CopyOnWriteArrayList<LogEventContainerListener>();
+    private final List<LogEventContainerControllerListener> controllerListeners = new CopyOnWriteArrayList<LogEventContainerControllerListener>();
     private long currentLevel = 0;
-
     private LogEventContainer liveEventsThatFailedFilter = new LogEventContainer();
     private LogEventContainer liveEventsThatPassFilter = new LogEventContainer();
     private LogEventContainer pausedEventsThatFailedFilter = new LogEventContainer();
     private LogEventContainer pausedEventsThatPassFilter = new LogEventContainer();
-
-    private final List<LogEventContainerListener> logEventContainerListeners = new CopyOnWriteArrayList<LogEventContainerListener>();
-    private final List<LogEventContainerControllerListener> controllerListeners = new CopyOnWriteArrayList<LogEventContainerControllerListener>();
-    
     private long threshold = (long) (Runtime.getRuntime().maxMemory() * 0.2f);
-
-    private static final Logger logger = Logger.getLoggerFor(LogEventContainerController.class);
 
     public Pair<Boolean, Boolean> add(LogEvent event, Filter<LogEvent> filter, boolean isPlaying) {
 
@@ -60,7 +49,7 @@ public class LogEventContainerController {
 
         Stopwatch sw1 = Stopwatch.start("Filtering");
         boolean passes = filter.passes(event);
-      
+
         VisualStopwatchController.getInstance().add(sw1);
 
         Stopwatch sw2 = Stopwatch.start("Adding");
@@ -69,19 +58,16 @@ public class LogEventContainerController {
                 Is.swingEventThread();
                 liveEventsThatPassFilter.add(event);
                 isVisibile = true;
-            }
-            else {
+            } else {
                 liveEventsThatFailedFilter.add(event);
                 isVisibile = false;
             }
-        }
-        else {
+        } else {
             if (passes) {
                 pausedEventsThatPassFilter.add(event);
                 isVisibile = false;
 
-            }
-            else {
+            } else {
                 pausedEventsThatFailedFilter.add(event);
                 isVisibile = false;
             }
@@ -94,19 +80,15 @@ public class LogEventContainerController {
             LogEvent removed = null;
             if (pausedEventsThatFailedFilter.size() > 0) {
                 removed = pausedEventsThatFailedFilter.remove();
-            }
-            else if (pausedEventsThatPassFilter.size() > 0) {
+            } else if (pausedEventsThatPassFilter.size() > 0) {
                 removed = pausedEventsThatPassFilter.remove();
-            }
-            else if (liveEventsThatFailedFilter.size() > 0) {
+            } else if (liveEventsThatFailedFilter.size() > 0) {
                 removed = liveEventsThatFailedFilter.remove();
-            }
-            else if (liveEventsThatPassFilter.size() > 0) {
+            } else if (liveEventsThatPassFilter.size() > 0) {
                 Is.swingEventThread();
                 removed = liveEventsThatPassFilter.remove();
                 removedVisible = true;
-            }
-            else {
+            } else {
                 // Crap, everything was empty, so how can we be over the
                 // threshold? Must have been the biggest log event ever we just
                 // added, or a daftly small threshold. Ignore it.
@@ -124,7 +106,7 @@ public class LogEventContainerController {
         if (passes) {
             firePassedFilter(event);
         }
-        
+
         currentLevel = newSize;
         start.stop();
         VisualStopwatchController.getInstance().add(start);
@@ -133,18 +115,42 @@ public class LogEventContainerController {
 
     }
 
+    private void fireRemoved(LogEvent event) {
+        for (LogEventContainerListener listener : logEventContainerListeners) {
+            listener.onRemoved(event);
+        }
+
+        for (LogEventContainerControllerListener listener : controllerListeners) {
+            listener.onRemoved(event);
+        }
+    }
+
+    private void fireAdded(LogEvent event) {
+        for (LogEventContainerListener listener : logEventContainerListeners) {
+            listener.onAdded(event);
+        }
+    }
+
+    private void fireAdded(LogEvent event, boolean playing, boolean passesFilter) {
+        for (LogEventContainerControllerListener listener : controllerListeners) {
+            listener.onAdded(event, playing, passesFilter);
+        }
+    }
+
+    private void firePassedFilter(LogEvent event) {
+        for (LogEventContainerListener listener : logEventContainerListeners) {
+            listener.onPassedFilter(event);
+        }
+    }
+
     public final void addLogEventContainerListener(LogEventContainerListener listener) {
         logEventContainerListeners.add(listener);
     }
-    
+
     public final void addLogEventContainerListener(LogEventContainerControllerListener listener) {
         controllerListeners.add(listener);
     }
 
-    public final void removeLogEventContainerListener(LogEventContainerControllerListener listener) {
-        controllerListeners.remove(listener);
-    }
-    
     public void clear() {
 
         Is.swingEventThread();
@@ -157,8 +163,7 @@ public class LogEventContainerController {
                 if (defaultLogEvent.getMetadata().getBoolean("locked", false)) {
                     // Item is locked, dont remove it
                     currentLevel += LoggingUtils.sizeof(logEvent);
-                }
-                else {
+                } else {
                     iterator.remove();
                     fireRemoved(logEvent);
                 }
@@ -178,6 +183,12 @@ public class LogEventContainerController {
             LogEvent logEvent = iterator.next();
             iterator.remove();
             fireRemoved(logEvent);
+        }
+    }
+
+    private void fireCleared() {
+        for (LogEventContainerListener listener : logEventContainerListeners) {
+            listener.onCleared();
         }
     }
 
@@ -214,6 +225,10 @@ public class LogEventContainerController {
         return threshold;
     }
 
+    public void setThreshold(long threshold) {
+        this.threshold = threshold;
+    }
+
     public double getUsedPercentage() {
         return 100d * currentLevel / (double) threshold;
     }
@@ -221,11 +236,11 @@ public class LogEventContainerController {
     public void play() {
         Is.swingEventThread();
         liveEventsThatPassFilter.add(pausedEventsThatPassFilter);
-        
+
         for (LogEventContainerControllerListener listener : controllerListeners) {
             listener.onPlayed(pausedEventsThatPassFilter);
         }
-        
+
         pausedEventsThatPassFilter.clear();
     }
 
@@ -243,53 +258,13 @@ public class LogEventContainerController {
         // collection... maybe.
         LogEventContainer allLive = new LogEventContainer(liveEventsThatPassFilter, liveEventsThatFailedFilter);
         allLive.sort();
-        
+
+        // TODO : there is a major optimisition to be made here; if we can tell that the filter is more specific, we only need to search in the events that have already passed
+
         Is.swingEventThread();
-        liveEventsThatPassFilter.clear();       
+        liveEventsThatPassFilter.clear();
         liveEventsThatFailedFilter.clear();
         allLive.applyFilter(filters, liveEventsThatPassFilter, liveEventsThatFailedFilter);
-    }
-
-    public final void removeLogEventContainerListener(LogEventContainerListener listener) {
-        logEventContainerListeners.remove(listener);
-    }
-
-    public void setThreshold(long threshold) {
-        this.threshold = threshold;
-    }
-
-    private void fireAdded(LogEvent event, boolean playing, boolean passesFilter) {
-        for (LogEventContainerControllerListener listener : controllerListeners) {
-            listener.onAdded(event, playing, passesFilter);
-        }
-    }
-    
-    private void fireAdded(LogEvent event) {
-        for (LogEventContainerListener listener : logEventContainerListeners) {
-            listener.onAdded(event);
-        }
-    }
-
-    private void fireRemoved(LogEvent event) {
-        for (LogEventContainerListener listener : logEventContainerListeners) {
-            listener.onRemoved(event);
-        }
-        
-        for (LogEventContainerControllerListener listener : controllerListeners) {
-            listener.onRemoved(event);
-        }
-    }
-
-    private void firePassedFilter(LogEvent event) {
-        for (LogEventContainerListener listener : logEventContainerListeners) {
-            listener.onPassedFilter(event);
-        }
-    }
-
-    private void fireCleared() {
-        for (LogEventContainerListener listener : logEventContainerListeners) {
-            listener.onCleared();
-        }
     }
 
     public LogEvent removeLiveEvent(int rowIndex) {
@@ -297,6 +272,14 @@ public class LogEventContainerController {
         LogEvent removeAt = liveEventsThatPassFilter.removeAt(rowIndex);
         fireRemoved(removeAt);
         return removeAt;
+    }
+
+    public final void removeLogEventContainerListener(LogEventContainerControllerListener listener) {
+        controllerListeners.remove(listener);
+    }
+
+    public final void removeLogEventContainerListener(LogEventContainerListener listener) {
+        logEventContainerListeners.remove(listener);
     }
 
 }

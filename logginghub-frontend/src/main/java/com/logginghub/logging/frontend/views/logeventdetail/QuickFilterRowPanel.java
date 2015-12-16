@@ -15,8 +15,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.HashMap;
-import java.util.Map;
 
 public class QuickFilterRowPanel extends JPanel {
     private static final long serialVersionUID = 1L;
@@ -33,43 +31,11 @@ public class QuickFilterRowPanel extends JPanel {
 
     private QuickFilterModel model;
 
-    private Map<String, JCheckBox> levelCheckBoxesByLevelName = new HashMap<String, JCheckBox>();
-
-//    private LevelsCheckboxModel levelsCheckboxModel;
-
     public QuickFilterRowPanel(LevelNamesModel levelNamesModel) {
         setLayout(new MigLayout(layoutConstraints, "[][][][grow,fill][]", "[grow,fill]"));
 
-     /*   Level[] levels = new Level[] { Level.SEVERE, Level.WARNING, Level.INFO, Level.CONFIG, Level.FINE, Level.FINER, Level.FINEST, Level.ALL };
-        JCheckBox[] checkBoxes = new JCheckBox[levels.length];
-        for (int i = 0; i < levels.length; i++) {
-            checkBoxes[i] = new JCheckBox(levels[i].getName(), true) {
-                @Override protected void processMouseEvent(MouseEvent e) {
-                    System.out.println(e);
-                    // super.processMouseEvent(e);
-
-                }
-
-                @Override public void doClick() {
-                    System.out.println("do click");
-
-                }
-
-                @Override public void doClick(int pressTime) {
-                    System.out.println("do click");
-
-                }
-                
-                
-            };
-            levelCheckBoxesByLevelName.put(levels[i].getName(), checkBoxes[i]);
-        }*/
-
-//        levelsCheckboxModel = new LevelsCheckboxModel();
-        
         quickLevelFilterCombo = new LevelsCheckboxListView(levelNamesModel);
         quickLevelFilterCombo.setName("quickLevelFilterCombo");
-//        quickLevelFilterCombo.setSelectedItem(Level.ALL);
 
         quickFilterTextField = new QuickFilterHistoryTextField();
         regexRadioButton = new JRadioButton("Regex");
@@ -99,18 +65,19 @@ public class QuickFilterRowPanel extends JPanel {
         quickFilterTextField.bind(quickFilterHistoryController);
 
         isAndFilter.addListenerAndNotifyCurrent(new ObservablePropertyListener<Boolean>() {
-            @Override public void onPropertyChanged(Boolean oldValue, Boolean isAnd) {
+            @Override
+            public void onPropertyChanged(Boolean oldValue, Boolean isAnd) {
                 if (isAnd) {
                     andOrToggle.setText("and");
-                }
-                else {
+                } else {
                     andOrToggle.setText("or");
                 }
             }
         });
 
         andOrToggle.addActionListener(new ActionListener() {
-            @Override public void actionPerformed(ActionEvent e) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
                 isAndFilter.set(!isAndFilter.get().booleanValue());
             }
         });
@@ -119,27 +86,8 @@ public class QuickFilterRowPanel extends JPanel {
         Binder.bind(model.getFilterText(), quickFilterTextField);
         Binder.bind(model.getIsRegex(), regexRadioButton);
 
-        // Bind the checkboxes by hand
-        // Binder.bind(model.getLevelFilter(), quickLevelFilterCombo);
-
         quickLevelFilterCombo.bind(model.getLevelFilter().get());
-        
-//        quickLevelFilterCombo.setSelectedItem(model.getLevelFilter().get());
 
-//        model.getLevelFilter().addListener(new ObservablePropertyListener<Level>() {
-//            public void onPropertyChanged(Level oldValue, Level newValue) {
-//                quickLevelFilterCombo.setSelectedItem(levelCheckBoxesByLevelName.get(newValue.getName()));
-//            }
-//        });
-
-//        quickLevelFilterCombo.addItemListener(new ItemListener() {
-//            @SuppressWarnings("unchecked") public void itemStateChanged(ItemEvent e) {
-//                if (e.getStateChange() == ItemEvent.SELECTED) {
-//                    JCheckBox box = (JCheckBox) quickLevelFilterCombo.getSelectedItem();
-//                    model.getLevelFilter().set(Level.parse(box.getText()));
-//                }
-//            }
-//        });
     }
 
     public QuickFilterModel getModel() {
@@ -157,8 +105,7 @@ public class QuickFilterRowPanel extends JPanel {
             setLayout(new MigLayout(layoutConstraints, "[][grow,fill][]", "[grow,fill]"));
             revalidate();
             doLayout();
-        }
-        else {
+        } else {
             removeAll();
             setLayout(new MigLayout(layoutConstraints, "[][][][grow,fill][]", "[grow,fill]"));
             add(enabledCheckbox);

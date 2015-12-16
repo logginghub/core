@@ -11,11 +11,13 @@ import com.logginghub.utils.filter.Filter;
  */
 public class MultipleEventContainsFilter extends CompositeAndFilter {
     private boolean useRegex = false;
+    private final FilterFactory filterFactory;
     private String value;
 
-    public MultipleEventContainsFilter(String value, boolean useRegex) {
+    public MultipleEventContainsFilter(String value, boolean useRegex, FilterFactory filterFactory) {
         this.value  = value;
         this.useRegex = useRegex;
+        this.filterFactory = filterFactory;
         setEventContainsString(value);
     }
 
@@ -67,7 +69,7 @@ public class MultipleEventContainsFilter extends CompositeAndFilter {
                 filter = new EventMatchesFilter(value);
             }
             else {
-                filter = new EventContainsFilter(value);
+                filter = filterFactory.createFilter(value);
             }
             addFilter(filter);
         }
@@ -123,7 +125,7 @@ public class MultipleEventContainsFilter extends CompositeAndFilter {
             filter = new EventMatchesFilter(phrase);
         }
         else {
-            filter = new EventContainsFilter(phrase);
+            filter = filterFactory.createFilter(value);
         }
 
         if (currentModifier == '+') {

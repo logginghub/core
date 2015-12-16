@@ -26,6 +26,54 @@ public class TestStringUtils {
     }
 
     @Test
+    public void testContainsIgnoreCase() {
+        assertThat(StringUtils.containsIgnoreCase("", ""), is(true));
+
+        assertThat(StringUtils.containsIgnoreCase("a", "a"), is(true));
+        assertThat(StringUtils.containsIgnoreCase("A", "a"), is(true));
+        assertThat(StringUtils.containsIgnoreCase("a", "A"), is(true));
+        assertThat(StringUtils.containsIgnoreCase("a", "b"), is(false));
+
+        assertThat(StringUtils.containsIgnoreCase("abc", "a"), is(true));
+        assertThat(StringUtils.containsIgnoreCase("abc", "b"), is(true));
+        assertThat(StringUtils.containsIgnoreCase("abc", "c"), is(true));
+        assertThat(StringUtils.containsIgnoreCase("abc", "A"), is(true));
+        assertThat(StringUtils.containsIgnoreCase("abc", "B"), is(true));
+        assertThat(StringUtils.containsIgnoreCase("abc", "C"), is(true));
+        assertThat(StringUtils.containsIgnoreCase("abc", "D"), is(false));
+
+        assertThat(StringUtils.containsIgnoreCase("abc", "ab"), is(true));
+        assertThat(StringUtils.containsIgnoreCase("abc", "bc"), is(true));
+        assertThat(StringUtils.containsIgnoreCase("abc", "AB"), is(true));
+        assertThat(StringUtils.containsIgnoreCase("abc", "BC"), is(true));
+        assertThat(StringUtils.containsIgnoreCase("abc", "D"), is(false));
+    }
+
+    @Test
+    public void testIndexOfIgnoreCase() {
+        assertThat(StringUtils.indexOfIgnoreCase("", ""), is(0));
+
+        assertThat(StringUtils.indexOfIgnoreCase("a", "a"), is(0));
+        assertThat(StringUtils.indexOfIgnoreCase("A", "a"), is(0));
+        assertThat(StringUtils.indexOfIgnoreCase("a", "A"), is(0));
+        assertThat(StringUtils.indexOfIgnoreCase("a", "b"), is(-1));
+
+        assertThat(StringUtils.indexOfIgnoreCase("abc", "a"), is(0));
+        assertThat(StringUtils.indexOfIgnoreCase("abc", "b"), is(1));
+        assertThat(StringUtils.indexOfIgnoreCase("abc", "c"), is(2));
+        assertThat(StringUtils.indexOfIgnoreCase("abc", "A"), is(0));
+        assertThat(StringUtils.indexOfIgnoreCase("abc", "B"), is(1));
+        assertThat(StringUtils.indexOfIgnoreCase("abc", "C"), is(2));
+        assertThat(StringUtils.indexOfIgnoreCase("abc", "D"), is(-1));
+
+        assertThat(StringUtils.indexOfIgnoreCase("abc", "ab"), is(0));
+        assertThat(StringUtils.indexOfIgnoreCase("abc", "bc"), is(1));
+        assertThat(StringUtils.indexOfIgnoreCase("abc", "AB"), is(0));
+        assertThat(StringUtils.indexOfIgnoreCase("abc", "BC"), is(1));
+        assertThat(StringUtils.indexOfIgnoreCase("abc", "D"), is(-1));
+    }
+
+    @Test
     public void testAfter() {
         assertThat(StringUtils.after("this is my string", "my"), is(" string"));
         assertThat(StringUtils.after("", ""), is(""));

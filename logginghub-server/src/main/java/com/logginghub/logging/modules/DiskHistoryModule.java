@@ -3,6 +3,7 @@ package com.logginghub.logging.modules;
 import com.logginghub.logging.DefaultLogEvent;
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.exceptions.LoggingMessageSenderException;
+import com.logginghub.logging.filters.FilterFactory;
 import com.logginghub.logging.filters.LogEventLevelFilter;
 import com.logginghub.logging.filters.MultipleEventContainsFilter;
 import com.logginghub.logging.interfaces.QueueAwareLoggingMessageSender;
@@ -70,6 +71,8 @@ public class DiskHistoryModule implements Module<DiskHistoryConfiguration> {
 
     private WorkerThread indexPublisher;
 
+    private FilterFactory filterFactory;
+
     @SuppressWarnings("unchecked") @Override
     public void configure(DiskHistoryConfiguration configuration, ServiceDiscovery discovery) {
         this.configuration = configuration;
@@ -117,6 +120,9 @@ public class DiskHistoryModule implements Module<DiskHistoryConfiguration> {
                 }
             });
         }
+
+
+        filterFactory = new FilterFactory(configuration.isFilterCaseSensitive(), configuration.isFilterUnicode());
     }
 
     private void handleJobKillRequest(HistoricalDataJobKillRequest message, SocketConnectionInterface source) {
@@ -197,7 +203,7 @@ public class DiskHistoryModule implements Module<DiskHistoryConfiguration> {
         final CompositeAndFilter<LogEvent> eventFilter = new CompositeAndFilter<LogEvent>();
         eventFilter.addFilter(new LogEventLevelFilter(message.getLevelFilter()));
         if (StringUtils.isNotNullOrEmpty(message.getQuickfilter())) {
-            eventFilter.addFilter(new MultipleEventContainsFilter(message.getQuickfilter(), false));
+            eventFilter.addFilter(new MultipleEventContainsFilter(message.getQuickfilter(), false, filterFactory));
         }
 
         Destination<SerialisableObject> visitor = new Destination<SerialisableObject>() {

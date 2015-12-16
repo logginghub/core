@@ -41,6 +41,8 @@ import java.util.List;
 
     @XmlElement private TimestampVariableRollingFileLoggerConfiguration outputLogConfiguration = new TimestampVariableRollingFileLoggerConfiguration();
     private boolean stillUsingdefaultOutputLogConfiuguration = true;
+    private boolean filterCaseSensitive;
+    private boolean filterUnicode;
 
     public EnvironmentConfiguration() {
         setupOutputLogConfiguration();
@@ -66,6 +68,14 @@ import java.util.List;
         return disableAutoScrollPauser;
     }
 
+    public boolean isFilterCaseSensitive() {
+        return filterCaseSensitive;
+    }
+
+    public boolean isFilterUnicode() {
+        return filterUnicode;
+    }
+
     public void setAutoRequestHistory(String autoRequestHistory) {
         this.autoRequestHistory = autoRequestHistory;
     }
@@ -80,6 +90,14 @@ import java.util.List;
 
     public void setDisableAutoScrollPauser(boolean disableAutoScrollPauser) {
         this.disableAutoScrollPauser = disableAutoScrollPauser;
+    }
+
+    public void setFilterCaseSensitive(boolean filterCaseSensitive) {
+        this.filterCaseSensitive = filterCaseSensitive;
+    }
+
+    public void setFilterUnicode(boolean filterUnicode) {
+        this.filterUnicode = filterUnicode;
     }
 
     public void setLevelMappings(List<NameMappingConfiguration> levelMappings) {

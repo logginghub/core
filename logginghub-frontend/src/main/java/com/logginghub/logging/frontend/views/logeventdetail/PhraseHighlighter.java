@@ -3,7 +3,7 @@ package com.logginghub.logging.frontend.views.logeventdetail;
 import java.awt.Color;
 
 import com.logginghub.logging.LogEvent;
-import com.logginghub.logging.filters.EventContainsFilter;
+import com.logginghub.logging.filters.CaseSensitiveEventContainsFilter;
 import com.logginghub.logging.frontend.configuration.RowFormatConfiguration;
 import com.logginghub.logging.frontend.model.RowFormatModel;
 import com.logginghub.utils.filter.Filter;
@@ -15,7 +15,7 @@ public class PhraseHighlighter implements RowHighlighter {
     private Color highlightForegroundColor = Color.black;
 
     public PhraseHighlighter(String phrase) {
-        filter = new EventContainsFilter(phrase);
+        filter = new CaseSensitiveEventContainsFilter(phrase);
     }
     
     public PhraseHighlighter(Filter<LogEvent> filter) {

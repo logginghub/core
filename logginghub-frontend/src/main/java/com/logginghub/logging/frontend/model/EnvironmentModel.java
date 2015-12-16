@@ -47,6 +47,8 @@ public class EnvironmentModel extends ObservableModel implements LogEventSource,
 
     private EventTableColumnModel eventTableColumnModel = new EventTableColumnModel();
     private LevelNamesModel levelNamesModel = new LevelNamesModel();
+    private boolean filterCaseSensitive;
+    private boolean filterUnicode;
 
     public double getEventMemoryMB() {
         return eventMemoryMB;
@@ -68,6 +70,14 @@ public class EnvironmentModel extends ObservableModel implements LogEventSource,
         return disableAutoScrollPauser;
     }
 
+    public boolean isFilterCaseSensitive() {
+        return filterCaseSensitive;
+    }
+
+    public boolean isFilterUnicode() {
+        return filterUnicode;
+    }
+
     public void setAutoRequestHistory(String autoRequestHistory) {
         this.autoRequestHistory = autoRequestHistory;
     }
@@ -78,6 +88,14 @@ public class EnvironmentModel extends ObservableModel implements LogEventSource,
 
     public void setEventMemoryMB(double eventMemoryMB) {
         this.eventMemoryMB = eventMemoryMB;
+    }
+
+    public void setFilterCaseSensitive(boolean filterCaseSensitive) {
+        this.filterCaseSensitive = filterCaseSensitive;
+    }
+
+    public void setFilterUnicode(boolean filterUnicode) {
+        this.filterUnicode = filterUnicode;
     }
 
     public enum Fields implements FieldEnumeration {

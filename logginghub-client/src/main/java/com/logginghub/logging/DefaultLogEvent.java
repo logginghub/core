@@ -48,12 +48,17 @@ public class DefaultLogEvent implements LogEvent, Serializable, SerialisableObje
 
     private Metadata metadata;
 
+    // jshaw - this is cached so we don't have to constantly look it up whilst filtering
+    private String levelDescription;
+
     public void populateFromLogRecord(LogRecord record, String sourceApplication) {
         populateFromLogRecord(record, sourceApplication, null);
     }
 
     public void populateFromLogRecord(LogRecord record, String sourceApplication, InetAddress sourceAddress) {
         level = record.getLevel().intValue();
+        levelDescription = getLevelDescriptionInternal();
+
         sequenceNumber = record.getSequenceNumber();
         sourceClassName = record.getSourceClassName();
         sourceMethodName = record.getSourceMethodName();
@@ -105,6 +110,7 @@ public class DefaultLogEvent implements LogEvent, Serializable, SerialisableObje
 
     public void setLevel(int level) {
         this.level = level;
+        this.levelDescription = getLevelDescriptionInternal();
     }
 
     public void setSequenceNumber(long sequenceNumber) {
@@ -288,8 +294,13 @@ public class DefaultLogEvent implements LogEvent, Serializable, SerialisableObje
      * Return the java.util.Logging style level description
      * 
      * @return
+     * @deprecated This is really slow, so we've cached it - use getLevelDescription instead
      */
     public String getJULILevelDescription() {
+        return getLevelDescriptionInternal();
+    }
+
+    private String getLevelDescriptionInternal() {
         Level javaLevel = getJavaLevel();
         if (javaLevel != null) {
             return javaLevel.toString();
@@ -300,7 +311,7 @@ public class DefaultLogEvent implements LogEvent, Serializable, SerialisableObje
     }
 
     public String getLevelDescription() {
-        return getJULILevelDescription();
+        return levelDescription;
     }
 
     public String getFlavour() {
@@ -411,6 +422,7 @@ public class DefaultLogEvent implements LogEvent, Serializable, SerialisableObje
     public void read(SofReader reader) throws SofException {
         originTime = reader.readLong(1);
         level = reader.readInt(2);
+        levelDescription = getLevelDescriptionInternal();
         message = reader.readString(3);
         sourceHost = reader.readString(4);
         sourceApplication = reader.readString(5);
@@ -427,6 +439,7 @@ public class DefaultLogEvent implements LogEvent, Serializable, SerialisableObje
         hubTime = reader.readLong(16);
         // FIXME : encode metadata
         // metadata = reader.readObject(16);
+
     }
 
     public void write(SofWriter writer) throws SofException {

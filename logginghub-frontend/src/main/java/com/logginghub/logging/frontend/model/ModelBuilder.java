@@ -54,6 +54,9 @@ public class ModelBuilder {
         environmentModel.setOutputLogConfiguration(environmentConfiguration.getOutputLogConfiguration());
         environmentModel.setWriteOutputLog(environmentConfiguration.isWriteOutputLog());
 
+        environmentModel.setFilterCaseSensitive(environmentConfiguration.isFilterCaseSensitive());
+        environmentModel.setFilterUnicode(environmentConfiguration.isFilterUnicode());
+
         List<HubConfiguration> hubs = environmentConfiguration.getHubs();
         if (environmentConfiguration.isClustered()) {
             HubConnectionModel model = new HubConnectionModel();

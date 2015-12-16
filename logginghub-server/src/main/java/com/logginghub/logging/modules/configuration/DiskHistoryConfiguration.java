@@ -1,11 +1,11 @@
 package com.logginghub.logging.modules.configuration;
 
+import com.logginghub.logging.modules.DiskHistoryModule;
+import com.logginghub.utils.module.Configures;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
-
-import com.logginghub.logging.modules.DiskHistoryModule;
-import com.logginghub.utils.module.Configures;
 
 @Configures(DiskHistoryModule.class) @XmlAccessorType(XmlAccessType.FIELD) public class DiskHistoryConfiguration {
 
@@ -21,9 +21,27 @@ import com.logginghub.utils.module.Configures;
     @XmlAttribute private String blockSize = "10 MB";
     @XmlAttribute private String maximumFlushInterval = "5 seconds";
     @XmlAttribute private boolean useEventTimes;
+    @XmlAttribute private boolean filterCaseSensitive = false;
+    @XmlAttribute private boolean filterUnicode = false;
 
     public String getTotalFileSizeLimit() {
         return totalFileSizeLimit;
+    }
+
+    public boolean isFilterCaseSensitive() {
+        return filterCaseSensitive;
+    }
+
+    public boolean isFilterUnicode() {
+        return filterUnicode;
+    }
+
+    public void setFilterCaseSensitive(boolean filterCaseSensitive) {
+        this.filterCaseSensitive = filterCaseSensitive;
+    }
+
+    public void setFilterUnicode(boolean filterUnicode) {
+        this.filterUnicode = filterUnicode;
     }
 
     public void setTotalFileSizeLimit(String totalFileSizeLimit) {

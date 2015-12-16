@@ -10,7 +10,6 @@ public class QuickFilterModel {
     private ObservableProperty<Boolean> isRegex = new ObservableProperty<Boolean>(false);
     private ObservableProperty<String> filterText = new ObservableProperty<String>("");
 
-    
     public ObservableProperty<String> getFilterText() {
         return filterText;
     }
