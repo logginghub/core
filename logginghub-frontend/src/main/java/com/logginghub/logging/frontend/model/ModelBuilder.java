@@ -1,6 +1,7 @@
 package com.logginghub.logging.frontend.model;
 
 import com.logginghub.logging.frontend.components.QuickFilterHistoryEntryModel;
+import com.logginghub.logging.frontend.configuration.ColumnMappingConfiguration;
 import com.logginghub.logging.frontend.configuration.EnvironmentConfiguration;
 import com.logginghub.logging.frontend.configuration.HighlighterConfiguration;
 import com.logginghub.logging.frontend.configuration.HubConfiguration;
@@ -9,6 +10,8 @@ import com.logginghub.utils.NetUtils;
 
 import java.net.InetSocketAddress;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public class ModelBuilder {
 
@@ -90,6 +93,22 @@ public class ModelBuilder {
         }
 
         environmentModel.addFilters(environmentConfiguration);
+
+        Map<Integer, String> columnNameMappings = environmentModel.getEventTableModel().getColumnNameMappings();
+        List<ColumnMappingConfiguration> columnMappings = environmentConfiguration.getColumnMappings();
+        for (ColumnMappingConfiguration columnMapping : columnMappings) {
+
+            String from = columnMapping.getFrom();
+            String to = columnMapping.getTo();
+
+            for (Entry<Integer, String> mappingEntry : columnNameMappings.entrySet()) {
+                if(mappingEntry.getValue().equalsIgnoreCase(from)) {
+                    int columnIndex = mappingEntry.getKey();
+                    columnNameMappings.put(columnIndex, to);
+                }
+            }
+
+        }
 
         return environmentModel;
     }

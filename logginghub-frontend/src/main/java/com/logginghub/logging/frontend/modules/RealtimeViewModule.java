@@ -1,9 +1,8 @@
 package com.logginghub.logging.frontend.modules;
 
-import javax.swing.JMenuBar;
-
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.frontend.model.EnvironmentModel;
+import com.logginghub.logging.frontend.model.EventTableModel;
 import com.logginghub.logging.frontend.model.LogEventContainerController;
 import com.logginghub.logging.frontend.modules.configuration.RealtimeViewConfiguration;
 import com.logginghub.logging.frontend.services.LayoutService;
@@ -14,6 +13,8 @@ import com.logginghub.utils.TimeProvider;
 import com.logginghub.utils.module.Inject;
 import com.logginghub.utils.module.Module;
 import com.logginghub.utils.module.ServiceDiscovery;
+
+import javax.swing.*;
 
 public class RealtimeViewModule implements Module<RealtimeViewConfiguration> {
 
@@ -29,8 +30,10 @@ public class RealtimeViewModule implements Module<RealtimeViewConfiguration> {
         JMenuBar menuBar = new JMenuBar();
         String propertiesName = "realtimeView";
         eventController = new LogEventContainerController();
-        
-        detailedLogEventTablePanel = new DetailedLogEventTablePanel(menuBar, propertiesName, eventController, timeProvider, false);
+
+        EventTableModel eventTableModel = new EventTableModel();
+
+        detailedLogEventTablePanel = new DetailedLogEventTablePanel(menuBar, propertiesName, eventTableModel, eventController, timeProvider, false);
     }
     
     public void setName(String name) {

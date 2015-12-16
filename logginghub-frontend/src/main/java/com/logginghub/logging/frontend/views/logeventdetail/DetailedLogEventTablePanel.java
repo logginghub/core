@@ -16,6 +16,7 @@ import com.logginghub.logging.frontend.configuration.RowFormatConfiguration;
 import com.logginghub.logging.frontend.images.Icons;
 import com.logginghub.logging.frontend.images.Icons.IconIdentifier;
 import com.logginghub.logging.frontend.model.EnvironmentModel;
+import com.logginghub.logging.frontend.model.EventTableModel;
 import com.logginghub.logging.frontend.model.HighlighterModel;
 import com.logginghub.logging.frontend.model.HubConnectionModel;
 import com.logginghub.logging.frontend.model.LogEventContainer;
@@ -166,6 +167,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
 
     public DetailedLogEventTablePanel(JMenuBar menuBar,
                                       String propertiesName,
+                                      EventTableModel eventTableModel,
                                       final LogEventContainerController eventController,
                                       TimeProvider timeProvider,
                                       boolean showHeapSlider) {
@@ -173,7 +175,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
 
         this.eventController = eventController;
 
-        tableModel = new DetailedLogEventTableModel(eventController);
+        tableModel = new DetailedLogEventTableModel(eventTableModel, eventController);
         table = new DetailedLogEventTable(tableModel, rowHighlighter, propertiesName);
 
         table.setName("logEventTable");

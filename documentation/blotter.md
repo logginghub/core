@@ -149,3 +149,35 @@ When you are running in blotter mode, the feature that automatically pauses the 
         </environment>
 
     </loggingFrontendConfiguration>
+
+# Repurposing the standard event fields to mean something else
+
+There may be instances where you want to display data using the standard event fields that doesn't necessarily map well to the conventional log event fields - for example Thread name, originating method etc. If you want to repurpose the standard fields, you can improve user experience by renaming the column headings in the frontend.  This is done in the frontend configuration file, and is done a per-enviroment basis using a *<columnMapping >* element:
+
+
+    <loggingFrontendConfiguration title="Example Configuration">
+
+        <environment name="local" eventMemoryMB="500" autoRequestHistory="all" disableAutoScrollPauser="true">
+            <hub name="local" host="localhost:15000"/>
+
+            <columnMapping from="Message" to="Order Details"/>
+
+        </environment>
+
+    </loggingFrontendConfiguration>
+
+
+The allowable values for the *from* field are:
+
+* Time
+* Source
+* Host
+* Level
+* Thread
+* Method
+* Message
+* DC
+* Locked
+* PID
+* Channel
+

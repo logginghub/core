@@ -3,6 +3,7 @@ package com.logginghub.logging.frontend.views.historicalevents;
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.frontend.binary.ImportController;
 import com.logginghub.logging.frontend.model.EnvironmentModel;
+import com.logginghub.logging.frontend.model.EventTableModel;
 import com.logginghub.logging.frontend.modules.EnvironmentMessagingService;
 import com.logginghub.logging.frontend.modules.configuration.HistoryViewConfiguration;
 import com.logginghub.logging.frontend.services.LayoutService;
@@ -29,25 +30,32 @@ import javax.swing.*;
 public class HistoryViewModule implements Module<HistoryViewConfiguration> {
 
     private static final Logger logger = Logger.getLoggerFor(HistoryViewModule.class);
+    //    private TimeSelectionView timeSelectionView = new TimeSelectionView();
+    private final JPanel contentPanel;
     private DetailedLogEventTablePanel detailedLogEventTablePanel;
     //    private EnvironmentMessagingService messagingService;
     private ImportController importController;
     private EnvironmentModel environmentModel;
     //    private EnvironmentNotificationService environmentNotificationService;
     private TimeProvider timeProvider = new SystemTimeProvider();
-
     private String name;
     private String layout;
     private LayoutService layoutService;
 
-//    private TimeSelectionView timeSelectionView = new TimeSelectionView();
-    private final JPanel contentPanel;
-
     //    private TimeSelectionModel timeSelectionModel =new TimeSelectionModel();
-
     private HistoricalSearchModel historicalSearchModel;
     private HistoricalSearchController historicalSearchController;
     private HistoricalSearchControlsView historicalSearchControlsView = new HistoricalSearchControlsView();
+    private boolean requestsSent = false;
+    private TimeController timeController;
+
+    //    @Inject public void setMessagingService(EnvironmentMessagingService messagingService) {
+    //        this.messagingService = messagingService;
+    //    }
+
+    //    @Inject public void setEnvironmentNotificationService(EnvironmentNotificationService environmentNotificationService) {
+    //        this.environmentNotificationService = environmentNotificationService;
+    //    }
 
     public HistoryViewModule(EnvironmentMessagingService messagingService) {
         JMenuBar menuBar = new JMenuBar();
@@ -63,26 +71,31 @@ public class HistoryViewModule implements Module<HistoryViewConfiguration> {
 
         contentPanel = new JPanel(new MigLayout("", "[fill, grow]", "[fill][fill][fill, grow]"));
 
-//        timeSelectionView.bind(historicalSearchModel.getTimeSelectionModel());
+        //        timeSelectionView.bind(historicalSearchModel.getTimeSelectionModel());
 
-//        contentPanel.add(timeSelectionView, "cell 0 0");
+        //        contentPanel.add(timeSelectionView, "cell 0 0");
         contentPanel.add(historicalSearchControlsView, "cell 0 0");
 
-//        timeSelectionView.setBorder(BorderFactory.createTitledBorder("Choose a time period"));
+        //        timeSelectionView.setBorder(BorderFactory.createTitledBorder("Choose a time period"));
         historicalSearchControlsView.setBorder(BorderFactory.createTitledBorder("Commands"));
 
         // jshaw - due to convoluted legacy issues, the events take a detour through the table panel on their way through
         // to the actual event controller in the model.
+
+        EventTableModel eventTableModel = new EventTableModel();
+
         detailedLogEventTablePanel = new DetailedLogEventTablePanel(menuBar,
-                propertiesName,
-                historicalSearchModel.getEvents(),
-                timeProvider,
-                false);
+                                                                    propertiesName,
+                                                                    eventTableModel,
+                                                                    historicalSearchModel.getEvents(),
+                                                                    timeProvider,
+                                                                    false);
 
         detailedLogEventTablePanel.setAutoScroll(false);
 
         historicalSearchModel.getLogEventStream().addDestination(new Destination<LogEvent>() {
-            @Override public void send(LogEvent logEvent) {
+            @Override
+            public void send(LogEvent logEvent) {
                 detailedLogEventTablePanel.onNewLogEvent(logEvent);
             }
         });
@@ -100,7 +113,8 @@ public class HistoryViewModule implements Module<HistoryViewConfiguration> {
 
         LogEventBlockElement t = new LogEventBlockElement(0, Long.MIN_VALUE, Long.MAX_VALUE);
         t.setDataProvider(new LogEventBlockDataProvider() {
-            @Override public void provideData(long start, long end, StreamListener<LogEvent> destination) {
+            @Override
+            public void provideData(long start, long end, StreamListener<LogEvent> destination) {
                 //                historicalSearchController.requestStreamingData(detailedLogEventTablePanel.getLevelFilter(), detailedLogEventTablePanel.getFirstQuickFilter()
                 //                                                                                                                        .getQuickFilterTextField()
                 //                                                                                                                        .getText(), destination);
@@ -109,23 +123,8 @@ public class HistoryViewModule implements Module<HistoryViewConfiguration> {
         importController.addBlock(t);
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    //    @Inject public void setMessagingService(EnvironmentMessagingService messagingService) {
-    //        this.messagingService = messagingService;
-    //    }
-
-    //    @Inject public void setEnvironmentNotificationService(EnvironmentNotificationService environmentNotificationService) {
-    //        this.environmentNotificationService = environmentNotificationService;
-    //    }
-
-    @Inject public void setLayoutService(LayoutService layoutService) {
-        this.layoutService = layoutService;
-    }
-
-    @Override public void configure(HistoryViewConfiguration configuration, ServiceDiscovery discovery) {
+    @Override
+    public void configure(HistoryViewConfiguration configuration, ServiceDiscovery discovery) {
         layoutService = discovery.findService(LayoutService.class);
         //        messagingService = discovery.findService(EnvironmentMessagingService.class, configuration.getEnvironmentRef());
         //        environmentNotificationService = discovery.findService(EnvironmentNotificationService.class, configuration.getEnvironmentRef());
@@ -136,27 +135,15 @@ public class HistoryViewModule implements Module<HistoryViewConfiguration> {
         layoutService.add(contentPanel, layout);
     }
 
-    protected void sendHistoryIndexRequest(final long from, final long to) {
-
-        logger.info("Sending history index request");
-
-        //        messagingService.sendStreaming(new HistoricalIndexRequest(from, to), new Destination<LoggingMessage>() {
-        //            @Override public void send(LoggingMessage t) {
-        //                processIndex((HistoricalIndexResponse) t);
-        //            }
-        //        });
-    }
-
-
     protected void processIndex(HistoricalIndexResponse t) {
 
         HistoricalIndexElement[] elements = t.getElements();
         int count = elements.length;
         if (count > 0) {
             logger.fine("Historical index response received : {} elements from '{}' to '{}'",
-                    count,
-                    Logger.toDateString(elements[0].getTime()),
-                    Logger.toDateString(elements[count - 1].getTime()));
+                        count,
+                        Logger.toDateString(elements[0].getTime()),
+                        Logger.toDateString(elements[count - 1].getTime()));
         } else {
             logger.fine("Historical index response received : {} elements", count);
         }
@@ -168,33 +155,6 @@ public class HistoryViewModule implements Module<HistoryViewConfiguration> {
             controller.moveToEarliestTime(TimeUtils.parseInterval("2 minutes"));
         }
     }
-
-    @Override public void start() {
-
-        //        environmentNotificationService.addListener(new EnvironmentNotificationListener() {
-        //            @Override public void onHubConnectionEstablished(HubConfiguration hubConfiguration) {}
-        //
-        //            @Override public void onHubConnectionLost(HubConfiguration hubConfiguration) {}
-        //
-        //            @Override public void onEnvironmentConnectionLost() {}
-        //
-        //            @Override public void onEnvironmentConnectionEstablished() {
-        //                sendInitialRequests();
-        //            }
-        //
-        //            @Override public void onTotalEnvironmentConnectionEstablished() {}
-        //
-        //            @Override public void onTotalEnvironmentConnectionLost() {}
-        //        });
-        //
-        //        if (environmentNotificationService.isEnvironmentConnectionEstablished()) {
-        //            sendInitialRequests();
-        //        }
-
-    }
-
-    private boolean requestsSent = false;
-    private TimeController timeController;
 
     private void sendInitialRequests() {
 
@@ -224,6 +184,53 @@ public class HistoryViewModule implements Module<HistoryViewConfiguration> {
         sendHistoryIndexRequest(viewStart, viewEnd);
     }
 
-    @Override public void stop() {}
+    protected void sendHistoryIndexRequest(final long from, final long to) {
+
+        logger.info("Sending history index request");
+
+        //        messagingService.sendStreaming(new HistoricalIndexRequest(from, to), new Destination<LoggingMessage>() {
+        //            @Override public void send(LoggingMessage t) {
+        //                processIndex((HistoricalIndexResponse) t);
+        //            }
+        //        });
+    }
+
+    @Inject
+    public void setLayoutService(LayoutService layoutService) {
+        this.layoutService = layoutService;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public void start() {
+
+        //        environmentNotificationService.addListener(new EnvironmentNotificationListener() {
+        //            @Override public void onHubConnectionEstablished(HubConfiguration hubConfiguration) {}
+        //
+        //            @Override public void onHubConnectionLost(HubConfiguration hubConfiguration) {}
+        //
+        //            @Override public void onEnvironmentConnectionLost() {}
+        //
+        //            @Override public void onEnvironmentConnectionEstablished() {
+        //                sendInitialRequests();
+        //            }
+        //
+        //            @Override public void onTotalEnvironmentConnectionEstablished() {}
+        //
+        //            @Override public void onTotalEnvironmentConnectionLost() {}
+        //        });
+        //
+        //        if (environmentNotificationService.isEnvironmentConnectionEstablished()) {
+        //            sendInitialRequests();
+        //        }
+
+    }
+
+    @Override
+    public void stop() {
+    }
 
 }

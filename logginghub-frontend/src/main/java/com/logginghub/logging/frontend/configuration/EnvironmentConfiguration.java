@@ -36,11 +36,17 @@ import java.util.List;
 
     @XmlElement List<FilterConfiguration> filter = new ArrayList<FilterConfiguration>();
 
+    @XmlElement List<ColumnMappingConfiguration> columnMapping = new ArrayList<ColumnMappingConfiguration>();
+
     @XmlElement private TimestampVariableRollingFileLoggerConfiguration outputLogConfiguration = new TimestampVariableRollingFileLoggerConfiguration();
     private boolean stillUsingdefaultOutputLogConfiuguration = true;
 
     public EnvironmentConfiguration() {
         setupOutputLogConfiguration();
+    }
+
+    public List<ColumnMappingConfiguration> getColumnMappings() {
+        return columnMapping;
     }
 
     public String getAutoRequestHistory() {

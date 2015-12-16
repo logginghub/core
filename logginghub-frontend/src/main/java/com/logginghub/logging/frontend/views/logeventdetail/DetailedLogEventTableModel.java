@@ -1,8 +1,5 @@
 package com.logginghub.logging.frontend.views.logeventdetail;
 
-import javax.swing.SwingUtilities;
-import javax.swing.table.DefaultTableModel;
-
 import com.logginghub.logging.DefaultLogEvent;
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.filters.CompositeAndFilter;
@@ -10,6 +7,7 @@ import com.logginghub.logging.filters.MessageContainsFilter;
 import com.logginghub.logging.frontend.Utils;
 import com.logginghub.logging.frontend.images.Icons;
 import com.logginghub.logging.frontend.images.Icons.IconIdentifier;
+import com.logginghub.logging.frontend.model.EventTableModel;
 import com.logginghub.logging.frontend.model.LogEventContainer;
 import com.logginghub.logging.frontend.model.LogEventContainerController;
 import com.logginghub.logging.listeners.LogEventListener;
@@ -18,6 +16,9 @@ import com.logginghub.utils.Metadata;
 import com.logginghub.utils.Pair;
 import com.logginghub.utils.filter.Filter;
 import com.logginghub.utils.logging.Logger;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 
 public class DetailedLogEventTableModel extends DefaultTableModel implements LogEventListener {
     
@@ -41,26 +42,29 @@ public class DetailedLogEventTableModel extends DefaultTableModel implements Log
     public static final int NUMBER_OF_COLUMNS = 11;
 
     private static final String BLANK = "";
-    private static final String[] columnNames = new String[] { "Time", "Source", "Host", "Level", "Thread", "Method", "Message", "DC", "", "PID", "Channel" };
+//    private static final String[] columnNames = new String[] { "Time", "Source", "Host", "Level", "Thread", "Method", "Message", "DC", "", "PID", "Channel" };
 
     private CompositeAndFilter filters = new CompositeAndFilter();
 
+    private final EventTableModel eventTableModel;
     private LogEventContainerController eventController;
 
     private boolean isPlaying = true;
 //    private IntegerStat gets;
 
-    public DetailedLogEventTableModel(LogEventContainerController eventController) {
-        
-//        StatBundle bundle = new StatBundle();
+    public DetailedLogEventTableModel(EventTableModel eventTableModel, LogEventContainerController eventController) {
+        this.eventTableModel = eventTableModel;
+
+        //        StatBundle bundle = new StatBundle();
 //        gets = bundle.createIncremental("gets");
 //        bundle.startPerSecond(logger);
         
         this.eventController = eventController;
+
     }
 
     @Override public String getColumnName(int column) {
-        return columnNames[column];
+        return eventTableModel.getColumnNameMappings().get(column);
     }
 
     @Override public int getColumnCount() {
