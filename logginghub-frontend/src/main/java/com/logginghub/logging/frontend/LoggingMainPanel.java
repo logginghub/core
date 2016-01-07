@@ -445,6 +445,7 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
                                                                                      environmentModel.getName(),
                                                                                      environmentModel.getEventTableColumnModel(),
                                                                                      environmentModel.getLevelNamesModel(),
+                                                                                     environmentModel.getColumnSettingsModel(),
                                                                                      environmentModel.getEventController(),
                                                                                      timeProvider,
                                                                                      proxy.getLoggingFrontendConfiguration().isShowHeapSlider());

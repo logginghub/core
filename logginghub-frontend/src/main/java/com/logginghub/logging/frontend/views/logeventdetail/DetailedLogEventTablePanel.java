@@ -15,6 +15,7 @@ import com.logginghub.logging.frontend.components.QuickFilterHistoryController;
 import com.logginghub.logging.frontend.configuration.RowFormatConfiguration;
 import com.logginghub.logging.frontend.images.Icons;
 import com.logginghub.logging.frontend.images.Icons.IconIdentifier;
+import com.logginghub.logging.frontend.model.ColumnSettingsModel;
 import com.logginghub.logging.frontend.model.EnvironmentModel;
 import com.logginghub.logging.frontend.model.EventTableColumnModel;
 import com.logginghub.logging.frontend.model.HighlighterModel;
@@ -172,6 +173,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
                                       String propertiesName,
                                       EventTableColumnModel eventTableColumnModel,
                                       LevelNamesModel levelNamesModel,
+                                      ColumnSettingsModel columnSettingsModel,
                                       final LogEventContainerController eventController,
                                       TimeProvider timeProvider,
                                       boolean showHeapSlider) {
@@ -183,7 +185,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         this.eventDetailPanel = new EventDetailPanel(levelNamesModel, eventTableColumnModel);
 
         tableModel = new DetailedLogEventTableModel(eventTableColumnModel, levelNamesModel, eventController);
-        table = new DetailedLogEventTable(tableModel, rowHighlighter, propertiesName);
+        table = new DetailedLogEventTable(tableModel, rowHighlighter, propertiesName, columnSettingsModel);
 
         table.setName("logEventTable");
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);

@@ -125,7 +125,7 @@ public class MultipleEventContainsFilter extends CompositeAndFilter {
             filter = new EventMatchesFilter(phrase);
         }
         else {
-            filter = filterFactory.createFilter(value);
+            filter = filterFactory.createFilter(phrase);
         }
 
         if (currentModifier == '+') {

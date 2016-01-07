@@ -49,6 +49,11 @@ public class EnvironmentModel extends ObservableModel implements LogEventSource,
     private LevelNamesModel levelNamesModel = new LevelNamesModel();
     private boolean filterCaseSensitive;
     private boolean filterUnicode;
+    private ColumnSettingsModel columnSettingsModel = new ColumnSettingsModel();
+
+    public ColumnSettingsModel getColumnSettingsModel() {
+        return columnSettingsModel;
+    }
 
     public double getEventMemoryMB() {
         return eventMemoryMB;
@@ -80,6 +85,10 @@ public class EnvironmentModel extends ObservableModel implements LogEventSource,
 
     public void setAutoRequestHistory(String autoRequestHistory) {
         this.autoRequestHistory = autoRequestHistory;
+    }
+
+    public void setColumnSettingsModel(ColumnSettingsModel columnSettingsModel) {
+        this.columnSettingsModel = columnSettingsModel;
     }
 
     public void setDisableAutoScrollPauser(boolean disableAutoScrollPauser) {

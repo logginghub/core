@@ -161,6 +161,7 @@ There may be instances where you want to display data using the standard event f
             <hub name="local" host="localhost:15000"/>
 
             <columnMapping from="Message" to="Order Details"/>
+            <columnMapping from="Level" to="Status"/>
 
         </environment>
 
@@ -180,4 +181,73 @@ The allowable values for the *from* field are:
 * Locked
 * PID
 * Channel
+
+# Renaming the logging levels
+
+The idea of filtering based on a level makes sense with traditional logging, but in blotter mode you might want to repurpose the log level to mean something different, depending on your use case. It is possible to remap the values in the configuration file. In our previous example we remapped the *Level* column to a new value called *Status*. We could then map the log levels to represent an order status:
+
+    <loggingFrontendConfiguration title="Example Configuration">
+
+        <environment name="local" eventMemoryMB="500" autoRequestHistory="all" disableAutoScrollPauser="true">
+            <hub name="local" host="localhost:15000"/>
+
+            <columnMapping from="Message" to="Order Details"/>
+            <columnMapping from="Level" to="Status"/>
+
+            <levelMapping from="Info" to="New Order"/>
+
+        </environment>
+
+    </loggingFrontendConfiguration>
+
+# Controlling column widths from the main configuration
+
+By default the frontend stores column width information on a per-user basis. This is handy if you have multiple users on the same machine, but also makes it difficult to distribute a specific column setup to users when you deploy the frontend. It is now possible to control the column configuration from the main configuration file.
+
+You need to do two things - firstly add *disableColumnFile="true"* to the environment element, and secondly you need to add one or more *<columnSetting ...>* elements to specify exactly what you want.
+
+NOTE - the names you use in the *<columnSetting ...>* elements are used _after_ any *<columnMapping ...>* elements have been applied.
+
+Here is a full environment configuration which captures a lot of the settings for blotter mode.  The use case is something like this:
+
+* Each event contains information about an order from a trading system
+* The Message contains the order details
+* The Level field now contains the Order status
+* We don't want to see any other columns
+
+Here is the sample configuration to achieve this:
+
+    <environment name="local"
+                 eventMemoryMB="500"
+                 autoRequestHistory="all"
+                 disableAutoScrollPauser="true"
+                 disableColumnFile="true">
+
+        <hub name="local" host="localhost:9000"/>
+
+        <!-- Remap the message and log levet event fields to new values, based on our order blotter view -->
+        <columnMapping from="Message" to="Order details"/>
+        <columnMapping from="Level" to="Status"/>
+
+        <!-- Map the log level INFO to 'New Order' -->
+        <levelMapping from="Info" to="New Order"/>
+
+        <!-- Configure the width and order of appearance for the columns we use -->
+        <columnSetting name="Time" width="200" order="0"/>
+        <columnSetting name="Status" width="200" order="1"/>
+        <columnSetting name="Order details" width="5000" order="2"/>
+
+        <!-- Hide all of the columns we don't use -->
+        <columnSetting name="Host" width="0"/>
+        <columnSetting name="Source" width="0"/>
+        <columnSetting name="DC" width="0"/>
+        <columnSetting name="Thread" width="0"/>
+        <columnSetting name="Locked" width="0"/>
+        <columnSetting name="PID" width="0"/>
+        <columnSetting name="Channel" width="0"/>
+        <columnSetting name="Method" width="0"/>
+
+    </environment>
+
+
 

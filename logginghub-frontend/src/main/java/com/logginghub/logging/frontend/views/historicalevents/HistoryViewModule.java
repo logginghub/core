@@ -2,6 +2,7 @@ package com.logginghub.logging.frontend.views.historicalevents;
 
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.frontend.binary.ImportController;
+import com.logginghub.logging.frontend.model.ColumnSettingsModel;
 import com.logginghub.logging.frontend.model.EnvironmentModel;
 import com.logginghub.logging.frontend.model.EventTableColumnModel;
 import com.logginghub.logging.frontend.model.LevelNamesModel;
@@ -85,11 +86,13 @@ public class HistoryViewModule implements Module<HistoryViewConfiguration> {
 
         EventTableColumnModel eventTableColumnModel = new EventTableColumnModel();
         LevelNamesModel levelNamesModel = new LevelNamesModel();
+        ColumnSettingsModel columnSettingModel = new ColumnSettingsModel();
 
         detailedLogEventTablePanel = new DetailedLogEventTablePanel(menuBar,
                                                                     propertiesName,
                                                                     eventTableColumnModel,
                                                                     levelNamesModel,
+                                                                    columnSettingModel,
                                                                     historicalSearchModel.getEvents(),
                                                                     timeProvider,
                                                                     false);

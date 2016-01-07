@@ -1,6 +1,7 @@
 package com.logginghub.logging.frontend.modules;
 
 import com.logginghub.logging.LogEvent;
+import com.logginghub.logging.frontend.model.ColumnSettingsModel;
 import com.logginghub.logging.frontend.model.EnvironmentModel;
 import com.logginghub.logging.frontend.model.EventTableColumnModel;
 import com.logginghub.logging.frontend.model.LevelNamesModel;
@@ -33,11 +34,13 @@ public class RealtimeViewModule implements Module<RealtimeViewConfiguration> {
         eventController = new LogEventContainerController();
 
         EventTableColumnModel eventTableColumnModel = new EventTableColumnModel();
+        ColumnSettingsModel columnSettingsModel = new ColumnSettingsModel();
 
         detailedLogEventTablePanel = new DetailedLogEventTablePanel(menuBar,
                                                                     propertiesName,
                                                                     eventTableColumnModel,
                                                                     new LevelNamesModel(),
+                                                                    columnSettingsModel,
                                                                     eventController,
                                                                     timeProvider,
                                                                     false);

@@ -18,7 +18,7 @@ import java.util.List;
     @XmlElement(name = "highlighter") private List<HighlighterConfiguration> highlighters = new ArrayList<HighlighterConfiguration>();
     @XmlElement(name = "charting") private ChartingConfiguration chartingConfiguration = new ChartingConfiguration();
     @XmlElement private List<String> quickFilters = new ArrayList<String>();
-    @XmlElement private String channel;
+    @XmlAttribute private String channel;
 
     @XmlAttribute private boolean clustered=false;
 
@@ -26,7 +26,7 @@ import java.util.List;
 
     @XmlAttribute private boolean autoLocking;
     @XmlAttribute private boolean writeOutputLog = false;
-    
+
     @XmlAttribute private boolean showHistoryTab = false;
 
     @XmlAttribute private boolean repoEnabled = false;
@@ -35,17 +35,24 @@ import java.util.List;
     @XmlAttribute private boolean disableAutoScrollPauser = false;
 
     @XmlElement List<FilterConfiguration> filter = new ArrayList<FilterConfiguration>();
+    @XmlElement List<ColumnConfiguration> columnSetting = new ArrayList<ColumnConfiguration>();
 
     @XmlElement List<NameMappingConfiguration> columnMapping = new ArrayList<NameMappingConfiguration>();
     @XmlElement private List<NameMappingConfiguration> levelMapping = new ArrayList<NameMappingConfiguration>();
 
     @XmlElement private TimestampVariableRollingFileLoggerConfiguration outputLogConfiguration = new TimestampVariableRollingFileLoggerConfiguration();
-    private boolean stillUsingdefaultOutputLogConfiuguration = true;
-    private boolean filterCaseSensitive;
-    private boolean filterUnicode;
+
+    @XmlAttribute private boolean stillUsingdefaultOutputLogConfiuguration = true;
+    @XmlAttribute private boolean filterCaseSensitive = false;
+    @XmlAttribute private boolean filterUnicode = false;
+    @XmlAttribute private boolean disableColumnFile = false;
 
     public EnvironmentConfiguration() {
         setupOutputLogConfiguration();
+    }
+
+    public List<ColumnConfiguration> getColumnSetting() {
+        return columnSetting;
     }
 
     public List<NameMappingConfiguration> getColumnMappings() {
@@ -68,6 +75,10 @@ import java.util.List;
         return disableAutoScrollPauser;
     }
 
+    public boolean isDisableColumnFile() {
+        return disableColumnFile;
+    }
+
     public boolean isFilterCaseSensitive() {
         return filterCaseSensitive;
     }
@@ -83,13 +94,17 @@ import java.util.List;
     public void setChannel(String channel) {
         this.channel = channel;
     }
-    
+
     public String getChannel() {
         return channel;
     }
 
     public void setDisableAutoScrollPauser(boolean disableAutoScrollPauser) {
         this.disableAutoScrollPauser = disableAutoScrollPauser;
+    }
+
+    public void setDisableColumnFile(boolean disableColumnFile) {
+        this.disableColumnFile = disableColumnFile;
     }
 
     public void setFilterCaseSensitive(boolean filterCaseSensitive) {
@@ -196,25 +211,25 @@ import java.util.List;
     public void setupDefaultLogConfiguration() {
         if (stillUsingdefaultOutputLogConfiuguration) {
             setupOutputLogConfiguration();
-        }        
+        }
     }
 
     public List<String> getQuickFilters() {
         return quickFilters;
     }
-    
+
     public void setQuickFilters(List<String> quickFilters) {
         this.quickFilters = quickFilters;
     }
-    
+
     public boolean isShowHistoryTab() {
         return showHistoryTab;
     }
-    
+
     public void setShowHistoryTab(boolean showHistoryTab) {
         this.showHistoryTab = showHistoryTab;
     }
-    
+
     public List<FilterConfiguration> getFilters() {
         return filter;
     }

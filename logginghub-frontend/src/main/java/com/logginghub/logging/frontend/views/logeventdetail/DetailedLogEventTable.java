@@ -3,6 +3,8 @@ package com.logginghub.logging.frontend.views.logeventdetail;
 import com.logginghub.logging.DefaultLogEvent;
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.frontend.PathHelper;
+import com.logginghub.logging.frontend.model.ColumnSettingsModel;
+import com.logginghub.logging.frontend.model.ColumnSettingsModel.ColumnSettingModel;
 import com.logginghub.utils.DelayedAction;
 import com.logginghub.utils.FileUtils;
 import com.logginghub.utils.Metadata;
@@ -11,10 +13,7 @@ import com.logginghub.utils.Stopwatch;
 import com.logginghub.utils.VisualStopwatchController;
 import com.logginghub.utils.logging.Logger;
 
-import javax.swing.ImageIcon;
-import javax.swing.JComponent;
-import javax.swing.JTable;
-import javax.swing.ListSelectionModel;
+import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
@@ -26,11 +25,7 @@ import javax.swing.event.TableColumnModelListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Point;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
@@ -45,6 +40,8 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -52,14 +49,14 @@ import java.util.concurrent.TimeUnit;
 
 public class DetailedLogEventTable extends JTable {
 
+    public final static String useDefaultColumnPropertiesKey = "detailedLogEventTable.useDefaultColumnProperties";
     private static final Logger logger = Logger.getLoggerFor(DetailedLogEventTable.class);
-
     private static final long serialVersionUID = 1L;
+    private final ColumnSettingsModel columnSettingsModel;
     private DetailedLogEventTableModel tableModel;
     private List<RowHighlighter> highlighters = new CopyOnWriteArrayList<RowHighlighter>();
     private RowHighlighter defaultHighlighter;
     private File columnPropertiesFile;
-    public final static String useDefaultColumnPropertiesKey = "detailedLogEventTable.useDefaultColumnProperties";
     private boolean useDefaultColumnProperties = Boolean.getBoolean(useDefaultColumnPropertiesKey);
     private LogEvent[] bookmarks = new LogEvent[10];
     private Set<LogEvent> bookmarkSet = new HashSet<LogEvent>();
@@ -68,57 +65,141 @@ public class DetailedLogEventTable extends JTable {
     private boolean controlKeyStatus = false;
     private boolean altKeyStatus = false;
 
-//    private IntegerStat paints;
+    //    private IntegerStat paints;
 
-    public DetailedLogEventTable(DetailedLogEventTableModel tableModel, RowHighlighter highlighter, String propertiesName) {
+    public DetailedLogEventTable(DetailedLogEventTableModel tableModel,
+                                 RowHighlighter highlighter,
+                                 String propertiesName,
+                                 ColumnSettingsModel columnSettingsModel) {
         this.tableModel = tableModel;
         this.defaultHighlighter = highlighter;
+        this.columnSettingsModel = columnSettingsModel;
 
-//        StatBundle bundle = new StatBundle();
-//        paints = bundle.createIncremental("paints");
-//        bundle.startPerSecond(logger);
+        //        StatBundle bundle = new StatBundle();
+        //        paints = bundle.createIncremental("paints");
+        //        bundle.startPerSecond(logger);
 
         columnPropertiesFile = PathHelper.getColumnsFile(propertiesName);
 
         setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         setModel(tableModel);
 
-        loadColumnSettings();
+        setupColumns(columnSettingsModel);
 
-        getColumnModel().addColumnModelListener(new TableColumnModelListener() {
-            public void columnSelectionChanged(ListSelectionEvent e) {}
+        // jshaw - its possible now to diable the entire dynamic columns system, so check to see if we need to skip all this
+        if (!columnSettingsModel.isDisableColumnFile()) {
+            loadColumnSettings();
 
-            public void columnRemoved(TableColumnModelEvent e) {}
+            getColumnModel().addColumnModelListener(new TableColumnModelListener() {
+                public void columnAdded(TableColumnModelEvent e) {
+                }
 
-            public void columnMoved(TableColumnModelEvent e) {
-                columnSaveDelayedAction.execute(new Runnable() {
-                    @Override public void run() {
-                        saveColumnSettings();
-                    }
-                });
-            }
+                public void columnRemoved(TableColumnModelEvent e) {
+                }
 
-            public void columnMarginChanged(ChangeEvent e) {
-                columnSaveDelayedAction.execute(new Runnable() {
-                    @Override public void run() {
-                        saveColumnSettings();
-                    }
-                });
-            }
+                public void columnMoved(TableColumnModelEvent e) {
+                    columnSaveDelayedAction.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            saveColumnSettings();
+                        }
+                    });
+                }
 
-            public void columnAdded(TableColumnModelEvent e) {}
-        });
+                public void columnMarginChanged(ChangeEvent e) {
+                    columnSaveDelayedAction.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            saveColumnSettings();
+                        }
+                    });
+                }
+
+                public void columnSelectionChanged(ListSelectionEvent e) {
+                }
+            });
+        }
 
         addMouseHandler();
     }
 
-    @Override public Class<?> getColumnClass(int column) {
-        String columnName = getColumnName(column);
-        if (columnName.equals("")) {
-            return ImageIcon.class;
+    private void setupColumns(ColumnSettingsModel columnSettingsModel) {
+
+        Map<String, ColumnSettingModel> columnSettings = columnSettingsModel.getColumnSettings();
+        Set<Entry<String, ColumnSettingModel>> entries = columnSettings.entrySet();
+        for (Entry<String, ColumnSettingModel> entry : entries) {
+            String columnName = entry.getKey();
+
+            TableColumnModel columnModel = getColumnModel();
+            int columnIndex = columnModel.getColumnIndex(columnName);
+            int width = entry.getValue().width;
+            TableColumn column = columnModel.getColumn(columnIndex);
+
+            if (width == 0) {
+                columnModel.removeColumn(column);
+            } else {
+                column.setPreferredWidth(width);
+
+                int order = entry.getValue().order;
+                order = Math.min(order, columnModel.getColumnCount() - 1);
+                columnModel.moveColumn(columnIndex, order);
+            }
+
         }
-        else {
-            return String.class;
+
+    }
+
+    private void loadColumnSettings() {
+        Properties properties = new Properties();
+        if (columnPropertiesFile.exists() && !useDefaultColumnProperties) {
+            Reader reader = null;
+            try {
+                reader = new BufferedReader(new FileReader(columnPropertiesFile));
+                properties.load(reader);
+            } catch (IOException e) {
+                throw new RuntimeException(String.format("Failed to load column settings from [%s]", columnPropertiesFile.getAbsolutePath()), e);
+            } finally {
+                FileUtils.closeQuietly(reader);
+            }
+        } else {
+            InputStream openStream = ResourceUtils.openStream("defaultColumnWidths.properties");
+            try {
+                properties.load(openStream);
+            } catch (IOException e) {
+                throw new RuntimeException(String.format("Failed to load column settings from [%s]", columnPropertiesFile.getAbsolutePath()), e);
+            } finally {
+                FileUtils.closeQuietly(openStream);
+            }
+        }
+
+        loadColumnSettings(properties, columnPropertiesFile);
+    }
+
+    protected void saveColumnSettings() {
+        logger.fine("Saving column settings to '{}'", columnPropertiesFile.getAbsolutePath());
+        Properties properties = new Properties();
+
+        TableColumnModel columnModel = getColumnModel();
+        int count = columnModel.getColumnCount();
+        for (int i = 0; i < count; i++) {
+            TableColumn column = columnModel.getColumn(i);
+
+            int columnWidth = column.getWidth();
+            String title = (String) column.getHeaderValue();
+
+            properties.setProperty(title + "-width", "" + columnWidth);
+            properties.setProperty(title + "-index", "" + i);
+        }
+
+        BufferedWriter writer = null;
+        try {
+            FileUtils.ensurePathExists(columnPropertiesFile);
+            writer = new BufferedWriter(new FileWriter(columnPropertiesFile));
+            properties.store(writer, "");
+        } catch (IOException e) {
+            throw new RuntimeException(String.format("Failed to save column properties to [%s]", columnPropertiesFile.getAbsolutePath()), e);
+        } finally {
+            FileUtils.closeQuietly(writer);
         }
     }
 
@@ -126,26 +207,27 @@ public class DetailedLogEventTable extends JTable {
         // The key listener detects if the control key is depressed
         addKeyListener(new KeyListener() {
 
-            @Override public void keyTyped(KeyEvent arg0) {}
+            @Override
+            public void keyTyped(KeyEvent arg0) {
+            }
 
-            @Override public void keyReleased(KeyEvent event) {
+            @Override
+            public void keyPressed(KeyEvent event) {
                 if (event.getKeyCode() == KeyEvent.VK_CONTROL) {
-                    controlKeyStatus = false;
-                }
-                else if (event.getKeyCode() == KeyEvent.VK_ALT) {
-                    altKeyStatus = false;
-                }
-                else if (event.getKeyCode() == KeyEvent.VK_DELETE) {
-                    deleteSelection();
+                    controlKeyStatus = true;
+                } else if (event.getKeyCode() == KeyEvent.VK_ALT) {
+                    altKeyStatus = true;
                 }
             }
 
-            @Override public void keyPressed(KeyEvent event) {
+            @Override
+            public void keyReleased(KeyEvent event) {
                 if (event.getKeyCode() == KeyEvent.VK_CONTROL) {
-                    controlKeyStatus = true;
-                }
-                else if (event.getKeyCode() == KeyEvent.VK_ALT) {
-                    altKeyStatus = true;
+                    controlKeyStatus = false;
+                } else if (event.getKeyCode() == KeyEvent.VK_ALT) {
+                    altKeyStatus = false;
+                } else if (event.getKeyCode() == KeyEvent.VK_DELETE) {
+                    deleteSelection();
                 }
             }
         });
@@ -155,7 +237,8 @@ public class DetailedLogEventTable extends JTable {
 
             }
 
-            @Override public void mouseReleased(MouseEvent e) {
+            @Override
+            public void mouseReleased(MouseEvent e) {
                 ListSelectionModel model = getSelectionModel();
 
                 int selectionMode = model.getSelectionMode();
@@ -163,16 +246,14 @@ public class DetailedLogEventTable extends JTable {
                     Point p = e.getPoint();
                     int rowNumber = rowAtPoint(p);
                     processOnRowClick(rowNumber, e);
-                }
-                else if (selectionMode == ListSelectionModel.SINGLE_INTERVAL_SELECTION) {
+                } else if (selectionMode == ListSelectionModel.SINGLE_INTERVAL_SELECTION) {
                     // model.setSelectionInterval(rowNumber, rowNumber);
                     int start = model.getMinSelectionIndex();
                     int end = model.getMaxSelectionIndex();
                     for (int i = start; i <= end; i++) {
                         processOnRowClick(i, e);
                     }
-                }
-                else if (selectionMode == ListSelectionModel.MULTIPLE_INTERVAL_SELECTION) {
+                } else if (selectionMode == ListSelectionModel.MULTIPLE_INTERVAL_SELECTION) {
 
                     int[] selectedRows = getSelectedRows();
                     for (int i : selectedRows) {
@@ -182,6 +263,43 @@ public class DetailedLogEventTable extends JTable {
                 }
             }
         });
+    }
+
+    private void loadColumnSettings(Properties properties, File source) {
+        Set<Object> keySet = properties.keySet();
+        for (Object object : keySet) {
+            String key = (String) object;
+            String value = properties.getProperty(key);
+
+            if (key.contains("-")) {
+                String[] split = key.split("-");
+
+                if (split.length == 2) {
+                    String column = split[0];
+                    String part = split[1];
+
+                    try {
+                        int valueInt = Integer.parseInt(value);
+                        if (part.equals("width")) {
+                            TableColumnModel columnModel = getColumnModel();
+                            int columnIndex = columnModel.getColumnIndex(column);
+                            columnModel.getColumn(columnIndex).setPreferredWidth(valueInt);
+                        } else {
+                            TableColumnModel columnModel = getColumnModel();
+                            int columnIndex = columnModel.getColumnIndex(column);
+                            columnModel.moveColumn(columnIndex, valueInt);
+                        }
+                    } catch (RuntimeException e) {
+                        logger.warn(e,
+                                    "Failed to process column setting for key '{}' and value '{}' from properties file '{}' - ignoring, but you might want to delete the columns file and re-layout your columns again to get rid of this warning",
+                                    key,
+                                    value,
+                                    source.getAbsolutePath());
+
+                    }
+                }
+            }
+        }
     }
 
     protected void deleteSelection() {
@@ -219,142 +337,56 @@ public class DetailedLogEventTable extends JTable {
             if (isLocked) {
                 metadata.put("locked", false);
                 tableModel.fireTableRowsUpdated(rowNumber, rowNumber);
-            }
-            else {
+            } else {
                 metadata.put("locked", true);
                 tableModel.fireTableRowsUpdated(rowNumber, rowNumber);
 
             }
-        }
-        else {
+        } else {
             metadata.put("locked", true);
             tableModel.fireTableRowsUpdated(rowNumber, rowNumber);
         }
     }
 
-    private void loadColumnSettings() {
-        Properties properties = new Properties();
-        if (columnPropertiesFile.exists() && !useDefaultColumnProperties) {
-            Reader reader = null;
-            try {
-                reader = new BufferedReader(new FileReader(columnPropertiesFile));
-                properties.load(reader);
-            }
-            catch (IOException e) {
-                throw new RuntimeException(String.format("Failed to load column settings from [%s]", columnPropertiesFile.getAbsolutePath()), e);
-            }
-            finally {
-                FileUtils.closeQuietly(reader);
-            }
-        }
-        else {
-            InputStream openStream = ResourceUtils.openStream("defaultColumnWidths.properties");
-            try {
-                properties.load(openStream);
-            }
-            catch (IOException e) {
-                throw new RuntimeException(String.format("Failed to load column settings from [%s]", columnPropertiesFile.getAbsolutePath()), e);
-            }
-            finally {
-                FileUtils.closeQuietly(openStream);
-            }
+    public void addBookmark(int index) {
+        LogEvent existing = bookmarks[index];
+        if (existing != null) {
+            bookmarkSet.remove(existing);
         }
 
-        loadColumnSettings(properties, columnPropertiesFile);
+        LogEvent selectedLogEvent = getSelectedLogEvent();
+        if (selectedLogEvent != null) {
+            bookmarks[index] = selectedLogEvent;
+            bookmarkSet.add(selectedLogEvent);
+        }
+
+        repaint();
     }
 
-    private void loadColumnSettings(Properties properties, File source) {
-        Set<Object> keySet = properties.keySet();
-        for (Object object : keySet) {
-            String key = (String) object;
-            String value = properties.getProperty(key);
+    public LogEvent getSelectedLogEvent() {
+        LogEvent selected = null;
 
-            if (key.contains("-")) {
-                String[] split = key.split("-");
-
-                if (split.length == 2) {
-                    String column = split[0];
-                    String part = split[1];
-
-                    try {
-                        int valueInt = Integer.parseInt(value);
-                        if (part.equals("width")) {
-                            TableColumnModel columnModel = getColumnModel();
-                            int columnIndex = columnModel.getColumnIndex(column);
-                            columnModel.getColumn(columnIndex).setPreferredWidth(valueInt);
-                        }
-                        else {
-                            TableColumnModel columnModel = getColumnModel();
-                            int columnIndex = columnModel.getColumnIndex(column);
-                            columnModel.moveColumn(columnIndex, valueInt);
-                        }
-                    }
-                    catch (RuntimeException e) {
-                        logger.warn(e,
-                                    "Failed to process column setting for key '{}' and value '{}' from properties file '{}' - ignoring, but you might want to delete the columns file and re-layout your columns again to get rid of this warning",
-                                    key,
-                                    value,
-                                    source.getAbsolutePath());
-
-                    }
-                }
-            }
+        int selectedRow = getSelectedRow();
+        if (selectedRow != -1) {
+            selected = tableModel.getLogEventAtRow(selectedRow);
         }
+
+        return selected;
     }
 
-    protected void saveColumnSettings() {
-        logger.fine("Saving column settings to '{}'", columnPropertiesFile.getAbsolutePath());
-        Properties properties = new Properties();
-
-        TableColumnModel columnModel = getColumnModel();
-        int count = columnModel.getColumnCount();
-        for (int i = 0; i < count; i++) {
-            TableColumn column = columnModel.getColumn(i);
-
-            int columnWidth = column.getWidth();
-            String title = (String) column.getHeaderValue();
-
-            properties.setProperty(title + "-width", "" + columnWidth);
-            properties.setProperty(title + "-index", "" + i);
-        }
-
-        BufferedWriter writer = null;
-        try {
-            FileUtils.ensurePathExists(columnPropertiesFile);
-            writer = new BufferedWriter(new FileWriter(columnPropertiesFile));
-            properties.store(writer, "");
-        }
-        catch (IOException e) {
-            throw new RuntimeException(String.format("Failed to save column properties to [%s]", columnPropertiesFile.getAbsolutePath()), e);
-        }
-        finally {
-            FileUtils.closeQuietly(writer);
-        }
+    public void addHighlighter(RowHighlighter highlighter) {
+        highlighters.add(highlighter);
+        tableModel.fireTableDataChanged();
     }
 
-    @Override protected void paintComponent(Graphics g) {
-        JTable table = this;
-
-        Rectangle clip = g.getClipBounds();
-
-        Point upperLeft = clip.getLocation();
-        int rMin = table.rowAtPoint(upperLeft);
-        if (rMin == -1) {
-            // Going to try and fudge it - if the clip is after our last view, change it to
-            // something else or else we'll end up rendering the entire table.
-            logger.fine("Fudging scrolling");
-            g.setClip(0, 0, 10, 10);
+    @Override
+    public Class<?> getColumnClass(int column) {
+        String columnName = getColumnName(column);
+        if (columnName.equals("")) {
+            return ImageIcon.class;
+        } else {
+            return String.class;
         }
-
-        Stopwatch stopwatch = Stopwatch.start("Table paintComponent");
-        super.paintComponent(g);
-        stopwatch.stop();
-        VisualStopwatchController.getInstance().add(stopwatch);
-//        paints.increment();
-    }
-
-    public void setDefaultHighlighter(LevelHighlighter defaultHighlighter) {
-        this.defaultHighlighter = defaultHighlighter;
     }
 
     public Component prepareRenderer(TableCellRenderer renderer, int rowIndex, int vColIndex) {
@@ -397,60 +429,6 @@ public class DetailedLogEventTable extends JTable {
         return c;
     }
 
-    public void setPreferredColumnWidths(double[] percentages) {
-        Dimension tableDim = this.getPreferredSize();
-
-        double total = 0;
-        for (int i = 0; i < getColumnModel().getColumnCount(); i++) {
-            total += percentages[i];
-        }
-
-        for (int i = 0; i < getColumnModel().getColumnCount(); i++) {
-            TableColumn column = getColumnModel().getColumn(i);
-            column.setPreferredWidth((int) (tableDim.width * (percentages[i] / total)));
-        }
-    }
-
-    public void addHighlighter(RowHighlighter highlighter) {
-        highlighters.add(highlighter);
-        tableModel.fireTableDataChanged();
-    }
-
-    public void removeHighlighter(RowHighlighter highlighter) {
-        highlighters.remove(highlighter);
-        tableModel.fireTableDataChanged();
-    }
-
-    public LogEvent getSelectedLogEvent() {
-        LogEvent selected = null;
-
-        int selectedRow = getSelectedRow();
-        if (selectedRow != -1) {
-            selected = tableModel.getLogEventAtRow(selectedRow);
-        }
-
-        return selected;
-    }
-
-    public void setSelectedRow(int newPositionOfSelectedEvent) {
-        getSelectionModel().setSelectionInterval(newPositionOfSelectedEvent, newPositionOfSelectedEvent);
-    }
-
-    public void addBookmark(int index) {
-        LogEvent existing = bookmarks[index];
-        if (existing != null) {
-            bookmarkSet.remove(existing);
-        }
-
-        LogEvent selectedLogEvent = getSelectedLogEvent();
-        if (selectedLogEvent != null) {
-            bookmarks[index] = selectedLogEvent;
-            bookmarkSet.add(selectedLogEvent);
-        }
-
-        repaint();
-    }
-
     public void gotoBookmark(int index) {
         LogEvent event = bookmarks[index];
         if (event != null) {
@@ -462,6 +440,55 @@ public class DetailedLogEventTable extends JTable {
             Rectangle cellRect = getCellRect(rowIndex, 0, true);
             cellRect.y = height;
             scrollRectToVisible(cellRect);
+        }
+    }
+
+    public void setSelectedRow(int newPositionOfSelectedEvent) {
+        getSelectionModel().setSelectionInterval(newPositionOfSelectedEvent, newPositionOfSelectedEvent);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        JTable table = this;
+
+        Rectangle clip = g.getClipBounds();
+
+        Point upperLeft = clip.getLocation();
+        int rMin = table.rowAtPoint(upperLeft);
+        if (rMin == -1) {
+            // Going to try and fudge it - if the clip is after our last view, change it to
+            // something else or else we'll end up rendering the entire table.
+            logger.fine("Fudging scrolling");
+            g.setClip(0, 0, 10, 10);
+        }
+
+        Stopwatch stopwatch = Stopwatch.start("Table paintComponent");
+        super.paintComponent(g);
+        stopwatch.stop();
+        VisualStopwatchController.getInstance().add(stopwatch);
+        //        paints.increment();
+    }
+
+    public void removeHighlighter(RowHighlighter highlighter) {
+        highlighters.remove(highlighter);
+        tableModel.fireTableDataChanged();
+    }
+
+    public void setDefaultHighlighter(LevelHighlighter defaultHighlighter) {
+        this.defaultHighlighter = defaultHighlighter;
+    }
+
+    public void setPreferredColumnWidths(double[] percentages) {
+        Dimension tableDim = this.getPreferredSize();
+
+        double total = 0;
+        for (int i = 0; i < getColumnModel().getColumnCount(); i++) {
+            total += percentages[i];
+        }
+
+        for (int i = 0; i < getColumnModel().getColumnCount(); i++) {
+            TableColumn column = getColumnModel().getColumn(i);
+            column.setPreferredWidth((int) (tableDim.width * (percentages[i] / total)));
         }
     }
 }
