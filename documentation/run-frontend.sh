@@ -1,2 +1,2 @@
-cd logginghub-frontend-1.4.12
+cd logginghub-frontend-1.4.13
 ./frontend.sh

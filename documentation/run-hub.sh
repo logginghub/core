@@ -1,1 +1,1 @@
-logginghub-1.4.12/bin/hub.sh console
+logginghub-1.4.13/bin/hub.sh console
