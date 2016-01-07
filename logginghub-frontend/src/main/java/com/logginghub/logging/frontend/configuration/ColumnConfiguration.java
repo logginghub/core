@@ -12,6 +12,11 @@ public class ColumnConfiguration {
     @XmlAttribute private String name;
     @XmlAttribute private int width;
     @XmlAttribute private int order;
+    @XmlAttribute private String alignment;
+
+    public String getAlignment() {
+        return alignment;
+    }
 
     public int getOrder() {
         return order;
@@ -23,6 +28,10 @@ public class ColumnConfiguration {
 
     public String getName() {
         return name;
+    }
+
+    public void setAlignment(String alignment) {
+        this.alignment = alignment;
     }
 
     public void setName(String name) {

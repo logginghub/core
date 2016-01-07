@@ -26,14 +26,16 @@ public class ColumnSettingsModel {
 
     public final static class ColumnSettingModel {
 
-        public int width;
-        public int order;
-        public String name;
+        public final int width;
+        public final int order;
+        public final String alignment;
+        public final String name;
 
-        public ColumnSettingModel(String name, int width, int order) {
+        public ColumnSettingModel(String name, int width, int order, String alignment) {
             this.name = name;
             this.width = width;
             this.order = order;
+            this.alignment = alignment;
         }
     }
 }

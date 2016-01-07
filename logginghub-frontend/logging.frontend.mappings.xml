@@ -1,0 +1,43 @@
+<loggingFrontendConfiguration title="Local Configuration"
+                              showHistoryViewer="true"
+                              showChartingEditor="true"
+                              showHeapSlider="false"
+                              showHubClearEvents="true">
+
+    <environment name="local"
+                 eventMemoryMB="500"
+                 autoRequestHistory="all"
+                 disableAutoScrollPauser="true"
+                 disableColumnFile="true">
+
+        <hub name="local" host="localhost:9000"/>
+
+        <!-- Remap the message and log levet event fields to new values, based on our order blotter view -->
+        <columnMapping from="Message" to="Order details"/>
+        <columnMapping from="Level" to="Status"/>
+
+        <!-- Map the log level INFO to 'New Order' -->
+        <levelMapping from="Info" to="New Order"/>
+        <levelMapping from="Config" to=""/>
+        <levelMapping from="Fine" to=""/>
+        <levelMapping from="Finer" to=""/>
+        <levelMapping from="Finest" to=""/>
+
+        <!-- Configure the width and order of appearance for the columns we use -->
+        <columnSetting name="Time" width="200" order="0"/>
+        <columnSetting name="Status" width="200" order="1"/>
+        <columnSetting name="Order details" width="5000" order="2"/>
+
+        <!-- Hide all of the columns we don't use -->
+        <columnSetting name="Host" width="0"/>
+        <columnSetting name="Source" width="0"/>
+        <columnSetting name="DC" width="0"/>
+        <columnSetting name="Thread" width="0"/>
+        <columnSetting name="Locked" width="0"/>
+        <columnSetting name="PID" width="0"/>
+        <columnSetting name="Channel" width="0"/>
+        <columnSetting name="Method" width="0"/>
+
+    </environment>
+
+</loggingFrontendConfiguration>

@@ -3,6 +3,7 @@ package com.logginghub.logging.frontend.components;
 import com.logginghub.logging.frontend.model.LevelNamesModel;
 import com.logginghub.utils.ColourUtils;
 import com.logginghub.utils.OSUtils;
+import com.logginghub.utils.StringUtils;
 import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.observable.ObservableProperty;
 import com.logginghub.utils.observable.ObservablePropertyListener;
@@ -74,35 +75,45 @@ public class LevelsCheckboxListView extends JPanel {
         Level[] levels = new Level[] { Level.SEVERE, Level.WARNING, Level.INFO, Level.CONFIG, Level.FINE, Level.FINER, Level.FINEST };
 
         for (final Level level : levels) {
-            final Row row = new Row(levelNamesModel.getLevelName(level.intValue()));
+            String levelName = levelNamesModel.getLevelName(level.intValue());
+            if(StringUtils.isNotNullOrEmpty(levelName)) {
+                final Row row = new Row(levelName);
 
-            row.label.addMouseListener(new MouseAdapter() {
-                @Override public void mouseClicked(MouseEvent e) {
-                    // logger.info("Clicked " + level);
-                    handleClick(level);
-                }
-
-                @Override public void mouseEntered(MouseEvent e) {
-                    for (Row otherRow : rows) {
-                        removeHightlightFromRow(otherRow);
+                row.label.addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mouseClicked(MouseEvent e) {
+                        // logger.info("Clicked " + level);
+                        handleClick(level);
                     }
-                    
-                    highlightRow(row);
-                }
 
-                @Override public void mouseExited(MouseEvent e) {
-                    removeHightlightFromRow(row);
-                }
+                    @Override
+                    public void mouseEntered(MouseEvent e) {
+                        for (Row otherRow : rows) {
+                            removeHightlightFromRow(otherRow);
+                        }
 
-            });
+                        highlightRow(row);
+                    }
 
-            list.add(row, "wrap");
-            rows.add(row);
-            rowsByLevel.put(level, row);
+                    @Override
+                    public void mouseExited(MouseEvent e) {
+                        removeHightlightFromRow(row);
+                    }
+
+                });
+
+                list.add(row, "wrap");
+                rows.add(row);
+                rowsByLevel.put(level, row);
+            }
         }
         popupMenu.add(list);
 
-        popupMenu.setPreferredSize(new Dimension(150, 176));
+        int allRows = 7;
+        int heightForAllRows = 176;
+        int height = (int) (heightForAllRows * (rows.size() / (double)allRows));
+
+        popupMenu.setPreferredSize(new Dimension(150, height));
 
         dropdownButton.setIcon(new MetalComboBoxIcon());
         dropdownButton.addActionListener(new ActionListener() {
@@ -146,14 +157,17 @@ public class LevelsCheckboxListView extends JPanel {
     }
 
     private void bindLevel(final ObservableProperty<Boolean> property, Level level) {
-        final JCheckBox checkBox = rowsByLevel.get(level).checkBox;
-        checkBox.addActionListener(new ActionListener() {           
-            @Override public void actionPerformed(ActionEvent e) {
-                property.set(checkBox.isSelected());        
-            }
-        });
-        
-        checkBox.setSelected(property.get());
+        Row row = rowsByLevel.get(level);
+        if(row != null) {
+            final JCheckBox checkBox = row.checkBox;
+            checkBox.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    property.set(checkBox.isSelected());
+                }
+            });
+            checkBox.setSelected(property.get());
+        }
     }
     
     protected void handleClick(Level level) {

@@ -200,6 +200,15 @@ The idea of filtering based on a level makes sense with traditional logging, but
 
     </loggingFrontendConfiguration>
 
+If you want to remove a log level entirely, set the mapping to an empty string:
+
+    <levelMapping from="Config" to=""/>
+    <levelMapping from="Fine" to=""/>
+    <levelMapping from="Finer" to=""/>
+    <levelMapping from="Finest" to=""/>
+
+This will remove the filter option from the filter field - but this is just a cosmetic change. If you still receive events on those levels that pass a lower level filter, you will still see the events in the event viewer.
+
 # Controlling column widths from the main configuration
 
 By default the frontend stores column width information on a per-user basis. This is handy if you have multiple users on the same machine, but also makes it difficult to distribute a specific column setup to users when you deploy the frontend. It is now possible to control the column configuration from the main configuration file.
@@ -249,5 +258,12 @@ Here is the sample configuration to achieve this:
 
     </environment>
 
+# Column text alignment
+
+You can set the text alignment within specific columns using the *alignment* attribute of the *columnSetting* element, for example:
+
+     <columnSetting name="Time" width="200" order="0" alignment="left"/>
+     <columnSetting name="Status" width="200" order="1" alignment="right"/>
+     <columnSetting name="Order details" width="5000" order="2" alignment="center"/>
 
 

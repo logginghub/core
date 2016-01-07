@@ -149,7 +149,8 @@ public class ModelBuilder {
                             .put(columnConfiguration.getName(),
                                  new ColumnSettingModel(columnConfiguration.getName(),
                                                         columnConfiguration.getWidth(),
-                                                        columnConfiguration.getOrder()));
+                                                        columnConfiguration.getOrder(),
+                                                        columnConfiguration.getAlignment()));
 
         }
 

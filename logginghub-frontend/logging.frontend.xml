@@ -12,48 +12,32 @@
 
         <hub name="local" host="localhost:9000"/>
 
-        <!-- Remap the message and log levet event fields to new values, based on our order blotter view -->
-        <columnMapping from="Message" to="Order details"/>
-        <columnMapping from="Level" to="Status"/>
+        <columnMapping from="Source" to="Market"/>
+        <columnMapping from="Host" to="Quantity"/>
+        <columnMapping from="Method" to="Instrument"/>
+        <columnMapping from="Thread" to="Customer"/>
+        <columnMapping from="Message" to="Status"/>
+        <columnMapping from="Level" to="Product"/>
 
-        <!-- Map the log level INFO to 'New Order' -->
-        <levelMapping from="Info" to="New Order"/>
+        <columnSetting name="Market" width="100" order="0"/>
+        <columnSetting name="Quantity" width="100" order="1"/>
+        <columnSetting name="Instrument" width="240" order="2"/>
+        <columnSetting name="Customer" width="280" order="3"/>
+        <columnSetting name="Status" width="110" order="4"/>
+        <columnSetting name="Product" width="110" order="5" alignment="center"/>
+        <columnSetting name="Time" width="150" order="6"/>
 
-        <!-- Configure the width and order of appearance for the columns we use -->
-        <columnSetting name="Time" width="200" order="0"/>
-        <columnSetting name="Status" width="200" order="1"/>
-        <columnSetting name="Order details" width="5000" order="2"/>
-
-        <!-- Hide all of the columns we don't use -->
-        <columnSetting name="Host" width="0"/>
-        <columnSetting name="Source" width="0"/>
+        <columnSetting name="Level" width="0"/>
         <columnSetting name="DC" width="0"/>
-        <columnSetting name="Thread" width="0"/>
-        <columnSetting name="Locked" width="0"/>
         <columnSetting name="PID" width="0"/>
+        <columnSetting name="Locked" width="0"/>
         <columnSetting name="Channel" width="0"/>
-        <columnSetting name="Method" width="0"/>
+
+        <levelMapping from="Info" to="Govies"/>
+        <levelMapping from="Finer" to="Switches"/>
+        <levelMapping from="Severe" to="Credit"/>
+        <levelMapping from="Finest" to="All"/>
 
     </environment>
-
-    <!--<environment name="SKE-EC2" showHistoryTab="true">-->
-    <!--<hub name="local" host="ec2-52-16-246-134.eu-west-1.compute.amazonaws.com:15000"/>-->
-    <!--</environment>-->
-
-
-    <!--<environment name="ske" showHistoryTab="true">-->
-    <!--<hub name="ske" host="54.77.166.227:15000"/>-->
-    <!--</environment>-->
-
-    <!--
-    <environment name="ec2" showHistoryTab="true">
-        <hub name="vl-ec2" host="vl-ec2"/>
-    </environment>
-    -->
-
-    <!--<environment name="local-cluster" clustered="true">-->
-    <!--<hub name="hub1" host="localhost:15000"/>-->
-    <!--<hub name="hub2" host="localhost:15001"/>-->
-    <!--</environment>-->
 
 </loggingFrontendConfiguration>

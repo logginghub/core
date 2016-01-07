@@ -13,8 +13,6 @@ gradle install distZip uploadArchives
 8. git commit -a -m "Ready for next version"
 9. git push --tags
 
-
-
 # Documentation
 
 Generating the documentation is current a manual process, with a view to automating it in the future. The document generation is also a self-test that the version has been build and correctly deployed, so you can't run it until the artifacts are up on the server.

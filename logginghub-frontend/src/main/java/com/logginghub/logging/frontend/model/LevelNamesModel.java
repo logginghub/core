@@ -15,7 +15,7 @@ public class LevelNamesModel {
         levelNames.put(Level.SEVERE.intValue(), Level.SEVERE.getName());
         levelNames.put(Level.WARNING.intValue(), Level.WARNING.getName());
         levelNames.put(Level.INFO.intValue(), Level.INFO.getName());
-        levelNames.put(Level.CONFIG.intValue(), Level.SEVERE.getName());
+        levelNames.put(Level.CONFIG.intValue(), Level.CONFIG.getName());
         levelNames.put(Level.FINE.intValue(), Level.FINE.getName());
         levelNames.put(Level.FINER.intValue(), Level.FINER.getName());
         levelNames.put(Level.FINEST.intValue(), Level.FINEST.getName());
