@@ -8,7 +8,8 @@
                  eventMemoryMB="500"
                  autoRequestHistory="all"
                  disableAutoScrollPauser="true"
-                 disableColumnFile="true">
+                 disableColumnFile="true"
+                 eventDetailsSeparatorLocation="0">
 
         <hub name="local" host="localhost:9000"/>
 

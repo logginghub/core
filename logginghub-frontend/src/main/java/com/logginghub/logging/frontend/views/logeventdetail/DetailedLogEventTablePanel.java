@@ -843,6 +843,10 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
             }
         });
 
+        if(environmentModel.getEventDetailsSeparatorLocation() != -1) {
+            eventDetailsSplitPane.setDividerLocation(environmentModel.getEventDetailsSeparatorLocation());
+        }
+
         if (environmentModel.isDisableAutoScrollPauser()) {
             disableScrollerAutoPause();
         }

@@ -46,6 +46,8 @@ public class ModelBuilder {
         environmentModel.set(EnvironmentModel.Fields.RepoConnectionPoints, environmentConfiguration.getRepoConnectionPoints());
         environmentModel.set(EnvironmentModel.Fields.ShowHistoryTab, environmentConfiguration.isShowHistoryTab());
 
+        environmentModel.setEventDetailsSeparatorLocation(environmentConfiguration.getEventDetailsSeparatorLocation());
+
         environmentConfiguration.setupDefaultLogConfiguration();
         environmentModel.setClustered(environmentConfiguration.isClustered());
         environmentModel.setEventMemoryMB(environmentConfiguration.getEventMemoryMB());

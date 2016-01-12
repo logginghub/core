@@ -267,3 +267,18 @@ You can set the text alignment within specific columns using the *alignment* att
      <columnSetting name="Order details" width="5000" order="2" alignment="center"/>
 
 
+# Configuring the event details split pane location
+
+If you want to show or hide the event details view at start up by default - for example to maximise the space for the scrolling event view - you can
+do this on a per-environment basis.  Add the *eventDetailsSeparatorLocation* attribute to the *environment* element:
+
+    <environment name="local"
+                 eventDetailsSeparatorLocation="10000"
+                 ...
+                 >
+
+The value is the number of pixels from the top of the view (from just under the tab pane) to give to the scrolling event view. Any number larger
+than the size of your screen should be a comfortable way of maximising the scrolling view.
+
+Using a value of zero will maximise the event details view, and you won't be able to see any streaming events. We are yet to hear of a use for this
+configuration.

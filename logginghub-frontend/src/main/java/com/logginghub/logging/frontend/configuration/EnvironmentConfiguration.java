@@ -46,6 +46,7 @@ import java.util.List;
     @XmlAttribute private boolean filterCaseSensitive = false;
     @XmlAttribute private boolean filterUnicode = false;
     @XmlAttribute private boolean disableColumnFile = false;
+    @XmlAttribute private int eventDetailsSeparatorLocation = 1;
 
     public EnvironmentConfiguration() {
         setupOutputLogConfiguration();
@@ -65,6 +66,10 @@ import java.util.List;
 
     public boolean getDisableAutoScrollPauser() {
         return disableAutoScrollPauser;
+    }
+
+    public int getEventDetailsSeparatorLocation() {
+        return eventDetailsSeparatorLocation;
     }
 
     public List<NameMappingConfiguration> getLevelMappings() {
@@ -105,6 +110,10 @@ import java.util.List;
 
     public void setDisableColumnFile(boolean disableColumnFile) {
         this.disableColumnFile = disableColumnFile;
+    }
+
+    public void setEventDetailsSeparatorLocation(int eventDetailsSeparatorLocation) {
+        this.eventDetailsSeparatorLocation = eventDetailsSeparatorLocation;
     }
 
     public void setFilterCaseSensitive(boolean filterCaseSensitive) {

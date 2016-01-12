@@ -50,9 +50,14 @@ public class EnvironmentModel extends ObservableModel implements LogEventSource,
     private boolean filterCaseSensitive;
     private boolean filterUnicode;
     private ColumnSettingsModel columnSettingsModel = new ColumnSettingsModel();
+    private int eventDetailsSeparatorLocation = -1;
 
     public ColumnSettingsModel getColumnSettingsModel() {
         return columnSettingsModel;
+    }
+
+    public int getEventDetailsSeparatorLocation() {
+        return eventDetailsSeparatorLocation;
     }
 
     public double getEventMemoryMB() {
@@ -93,6 +98,10 @@ public class EnvironmentModel extends ObservableModel implements LogEventSource,
 
     public void setDisableAutoScrollPauser(boolean disableAutoScrollPauser) {
         this.disableAutoScrollPauser = disableAutoScrollPauser;
+    }
+
+    public void setEventDetailsSeparatorLocation(int eventDetailsSeparatorLocation) {
+        this.eventDetailsSeparatorLocation = eventDetailsSeparatorLocation;
     }
 
     public void setEventMemoryMB(double eventMemoryMB) {
