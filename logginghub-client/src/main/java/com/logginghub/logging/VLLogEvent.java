@@ -1,11 +1,11 @@
 package com.logginghub.logging;
 
+import com.logginghub.utils.StringUtils;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.net.InetAddress;
+import java.util.Map;
 import java.util.logging.Level;
-
-import com.logginghub.utils.StringUtils;
 
 /**
  * LogEvent wrapper for the com.logginghub.util.logging log record object.
@@ -91,6 +91,11 @@ public class VLLogEvent extends BaseLogEvent {
 
     public Level getJavaLevel() {
         return Level.parse("" + event.getLevel());
+    }
+
+    @Override
+    public Map<String, String> getMetadata() {
+        return null;
     }
 
     @Override public long getHubTime() {

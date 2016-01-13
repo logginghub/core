@@ -3,12 +3,12 @@ package com.logginghub.logging.frontend.views.logeventdetail;
 import com.logginghub.logging.DefaultLogEvent;
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.frontend.PathHelper;
+import com.logginghub.logging.frontend.Utils;
 import com.logginghub.logging.frontend.model.ColumnSettingsModel;
 import com.logginghub.logging.frontend.model.ColumnSettingsModel.ColumnSettingModel;
 import com.logginghub.utils.CompareUtils;
 import com.logginghub.utils.DelayedAction;
 import com.logginghub.utils.FileUtils;
-import com.logginghub.utils.Metadata;
 import com.logginghub.utils.ResourceUtils;
 import com.logginghub.utils.Stopwatch;
 import com.logginghub.utils.StringUtils;
@@ -44,6 +44,7 @@ import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +71,7 @@ public class DetailedLogEventTable extends JTable {
 
     private boolean controlKeyStatus = false;
     private boolean altKeyStatus = false;
+
 
     //    private IntegerStat paints;
 
@@ -135,28 +137,44 @@ public class DetailedLogEventTable extends JTable {
         Map<String, ColumnSettingModel> columnSettings = columnSettingsModel.getColumnSettings();
         Set<Entry<String, ColumnSettingModel>> entries = columnSettings.entrySet();
 
+        TableColumnModel columnModel = getColumnModel();
+        tableModel.fireTableStructureChanged();
+
         for (Entry<String, ColumnSettingModel> entry : entries) {
             String columnName = entry.getKey();
 
-            TableColumnModel columnModel = getColumnModel();
+            ColumnSettingModel value = entry.getValue();
+            int width = value.getWidth();
+
             try {
                 int columnIndex = columnModel.getColumnIndex(columnName);
-                int width = entry.getValue().width;
                 TableColumn column = columnModel.getColumn(columnIndex);
 
                 if (width == 0) {
                     columnModel.removeColumn(column);
+                    tableModel.fireTableStructureChanged();
                     logger.info("Removing column '{}' from the event view", columnName);
                 }
             } catch (IllegalArgumentException e) {
-                logger.warn("Failed to find column '{}' in the column model - has it been removed?", columnName);
+
+                // It might be a metadata column that we need to add?
+                if (StringUtils.isNotNullOrEmpty(value.getMetadataMapping())) {
+                    TableColumn tableColumn = new TableColumn();
+                    tableColumn.setHeaderValue(value.getName());
+                    columnModel.addColumn(tableColumn);
+                    int index = columnModel.getColumnIndex(value.getName());
+                    tableModel.addMetadataColumn(index, value.getMetadataMapping(), value.getName());
+                    logger.info("New column name '{}' mapped to '{}' added at index '{}'", value.getName(), value.getMetadataMapping(), index);
+                } else {
+                    logger.warn("Failed to find column '{}' in the column model - has it been removed?", columnName);
+                }
             }
         }
 
         // We need to order the columns by their position to do this properly
         List<ColumnSettingModel> settings = new ArrayList<ColumnSettingModel>();
         for (Entry<String, ColumnSettingModel> entry : entries) {
-            if (entry.getValue().width > 0) {
+            if (entry.getValue().getWidth() > 0) {
                 settings.add(entry.getValue());
             }
         }
@@ -164,37 +182,36 @@ public class DetailedLogEventTable extends JTable {
         Collections.sort(settings, new Comparator<ColumnSettingModel>() {
             @Override
             public int compare(ColumnSettingModel o1, ColumnSettingModel o2) {
-                return CompareUtils.compare(o1.order, o2.order);
+                return CompareUtils.compare(o1.getOrder(), o2.getOrder());
             }
         });
 
         for (ColumnSettingModel entry : settings) {
 
-            String columnName = entry.name;
+            String columnName = entry.getName();
 
-            TableColumnModel columnModel = getColumnModel();
             try {
                 int columnIndex = columnModel.getColumnIndex(columnName);
-                int width = entry.width;
+                int width = entry.getWidth();
                 TableColumn column = columnModel.getColumn(columnIndex);
 
                 column.setPreferredWidth(width);
 
-                if(StringUtils.isNotNullOrEmpty(entry.alignment)) {
-                    if(entry.alignment.equalsIgnoreCase("right")) {
+                if (StringUtils.isNotNullOrEmpty(entry.getAlignment())) {
+                    if (entry.getAlignment().equalsIgnoreCase("right")) {
                         DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
                         rightRenderer.setHorizontalAlignment(SwingConstants.RIGHT);
                         column.setCellRenderer(rightRenderer);
-                    }else if(entry.alignment.equalsIgnoreCase("left")) {
+                    } else if (entry.getAlignment().equalsIgnoreCase("left")) {
                         // Do nothing, this is the default
-                    }else if(entry.alignment.equalsIgnoreCase("centre") || entry.alignment.equalsIgnoreCase("center")) {
+                    } else if (entry.getAlignment().equalsIgnoreCase("centre") || entry.getAlignment().equalsIgnoreCase("center")) {
                         DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
                         rightRenderer.setHorizontalAlignment(SwingConstants.CENTER);
                         column.setCellRenderer(rightRenderer);
                     }
                 }
 
-                int order = entry.order;
+                int order = entry.getOrder();
                 order = Math.min(order, columnModel.getColumnCount() - 1);
 
                 logger.info("Moving column '{}' from original index {} to new index {}", columnName, columnIndex, order);
@@ -205,6 +222,7 @@ public class DetailedLogEventTable extends JTable {
             }
         }
 
+        tableModel.fireTableStructureChanged();
     }
 
     private void loadColumnSettings() {
@@ -266,6 +284,10 @@ public class DetailedLogEventTable extends JTable {
         addKeyListener(new KeyListener() {
 
             @Override
+            public void keyTyped(KeyEvent arg0) {
+            }
+
+            @Override
             public void keyPressed(KeyEvent event) {
                 if (event.getKeyCode() == KeyEvent.VK_CONTROL) {
                     controlKeyStatus = true;
@@ -283,10 +305,6 @@ public class DetailedLogEventTable extends JTable {
                 } else if (event.getKeyCode() == KeyEvent.VK_DELETE) {
                     deleteSelection();
                 }
-            }
-
-            @Override
-            public void keyTyped(KeyEvent arg0) {
             }
         });
 
@@ -369,8 +387,8 @@ public class DetailedLogEventTable extends JTable {
 
             LogEvent logEventAtRow = tableModel.getLogEventAtRow(adjustedForEarlierDeletions);
             DefaultLogEvent defaultLogEvent = (DefaultLogEvent) logEventAtRow;
-            Metadata metadata = defaultLogEvent.getMetadata();
-            if (!metadata.getBoolean("locked", false)) {
+
+            if (!Utils.isEventLocked(logEventAtRow)) {
                 tableModel.removeRow(adjustedForEarlierDeletions);
                 deleted++;
             }
@@ -388,20 +406,25 @@ public class DetailedLogEventTable extends JTable {
 
     private void toggleLocked(int rowNumber, LogEvent logEventAtRow) {
         DefaultLogEvent defaultLogEvent = (DefaultLogEvent) logEventAtRow;
-        Metadata metadata = defaultLogEvent.getMetadata();
+
+        Map<String, String> metadata = defaultLogEvent.getMetadata();
+        if (metadata == null) {
+            metadata = new HashMap<String, String>();
+            defaultLogEvent.setMetadata(metadata);
+        }
 
         if (metadata.containsKey("locked")) {
-            boolean isLocked = metadata.getBoolean("locked", false);
+            boolean isLocked = Utils.isEventLocked(defaultLogEvent);
             if (isLocked) {
-                metadata.put("locked", false);
+                metadata.put("locked", "false");
                 tableModel.fireTableRowsUpdated(rowNumber, rowNumber);
             } else {
-                metadata.put("locked", true);
+                metadata.put("locked", "true");
                 tableModel.fireTableRowsUpdated(rowNumber, rowNumber);
 
             }
         } else {
-            metadata.put("locked", true);
+            metadata.put("locked", "true");
             tableModel.fireTableRowsUpdated(rowNumber, rowNumber);
         }
     }
@@ -440,51 +463,11 @@ public class DetailedLogEventTable extends JTable {
     @Override
     public Class<?> getColumnClass(int column) {
         String columnName = getColumnName(column);
-        if (columnName.equals("")) {
+        if (columnName != null && columnName.equals("")) {
             return ImageIcon.class;
         } else {
             return String.class;
         }
-    }
-
-    public void gotoBookmark(int index) {
-        LogEvent event = bookmarks[index];
-        if (event != null) {
-            int rowIndex = tableModel.getVisibleIndexForEvent(event);
-            setSelectedRow(rowIndex);
-
-            int height = rowIndex * getRowHeight();
-
-            Rectangle cellRect = getCellRect(rowIndex, 0, true);
-            cellRect.y = height;
-            scrollRectToVisible(cellRect);
-        }
-    }
-
-    public void setSelectedRow(int newPositionOfSelectedEvent) {
-        getSelectionModel().setSelectionInterval(newPositionOfSelectedEvent, newPositionOfSelectedEvent);
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-        JTable table = this;
-
-        Rectangle clip = g.getClipBounds();
-
-        Point upperLeft = clip.getLocation();
-        int rMin = table.rowAtPoint(upperLeft);
-        if (rMin == -1) {
-            // Going to try and fudge it - if the clip is after our last view, change it to
-            // something else or else we'll end up rendering the entire table.
-            logger.fine("Fudging scrolling");
-            g.setClip(0, 0, 10, 10);
-        }
-
-        Stopwatch stopwatch = Stopwatch.start("Table paintComponent");
-        super.paintComponent(g);
-        stopwatch.stop();
-        VisualStopwatchController.getInstance().add(stopwatch);
-        //        paints.increment();
     }
 
     public Component prepareRenderer(TableCellRenderer renderer, int rowIndex, int vColIndex) {
@@ -525,6 +508,46 @@ public class DetailedLogEventTable extends JTable {
         }
 
         return c;
+    }
+
+    public void gotoBookmark(int index) {
+        LogEvent event = bookmarks[index];
+        if (event != null) {
+            int rowIndex = tableModel.getVisibleIndexForEvent(event);
+            setSelectedRow(rowIndex);
+
+            int height = rowIndex * getRowHeight();
+
+            Rectangle cellRect = getCellRect(rowIndex, 0, true);
+            cellRect.y = height;
+            scrollRectToVisible(cellRect);
+        }
+    }
+
+    public void setSelectedRow(int newPositionOfSelectedEvent) {
+        getSelectionModel().setSelectionInterval(newPositionOfSelectedEvent, newPositionOfSelectedEvent);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        JTable table = this;
+
+        Rectangle clip = g.getClipBounds();
+
+        Point upperLeft = clip.getLocation();
+        int rMin = table.rowAtPoint(upperLeft);
+        if (rMin == -1) {
+            // Going to try and fudge it - if the clip is after our last view, change it to
+            // something else or else we'll end up rendering the entire table.
+            logger.fine("Fudging scrolling");
+            g.setClip(0, 0, 10, 10);
+        }
+
+        Stopwatch stopwatch = Stopwatch.start("Table paintComponent");
+        super.paintComponent(g);
+        stopwatch.stop();
+        VisualStopwatchController.getInstance().add(stopwatch);
+        //        paints.increment();
     }
 
     public void removeHighlighter(RowHighlighter highlighter) {

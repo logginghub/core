@@ -1,16 +1,16 @@
 package com.logginghub.logging;
 
+import com.logginghub.logging.log4j.Log4jDetailsSnapshot;
+import org.apache.log4j.spi.LoggingEvent;
+import org.apache.log4j.spi.ThrowableInformation;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.InetAddress;
 import java.util.Hashtable;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-
-import org.apache.log4j.spi.LoggingEvent;
-import org.apache.log4j.spi.ThrowableInformation;
-
-import com.logginghub.logging.log4j.Log4jDetailsSnapshot;
 
 
 /**
@@ -136,6 +136,11 @@ public class Log4jLogEvent extends BaseLogEvent {
     public Level getJavaLevel() {
         Level juliLevel = log4jToJuliLevel(record.getLevel());
         return juliLevel;
+    }
+
+    @Override
+    public Map<String, String> getMetadata() {
+        return null;
     }
 
     private Level log4jToJuliLevel(org.apache.log4j.Level level) {

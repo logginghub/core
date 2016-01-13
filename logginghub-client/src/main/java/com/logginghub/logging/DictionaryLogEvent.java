@@ -1,11 +1,12 @@
 package com.logginghub.logging;
 
 import com.logginghub.utils.Dictionary;
-import com.logginghub.utils.Metadata;
 import com.logginghub.utils.sof.SerialisableObject;
 import com.logginghub.utils.sof.SofException;
 import com.logginghub.utils.sof.SofReader;
 import com.logginghub.utils.sof.SofWriter;
+
+import java.util.Map;
 
 /**
  * The main model that represents a single item of logging.
@@ -32,7 +33,7 @@ public class DictionaryLogEvent implements SerialisableObject {
     private String formattedException;
     private String[] formattedObject;
 
-    private Metadata metadata;
+    private Map<String,String> metadata;
 
     public int getLevel() {
         return level;
@@ -154,11 +155,11 @@ public class DictionaryLogEvent implements SerialisableObject {
         this.formattedObject = formattedObject;
     }
 
-    public Metadata getMetadata() {
+    public Map<String, String> getMetadata() {
         return metadata;
     }
 
-    public void setMetadata(Metadata metadata) {
+    public void setMetadata(Map<String, String> metadata) {
         this.metadata = metadata;
     }
 

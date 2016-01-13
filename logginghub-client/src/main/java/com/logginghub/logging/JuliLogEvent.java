@@ -3,19 +3,18 @@ package com.logginghub.logging;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.InetAddress;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
 /**
  * LogEvent wrapper for the juli log record object.
- * 
+ *
  * @author admin
  */
 public class JuliLogEvent extends BaseLogEvent {
-    private LogRecord record;
-
     private static String lineSeparator = (String) System.getProperty("line.separator");
-
+    private LogRecord record;
     private boolean gatheringCallerDetails;
 
     public JuliLogEvent(LogRecord record, String sourceApplication, InetAddress sourceHost, String threadName, boolean gatheringCallerDetails) {
@@ -37,6 +36,10 @@ public class JuliLogEvent extends BaseLogEvent {
         return sw.toString();
     }
 
+    public String getFlavour() {
+        return "Juli";
+    }
+
     public String getFormattedException() {
         String formatted;
 
@@ -48,8 +51,7 @@ public class JuliLogEvent extends BaseLogEvent {
             sw.append(lineSeparator);
             thrown.printStackTrace(pw);
             formatted = sw.toString();
-        }
-        else {
+        } else {
             formatted = null;
         }
 
@@ -61,12 +63,21 @@ public class JuliLogEvent extends BaseLogEvent {
         return null;
     }
 
+    @Override
+    public long getHubTime() {
+        return record.getMillis();
+    }
+
+    public Level getJavaLevel() {
+        return record.getLevel();
+    }
+
     public int getLevel() {
         return record.getLevel().intValue();
     }
 
-    public long getOriginTime() {
-        return record.getMillis();
+    public String getLevelDescription() {
+        return record.getLevel().getName();
     }
 
     public String getLoggerName() {
@@ -77,6 +88,15 @@ public class JuliLogEvent extends BaseLogEvent {
         return record.getMessage();
     }
 
+    @Override
+    public Map<String, String> getMetadata() {
+        return null;
+    }
+
+    public long getOriginTime() {
+        return record.getMillis();
+    }
+
     public long getSequenceNumber() {
         return record.getSequenceNumber();
     }
@@ -84,8 +104,7 @@ public class JuliLogEvent extends BaseLogEvent {
     public String getSourceClassName() {
         if (gatheringCallerDetails) {
             return record.getSourceClassName();
-        }
-        else {
+        } else {
             return null;
         }
     }
@@ -93,26 +112,9 @@ public class JuliLogEvent extends BaseLogEvent {
     public String getSourceMethodName() {
         if (gatheringCallerDetails) {
             return record.getSourceMethodName();
-        }
-        else {
+        } else {
             return null;
         }
-    }
-
-    public String getLevelDescription() {
-        return record.getLevel().getName();
-    }
-
-    public Level getJavaLevel() {
-        return record.getLevel();
-    }
-
-    public String getFlavour() {
-        return "Juli";
-    }
-
-    @Override public long getHubTime() {
-        return record.getMillis();         
     }
 
 }

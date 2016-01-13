@@ -282,3 +282,30 @@ than the size of your screen should be a comfortable way of maximising the scrol
 
 Using a value of zero will maximise the event details view, and you won't be able to see any streaming events. We are yet to hear of a use for this
 configuration.
+
+# Experimental feature - Adding custom data to your log events, and then show this data in the column view
+
+If the column renaming feature isn't enough for you, and you find yourself wanting to start defining your own event attributes, you can use the event
+metadata feature in conjunction with some frontend column configuration.
+
+You can provide the additional data using the *getMetadata* and *setMetadata* methods on the *DefaultLogEvent* class:
+
+     LogEvent event = new DefaultLogEvent();
+
+     // Set up the event as you normally would
+     // ......
+
+     // Add the metadata fields
+     event.getMetadata().put("key1", "value1");
+     event.getMetadata().put("key2", "value2");
+     event.getMetadata().put("key3", "42");
+
+The metadata is encoded with the event during transmission from your app to the hub, and then on from the hub to the client. It is also persisted in
+the in memory or disk based history modules.
+
+In order to see the metadata in the frontend you need to add a new attribute to the *columnSetting* element:
+
+    <columnSetting name="New Field" width="150" order="8" metadata="newfield"/>
+
+This example will create a new column with the title "New Field" and it will populate that with the metadata value from each event. If the event
+doesn't have that bit of metadata set, the column will just appear blank.

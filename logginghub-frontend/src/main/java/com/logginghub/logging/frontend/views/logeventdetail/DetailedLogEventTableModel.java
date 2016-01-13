@@ -13,7 +13,6 @@ import com.logginghub.logging.frontend.model.LogEventContainer;
 import com.logginghub.logging.frontend.model.LogEventContainerController;
 import com.logginghub.logging.listeners.LogEventListener;
 import com.logginghub.utils.Is;
-import com.logginghub.utils.Metadata;
 import com.logginghub.utils.Pair;
 import com.logginghub.utils.Stopwatch;
 import com.logginghub.utils.filter.Filter;
@@ -21,6 +20,8 @@ import com.logginghub.utils.logging.Logger;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import java.util.HashMap;
+import java.util.Map;
 
 public class DetailedLogEventTableModel extends DefaultTableModel implements LogEventListener {
     
@@ -53,18 +54,32 @@ public class DetailedLogEventTableModel extends DefaultTableModel implements Log
 
     private boolean isPlaying = true;
 
+    private Map<Integer, String> metadataColumns = new HashMap<Integer, String>();
+    private Map<Integer, String> metadataColumnNames = new HashMap<Integer, String>();
+
     public DetailedLogEventTableModel(EventTableColumnModel eventTableColumnModel, LevelNamesModel levelNamesModel, LogEventContainerController eventController) {
         this.eventTableColumnModel = eventTableColumnModel;
         this.levelNamesModel = levelNamesModel;
         this.eventController = eventController;
     }
 
+    public void addMetadataColumn(int index, String metadataKey, String name) {
+        metadataColumns.put(index, metadataKey);
+        metadataColumnNames.put(index, name);
+        fireTableStructureChanged();
+    }
+
     @Override public String getColumnName(int column) {
-        return eventTableColumnModel.getColumnNameMappings().get(column);
+        String name = eventTableColumnModel.getColumnNameMappings().get(column);
+        if(name == null) {
+            name = metadataColumnNames.get(column);
+        }
+
+        return name;
     }
 
     @Override public int getColumnCount() {
-        return NUMBER_OF_COLUMNS;
+        return NUMBER_OF_COLUMNS + metadataColumns.size();
     }
 
     @Override public int getRowCount() {
@@ -109,9 +124,9 @@ public class DetailedLogEventTableModel extends DefaultTableModel implements Log
             case COLUMN_LOCKED: {
                 if (logEvent instanceof DefaultLogEvent) {
                     DefaultLogEvent defaultLogEvent = (DefaultLogEvent) logEvent;
-                    Metadata metadata = defaultLogEvent.getMetadata();
+                    Map<String, String> metadata = defaultLogEvent.getMetadata();
                     if (metadata.containsKey("locked")) {
-                        if (metadata.getBoolean("locked")) {
+                        if (metadata.get("locked").equalsIgnoreCase("true")) {
                             return Icons.get(IconIdentifier.Locked);
                         }
                         else {
@@ -179,7 +194,16 @@ public class DetailedLogEventTableModel extends DefaultTableModel implements Log
                 break;
             }
             default: {
-                value = "???";
+                logger.fine("Custom column id {}", column);
+                String metadatakey = metadataColumns.get(column);
+                if(metadatakey != null && logEvent.getMetadata() != null) {
+                    value = logEvent.getMetadata().get(metadatakey);
+                    if(value == null) {
+                        value = "";
+                    }
+                }else {
+                    value = "???";
+                }
             }
         }
 

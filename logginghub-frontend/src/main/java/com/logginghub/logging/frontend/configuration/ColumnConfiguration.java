@@ -13,9 +13,14 @@ public class ColumnConfiguration {
     @XmlAttribute private int width;
     @XmlAttribute private int order;
     @XmlAttribute private String alignment;
+    @XmlAttribute private String metadata;
 
     public String getAlignment() {
         return alignment;
+    }
+
+    public String getMetadata() {
+        return metadata;
     }
 
     public int getOrder() {
@@ -32,6 +37,10 @@ public class ColumnConfiguration {
 
     public void setAlignment(String alignment) {
         this.alignment = alignment;
+    }
+
+    public void setMetadata(String metadata) {
+        this.metadata = metadata;
     }
 
     public void setName(String name) {

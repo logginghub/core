@@ -1,19 +1,22 @@
 package com.logginghub.logging.frontend;
 
-import java.awt.Color;
+import com.logginghub.logging.LogEvent;
+
+import javax.swing.*;
+import java.awt.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Map;
 import java.util.logging.Level;
 
-import javax.swing.ImageIcon;
-
-import com.logginghub.logging.LogEvent;
-
 public class Utils {
-    private static String[] m_colourHex = new String[] { "#6B8ADF", "#92B8E4", "#A0CCFF", "#F7F7FE", "#E2E2FE", "#F9F915", "#FF484C" };
+    private static String[] m_colourHex = new String[]{"#6B8ADF", "#92B8E4", "#A0CCFF", "#F7F7FE", "#E2E2FE", "#F9F915", "#FF484C"};
 
     private static Color[] m_colours = null;
+    private static DateFormat m_dateFormatWithMillis = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss.SSS");
+    private static DateFormat m_dateFormat = DateFormat.getDateTimeInstance();
+    private static ThreadLocal<Date> m_dates = new ThreadLocal<Date>();
 
     static {
         int colours = m_colourHex.length;
@@ -23,24 +26,19 @@ public class Utils {
         }
     }
 
-    private static DateFormat m_dateFormatWithMillis = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss.SSS");
-    private static DateFormat m_dateFormat = DateFormat.getDateTimeInstance();
-    private static ThreadLocal<Date> m_dates = new ThreadLocal<Date>();
+    public static ImageIcon createImageIcon(String path, String description) {
+        java.net.URL imgURL = Utils.class.getResource(path);
+        if (imgURL != null) {
+            return new ImageIcon(imgURL, description);
+        } else {
+            throw new RuntimeException("Failed to create image icon for path " + path);
+        }
+    }
 
     public static String formatTime(long localCreationTimeMillis) {
         Date date = getTempDate();
         date.setTime(localCreationTimeMillis);
         return m_dateFormatWithMillis.format(date);
-    }
-
-    public static ImageIcon createImageIcon(String path, String description) {
-        java.net.URL imgURL = Utils.class.getResource(path);
-        if (imgURL != null) {
-            return new ImageIcon(imgURL, description);
-        }
-        else {
-            throw new RuntimeException("Failed to create image icon for path " + path);
-        }
     }
 
     /*
@@ -68,29 +66,40 @@ public class Utils {
 
         if (levelValue == Level.SEVERE.intValue()) {
             background = m_colours[6];
-        }
-        else if (levelValue == Level.WARNING.intValue()) {
+        } else if (levelValue == Level.WARNING.intValue()) {
             background = m_colours[5];
-        }
-        else if (levelValue == Level.CONFIG.intValue()) {
+        } else if (levelValue == Level.CONFIG.intValue()) {
             background = m_colours[4];
-        }
-        else if (levelValue == Level.INFO.intValue()) {
+        } else if (levelValue == Level.INFO.intValue()) {
             background = m_colours[3];
-        }
-        else if (levelValue == Level.FINE.intValue()) {
+        } else if (levelValue == Level.FINE.intValue()) {
             background = m_colours[2];
-        }
-        else if (levelValue == Level.FINER.intValue()) {
+        } else if (levelValue == Level.FINER.intValue()) {
             background = m_colours[1];
-        }
-        else if (levelValue == Level.FINEST.intValue()) {
+        } else if (levelValue == Level.FINEST.intValue()) {
             background = m_colours[0];
-        }
-        else {
+        } else {
             background = m_colours[3];
         }
 
         return background;
+    }
+
+    public static boolean isEventLocked(LogEvent event) {
+        boolean isLocked;
+
+        Map<String, String> metadata = event.getMetadata();
+        if(metadata != null) {
+            String locked = metadata.get("locked");
+            if("true".equalsIgnoreCase(locked)) {
+                isLocked = true;
+            }else{
+                isLocked = false;
+            }
+        }else{
+            isLocked = false;
+        }
+
+        return isLocked;
     }
 }

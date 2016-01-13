@@ -152,7 +152,9 @@ public class ModelBuilder {
                                  new ColumnSettingModel(columnConfiguration.getName(),
                                                         columnConfiguration.getWidth(),
                                                         columnConfiguration.getOrder(),
-                                                        columnConfiguration.getAlignment()));
+                                                        columnConfiguration.getAlignment(),
+                                                        columnConfiguration.getMetadata()
+                                                        ));
 
         }
 

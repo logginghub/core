@@ -26,16 +26,38 @@ public class ColumnSettingsModel {
 
     public final static class ColumnSettingModel {
 
-        public final int width;
-        public final int order;
-        public final String alignment;
-        public final String name;
+        private final int width;
+        private final int order;
+        private final String alignment;
+        private final String metadataMapping;
+        private final String name;
 
-        public ColumnSettingModel(String name, int width, int order, String alignment) {
+        public ColumnSettingModel(String name, int width, int order, String alignment, String metadataMapping) {
             this.name = name;
             this.width = width;
             this.order = order;
             this.alignment = alignment;
+            this.metadataMapping = metadataMapping;
+        }
+
+        public int getOrder() {
+            return order;
+        }
+
+        public int getWidth() {
+            return width;
+        }
+
+        public String getAlignment() {
+            return alignment;
+        }
+
+        public String getMetadataMapping() {
+            return metadataMapping;
+        }
+
+        public String getName() {
+            return name;
         }
     }
 }

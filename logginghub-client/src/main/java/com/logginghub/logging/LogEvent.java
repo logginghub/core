@@ -1,53 +1,56 @@
 package com.logginghub.logging;
 
+import java.util.Map;
 import java.util.logging.Level;
 
 /**
  * The main model that represents a single item of logging.
- * 
+ *
  * @author admin
  */
-public interface LogEvent
-{
-    public int getLevel();
-
-    public long getSequenceNumber();
-
-    public String getSourceClassName();
-
-    public String getSourceMethodName();
-
-    public String getMessage();
-
-    public String getThreadName();
-
-    public long getOriginTime();
-    public long getHubTime();
-
-    public String getLoggerName();
-
-    public String getSourceHost();
-    public String getSourceAddress();
-
-    public String getSourceApplication();
-
-    public String getFormattedException();
-
-    public String[] getFormattedObject();
+public interface LogEvent {
+    String getChannel();
 
     /**
-     * Return something to indicate the flavour of this event: eg Juli, Log4j
-     * etc
-     * 
+     * Return something to indicate the flavour of this event: eg Juli, Log4j etc
+     *
      * @return
      */
-    public String getFlavour();
+    String getFlavour();
 
-    public String getLevelDescription();
+    String getFormattedException();
 
-    public Level getJavaLevel();
-    
-    public int getPid();
-    
-    public String getChannel();
+    String[] getFormattedObject();
+
+    long getHubTime();
+
+    Level getJavaLevel();
+
+    int getLevel();
+
+    String getLevelDescription();
+
+    String getLoggerName();
+
+    String getMessage();
+
+    Map<String, String> getMetadata();
+
+    long getOriginTime();
+
+    int getPid();
+
+    long getSequenceNumber();
+
+    String getSourceAddress();
+
+    String getSourceApplication();
+
+    String getSourceClassName();
+
+    String getSourceHost();
+
+    String getSourceMethodName();
+
+    String getThreadName();
 }

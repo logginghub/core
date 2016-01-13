@@ -234,7 +234,7 @@ public class EnvironmentModel extends ObservableModel implements LogEventSource,
                 defaultLogEvent.setSequenceNumber(sequenceIDGenerator.getAndIncrement());
 
                 if (autoLockWarning && event.getLevel() >= LevelConstants.WARNING) {
-                    defaultLogEvent.getMetadata().put("locked", true);
+                    defaultLogEvent.getMetadata().put("locked", "true");
                 }
             }
 

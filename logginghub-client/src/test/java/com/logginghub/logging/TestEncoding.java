@@ -1,23 +1,18 @@
 package com.logginghub.logging;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
-import java.util.logging.LogRecord;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
-import com.logginghub.logging.DefaultLogEvent;
-import com.logginghub.logging.LogEvent;
-import com.logginghub.logging.LogEventFactory;
-import com.logginghub.logging.LogRecordFactory;
 import com.logginghub.logging.messages.PartialMessageException;
 import com.logginghub.logging.messaging.LogEventCodex;
 import com.logginghub.testutils.CustomRunner;
 import com.logginghub.utils.ExpandingByteBuffer;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.util.logging.LogRecord;
+
+import static org.junit.Assert.*;
 
 @RunWith(CustomRunner.class) public class TestEncoding {
+
     @Test public void testEncodeDecode() throws PartialMessageException {
         LogEventCodex codex = new LogEventCodex();
         LogRecord record = LogRecordFactory.getLogRecord1();
@@ -44,6 +39,36 @@ import com.logginghub.utils.ExpandingByteBuffer;
         assertEquals(event.getSourceHost(), fullLogEvent.getSourceHost());
         assertEquals(event.getSourceMethodName(), fullLogEvent.getSourceMethodName());
         assertEquals(event.getThreadName(), fullLogEvent.getThreadName());
+    }
+
+    @Test public void test_encode_decode_metadata() throws PartialMessageException {
+        LogEventCodex codex = new LogEventCodex();
+        LogRecord record = LogRecordFactory.getLogRecord1();
+        DefaultLogEvent event = new DefaultLogEvent();
+        event.populateFromLogRecord(record, "Test Application");
+        event.getMetadata().put("meta", "data");
+
+        // ByteBuffer buffer = ByteBuffer.allocate(4096);
+        ExpandingByteBuffer buffer = new ExpandingByteBuffer();
+        LogEventCodex.encode(buffer, event);
+        buffer.flip();
+
+        LogEvent fullLogEvent = LogEventCodex.decode(buffer.getBuffer());
+
+        assertEquals(event.getOriginTime(), fullLogEvent.getOriginTime());
+        assertEquals(event.getSequenceNumber(), fullLogEvent.getSequenceNumber());
+        assertEquals(event.getFormattedException(), fullLogEvent.getFormattedException());
+        assertEquals(event.getFormattedObject(), fullLogEvent.getFormattedObject());
+        assertEquals(event.getLevel(), fullLogEvent.getLevel());
+        assertEquals(event.getJavaLevel(), fullLogEvent.getJavaLevel());
+        assertEquals(event.getLoggerName(), fullLogEvent.getLoggerName());
+        assertEquals(event.getMessage(), fullLogEvent.getMessage());
+        assertEquals(event.getSourceApplication(), fullLogEvent.getSourceApplication());
+        assertEquals(event.getSourceClassName(), fullLogEvent.getSourceClassName());
+        assertEquals(event.getSourceHost(), fullLogEvent.getSourceHost());
+        assertEquals(event.getSourceMethodName(), fullLogEvent.getSourceMethodName());
+        assertEquals(event.getThreadName(), fullLogEvent.getThreadName());
+        assertEquals("data", fullLogEvent.getMetadata().get("meta"));
     }
 
     @Test public void testPartialPacket() throws PartialMessageException {

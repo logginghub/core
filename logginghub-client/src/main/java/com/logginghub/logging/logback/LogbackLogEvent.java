@@ -1,15 +1,14 @@
 package com.logginghub.logging.logback;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.IThrowableProxy;
+import ch.qos.logback.classic.spi.StackTraceElementProxy;
+import com.logginghub.logging.BaseLogEvent;
+
 import java.net.InetAddress;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.IThrowableProxy;
-import ch.qos.logback.classic.spi.StackTraceElementProxy;
-
-import com.logginghub.logging.BaseLogEvent;
 
 /**
  * LogEvent wrapper for the logback log record object.
@@ -131,6 +130,11 @@ public class LogbackLogEvent extends BaseLogEvent {
     public Level getJavaLevel() {
         Level juliLevel = logbackToLoggingHubLevel(record.getLevel());
         return juliLevel;
+    }
+
+    @Override
+    public Map<String, String> getMetadata() {
+        return null;
     }
 
     private Level logbackToLoggingHubLevel(ch.qos.logback.classic.Level level) {

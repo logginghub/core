@@ -160,7 +160,7 @@ public class LogEventContainerController {
             LogEvent logEvent = iterator.next();
             if (logEvent instanceof DefaultLogEvent) {
                 DefaultLogEvent defaultLogEvent = (DefaultLogEvent) logEvent;
-                if (defaultLogEvent.getMetadata().getBoolean("locked", false)) {
+                if ("true".equalsIgnoreCase(defaultLogEvent.getMetadata().get("locked"))) {
                     // Item is locked, dont remove it
                     currentLevel += LoggingUtils.sizeof(logEvent);
                 } else {

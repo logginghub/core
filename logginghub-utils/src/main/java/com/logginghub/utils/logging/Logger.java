@@ -635,13 +635,13 @@ public class Logger {
 
     public void info(long timestamp, String format, Object... objects) {
         if ((level < 0 && root.level <= info) || (level >= 0 && level <= info)) {
-            logInternal(info, timestamp, format, objects);
+            logInternal(info, timestamp, format, objects, 2);
         }
     }
 
     public void log(int eventlevel, long timestamp, String format, Object... objects) {
         if ((level < 0 && root.level <= eventlevel) || (level >= 0 && level <= eventlevel)) {
-            logInternal(eventlevel, timestamp, format, objects);
+            logInternal(eventlevel, timestamp, format, objects, 2);
         }
     }
 
@@ -694,7 +694,7 @@ public class Logger {
 
     }
 
-    private void logInternal(int level, long timestamp, String format, Object[] objects) {
+    private void logInternal(int level, long timestamp, String format, Object[] objects, int nestingLevel) {
         if (threadContextOverride != null) {
             setThreadContext(threadContextOverride);
         }
@@ -705,8 +705,8 @@ public class Logger {
         } else {
             event.setMessage("null");
         }
-        event.setSourceClassName(StacktraceUtils.getCallingClassName(2));
-        event.setSourceMethodName(StacktraceUtils.getCallingMethodName(2));
+        event.setSourceClassName(StacktraceUtils.getCallingClassName(nestingLevel));
+        event.setSourceMethodName(StacktraceUtils.getCallingMethodName(nestingLevel));
         event.setLocalCreationTimeMillis(timestamp);
         event.setLevel(level);
         event.setThreadName(Thread.currentThread().getName());
@@ -715,7 +715,7 @@ public class Logger {
     }
 
     private void log(int level, String format, Object[] objects) {
-        logInternal(level, timeProvider.getTime(), format, objects);
+        logInternal(level, timeProvider.getTime(), format, objects, 3);
     }
 
 
