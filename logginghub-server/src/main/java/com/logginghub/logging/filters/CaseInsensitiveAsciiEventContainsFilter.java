@@ -36,7 +36,7 @@ public class CaseInsensitiveAsciiEventContainsFilter implements Filter<LogEvent>
                 if (message != null) {
                     char[] characterData = (char[]) accessField.get(message);
                     passes = StringUtils.indexOfIgnoreCase(characterData, characters) != -1;
-                    if(passes) {
+                    if (passes) {
                         return passes;
                     }
                 }
@@ -45,7 +45,7 @@ public class CaseInsensitiveAsciiEventContainsFilter implements Filter<LogEvent>
                 if (threadName != null) {
                     char[] characterData = (char[]) accessField.get(threadName);
                     passes = StringUtils.indexOfIgnoreCase(characterData, characters) != -1;
-                    if(passes) {
+                    if (passes) {
                         return passes;
                     }
                 }
@@ -54,7 +54,7 @@ public class CaseInsensitiveAsciiEventContainsFilter implements Filter<LogEvent>
                 if (sourceApplication != null) {
                     char[] characterData = (char[]) accessField.get(sourceApplication);
                     passes = StringUtils.indexOfIgnoreCase(characterData, characters) != -1;
-                    if(passes) {
+                    if (passes) {
                         return passes;
                     }
                 }
@@ -63,7 +63,7 @@ public class CaseInsensitiveAsciiEventContainsFilter implements Filter<LogEvent>
                 if (channel != null) {
                     char[] characterData = (char[]) accessField.get(channel);
                     passes = StringUtils.indexOfIgnoreCase(characterData, characters) != -1;
-                    if(passes) {
+                    if (passes) {
                         return passes;
                     }
                 }
@@ -72,7 +72,7 @@ public class CaseInsensitiveAsciiEventContainsFilter implements Filter<LogEvent>
                 if (sourceMethodName != null) {
                     char[] characterData = (char[]) accessField.get(sourceMethodName);
                     passes = StringUtils.indexOfIgnoreCase(characterData, characters) != -1;
-                    if(passes) {
+                    if (passes) {
                         return passes;
                     }
                 }
@@ -81,7 +81,7 @@ public class CaseInsensitiveAsciiEventContainsFilter implements Filter<LogEvent>
                 if (sourceHost != null) {
                     char[] characterData = (char[]) accessField.get(sourceHost);
                     passes = StringUtils.indexOfIgnoreCase(characterData, characters) != -1;
-                    if(passes) {
+                    if (passes) {
                         return passes;
                     }
                 }
@@ -90,7 +90,7 @@ public class CaseInsensitiveAsciiEventContainsFilter implements Filter<LogEvent>
                 if (sourceClassName != null) {
                     char[] characterData = (char[]) accessField.get(sourceClassName);
                     passes = StringUtils.indexOfIgnoreCase(characterData, characters) != -1;
-                    if(passes) {
+                    if (passes) {
                         return passes;
                     }
                 }
@@ -99,7 +99,7 @@ public class CaseInsensitiveAsciiEventContainsFilter implements Filter<LogEvent>
                 if (loggerName != null) {
                     char[] characterData = (char[]) accessField.get(loggerName);
                     passes = StringUtils.indexOfIgnoreCase(characterData, characters) != -1;
-                    if(passes) {
+                    if (passes) {
                         return passes;
                     }
                 }
@@ -108,7 +108,7 @@ public class CaseInsensitiveAsciiEventContainsFilter implements Filter<LogEvent>
                 if (levelDescription != null) {
                     char[] characterData = (char[]) accessField.get(levelDescription);
                     passes = StringUtils.indexOfIgnoreCase(characterData, characters) != -1;
-                    if(passes) {
+                    if (passes) {
                         return passes;
                     }
                 }
@@ -117,7 +117,7 @@ public class CaseInsensitiveAsciiEventContainsFilter implements Filter<LogEvent>
                 if (formattedException != null) {
                     char[] characterData = (char[]) accessField.get(formattedException);
                     passes = StringUtils.indexOfIgnoreCase(characterData, characters) != -1;
-                    if(passes) {
+                    if (passes) {
                         return passes;
                     }
                 }
@@ -129,14 +129,24 @@ public class CaseInsensitiveAsciiEventContainsFilter implements Filter<LogEvent>
                         if (string != null) {
                             char[] characterData = (char[]) accessField.get(string);
                             passes = StringUtils.indexOfIgnoreCase(characterData, characters) != -1;
-                            if(passes) {
+                            if (passes) {
                                 return passes;
                             }
                         }
                     }
                 }
+
+                if (event.getMetadata() != null) {
+                    for (String value : event.getMetadata().values()) {
+                        char[] characterData = (char[]) accessField.get(value);
+                        passes = StringUtils.indexOfIgnoreCase(characterData, characters) != -1;
+                        if (passes) {
+                            return passes;
+                        }
+                    }
+                }
             }
-        }catch(IllegalAccessException e) {
+        } catch (IllegalAccessException e) {
             e.printStackTrace();
         }
 

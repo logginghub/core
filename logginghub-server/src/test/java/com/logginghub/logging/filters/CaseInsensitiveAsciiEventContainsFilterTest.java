@@ -32,4 +32,14 @@ public class CaseInsensitiveAsciiEventContainsFilterTest {
         assertThat(filter.passes(eventB), is(true));
     }
 
+    @Test
+    public void test_metadata() {
+        CaseInsensitiveAsciiEventContainsFilter filter = new CaseInsensitiveAsciiEventContainsFilter("value");
+
+        DefaultLogEvent event = new DefaultLogEvent();
+        event.getMetadata().put("key", "value");
+
+        assertThat(filter.passes(event), is(true));
+    }
+
 }

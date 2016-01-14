@@ -845,6 +845,8 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
 
         if(environmentModel.getEventDetailsSeparatorLocation() != -1) {
             eventDetailsSplitPane.setDividerLocation(environmentModel.getEventDetailsSeparatorLocation());
+        }else{
+            eventDetailsSplitPane.setDividerLocation(0.5d);
         }
 
         if (environmentModel.isDisableAutoScrollPauser()) {

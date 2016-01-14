@@ -35,6 +35,11 @@ public class MultipleCaseSensitiveEventContainsFilterTest {
 
         eventD.setMessage("four");
         eventE.setMessage("one four");
+
+        eventC.getMetadata().put("key", "value");
+
+        eventD.getMetadata().put("key1", "value");
+        eventD.getMetadata().put("key2", "ring");
     }
 
     @Test
@@ -69,6 +74,32 @@ public class MultipleCaseSensitiveEventContainsFilterTest {
         assertThat(filter.passes(eventC), is(false));
         assertThat(filter.passes(eventD), is(false));
         assertThat(filter.passes(eventE), is(true));
+
+    }
+
+    @Test
+    public void test_metadata() {
+        MultipleEventContainsFilter filter = new MultipleEventContainsFilter("", false, factory);
+        filter.setEventContainsString("+VALUE -RING");
+
+        assertThat(filter.passes(eventA), is(false));
+        assertThat(filter.passes(eventB), is(false));
+        assertThat(filter.passes(eventC), is(true));
+        assertThat(filter.passes(eventD), is(false));
+        assertThat(filter.passes(eventE), is(false));
+
+    }
+
+    @Test
+    public void test_metadata_casesensitive_unicorns() {
+        MultipleEventContainsFilter filter = new MultipleEventContainsFilter("", false, new FilterFactory(true, true));
+        filter.setEventContainsString("+value -ring");
+
+        assertThat(filter.passes(eventA), is(false));
+        assertThat(filter.passes(eventB), is(false));
+        assertThat(filter.passes(eventC), is(true));
+        assertThat(filter.passes(eventD), is(false));
+        assertThat(filter.passes(eventE), is(false));
 
     }
 }

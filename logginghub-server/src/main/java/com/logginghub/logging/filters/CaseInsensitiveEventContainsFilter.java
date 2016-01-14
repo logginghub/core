@@ -82,6 +82,19 @@ public class CaseInsensitiveEventContainsFilter implements Filter<LogEvent> {
                     }
                 }
             }
+
+            if (!passes && event.getMetadata() != null) {
+                for (String string : event.getMetadata().values()) {
+                    if (string != null) {
+                        passes = StringUtils.indexOfIgnoreCase(string, value) != -1;
+                        if(passes) {
+                            break;
+                        }
+                    }
+                }
+            }
+
+
         }
 
         return passes;

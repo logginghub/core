@@ -46,7 +46,7 @@ import java.util.List;
     @XmlAttribute private boolean filterCaseSensitive = false;
     @XmlAttribute private boolean filterUnicode = false;
     @XmlAttribute private boolean disableColumnFile = false;
-    @XmlAttribute private int eventDetailsSeparatorLocation = 1;
+    @XmlAttribute private int eventDetailsSeparatorLocation = -1;
 
     public EnvironmentConfiguration() {
         setupOutputLogConfiguration();

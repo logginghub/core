@@ -1,22 +1,6 @@
 package com.logginghub.integrationtests.loggingfrontend.newera;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-
-import java.awt.Color;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-
-import javax.swing.JTabbedPane;
-
-import org.fest.swing.fixture.FrameFixture;
-import org.fest.swing.fixture.JTabbedPaneFixture;
-import org.junit.Test;
-
+import com.logginghub.integrationtests.loggingfrontend.helpers.NewEraBase;
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.LogEventBuilder;
 import com.logginghub.logging.frontend.SwingFrontEnd;
@@ -26,9 +10,9 @@ import com.logginghub.logging.frontend.configuration.HubConfiguration;
 import com.logginghub.logging.frontend.configuration.LoggingFrontendConfiguration;
 import com.logginghub.logging.frontend.model.EnvironmentModel;
 import com.logginghub.logging.frontend.model.HubConnectionModel;
+import com.logginghub.logging.frontend.model.HubConnectionModel.ConnectionState;
 import com.logginghub.logging.frontend.model.LoggingFrontendModel;
 import com.logginghub.logging.frontend.model.ObservableList;
-import com.logginghub.logging.frontend.model.HubConnectionModel.ConnectionState;
 import com.logginghub.logging.frontend.views.logeventdetail.DetailedLogEventTablePanel;
 import com.logginghub.logging.messages.LogEventMessage;
 import com.logginghub.logging.servers.SocketHub;
@@ -36,15 +20,31 @@ import com.logginghub.logging.utils.LogEventBucket;
 import com.logginghub.utils.ColourUtils;
 import com.logginghub.utils.SwingHelper;
 import com.logginghub.utils.TestUtils;
-import com.logginghub.utils.ThreadUtils;
 import com.logginghub.utils.TestUtils.BooleanOperation;
-import com.logginghub.integrationtests.loggingfrontend.helpers.NewEraBase;
+import com.logginghub.utils.ThreadUtils;
+import org.fest.swing.fixture.FrameFixture;
+import org.fest.swing.fixture.JTabbedPaneFixture;
+import org.junit.Ignore;
+import org.junit.Test;
+
+import javax.swing.*;
+import java.awt.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+
+import static org.hamcrest.MatcherAssert.*;
+import static org.hamcrest.Matchers.*;
 
 public class TestTabsChangeColourWhenEventsComeIn {
 
     private SwingFrontEnd swingFrontEnd;
     private FrameFixture frameFixture;
 
+    @Ignore // jshaw - OS specific tab colours
     @Test public void testWithTwoEnvironments() throws IOException {
 
         SocketHub hub1 = new SocketHub();

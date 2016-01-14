@@ -1,6 +1,7 @@
 package com.logginghub.logging.filters;
 
 import com.logginghub.logging.LogEvent;
+import com.logginghub.utils.StringUtils;
 import com.logginghub.utils.filter.Filter;
 
 /**
@@ -121,6 +122,18 @@ public class CaseSensitiveEventContainsFilter implements Filter<LogEvent> {
                     }
                 }
             }
+
+            if (!passes && event.getMetadata() != null) {
+                for (String string : event.getMetadata().values()) {
+                    if (string != null) {
+                        passes = StringUtils.indexOfIgnoreCase(string, value) != -1;
+                        if(passes) {
+                            break;
+                        }
+                    }
+                }
+            }
+
         }
 
         return passes;

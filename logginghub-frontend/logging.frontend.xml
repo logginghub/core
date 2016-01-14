@@ -28,8 +28,6 @@
         <columnSetting name="Product" width="110" order="6" alignment="center"/>
         <columnSetting name="Time" width="150" order="7"/>
         <columnSetting name="A value" width="150" order="0" metadata="newfield2"/>
-        <!--<columnSetting name="New Field" width="150" order="8" metadata="newfield"/>-->
-
 
         <columnSetting name="Level" width="0"/>
         <columnSetting name="DC" width="0"/>

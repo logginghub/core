@@ -24,6 +24,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.TableColumnModelEvent;
 import javax.swing.event.TableColumnModelListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
@@ -78,7 +80,7 @@ public class DetailedLogEventTable extends JTable {
     public DetailedLogEventTable(DetailedLogEventTableModel tableModel,
                                  RowHighlighter highlighter,
                                  String propertiesName,
-                                 ColumnSettingsModel columnSettingsModel) {
+                                 final ColumnSettingsModel columnSettingsModel) {
         this.tableModel = tableModel;
         this.defaultHighlighter = highlighter;
         this.columnSettingsModel = columnSettingsModel;
@@ -91,6 +93,17 @@ public class DetailedLogEventTable extends JTable {
 
         setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         setModel(tableModel);
+
+        tableModel.addTableModelListener(new TableModelListener() {
+            @Override
+            public void tableChanged(TableModelEvent e) {
+                if (e.getType() == TableModelEvent.UPDATE) {
+                    if (e.getFirstRow() == TableModelEvent.HEADER_ROW) {
+                        applyColumnWidths(columnSettingsModel);
+                    }
+                }
+            }
+        });
 
         setupColumns(columnSettingsModel);
 
@@ -131,6 +144,41 @@ public class DetailedLogEventTable extends JTable {
         addMouseHandler();
     }
 
+    private void applyColumnWidths(ColumnSettingsModel columnSettingsModel) {
+        TableColumnModel tableColumnModel = getColumnModel();
+        Map<String, ColumnSettingModel> columnSettings = columnSettingsModel.getColumnSettings();
+        for (Entry<String, ColumnSettingModel> entry : columnSettings.entrySet()) {
+            ColumnSettingModel value = entry.getValue();
+            if (value.getWidth() > 0) {
+                String columnName = entry.getKey();
+
+                try {
+                    int index = tableColumnModel.getColumnIndex(columnName);
+                    TableColumn column = tableColumnModel.getColumn(index);
+                    column.setPreferredWidth(value.getWidth());
+                    logger.info("Setting column width for {} ({}) to {}", columnName, index, value.getWidth());
+
+                    if (StringUtils.isNotNullOrEmpty(value.getAlignment())) {
+                        if (value.getAlignment().equalsIgnoreCase("right")) {
+                            DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
+                            rightRenderer.setHorizontalAlignment(SwingConstants.RIGHT);
+                            column.setCellRenderer(rightRenderer);
+                        } else if (value.getAlignment().equalsIgnoreCase("left")) {
+                            // Do nothing, this is the default
+                        } else if (value.getAlignment().equalsIgnoreCase("centre") || value.getAlignment().equalsIgnoreCase("center")) {
+                            DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
+                            rightRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+                            column.setCellRenderer(rightRenderer);
+                        }
+                    }
+                } catch (IllegalArgumentException e) {
+                    // jshaw - this is probably a column that we haven't got around to adding yet, we'll have to set the width on that later once
+                    // it is in the column model
+                }
+            }
+        }
+    }
+
     private void setupColumns(ColumnSettingsModel columnSettingsModel) {
 
         // jshaw - due to the way column indicies change when removing columns, its important that we remove columns in one pass, and then change the order of the remaining items in a second pass
@@ -138,91 +186,16 @@ public class DetailedLogEventTable extends JTable {
         Set<Entry<String, ColumnSettingModel>> entries = columnSettings.entrySet();
 
         TableColumnModel columnModel = getColumnModel();
-        tableModel.fireTableStructureChanged();
 
-        for (Entry<String, ColumnSettingModel> entry : entries) {
-            String columnName = entry.getKey();
-
-            ColumnSettingModel value = entry.getValue();
-            int width = value.getWidth();
-
-            try {
-                int columnIndex = columnModel.getColumnIndex(columnName);
-                TableColumn column = columnModel.getColumn(columnIndex);
-
-                if (width == 0) {
-                    columnModel.removeColumn(column);
-                    tableModel.fireTableStructureChanged();
-                    logger.info("Removing column '{}' from the event view", columnName);
-                }
-            } catch (IllegalArgumentException e) {
-
-                // It might be a metadata column that we need to add?
-                if (StringUtils.isNotNullOrEmpty(value.getMetadataMapping())) {
-                    TableColumn tableColumn = new TableColumn();
-                    tableColumn.setHeaderValue(value.getName());
-                    columnModel.addColumn(tableColumn);
-                    int index = columnModel.getColumnIndex(value.getName());
-                    tableModel.addMetadataColumn(index, value.getMetadataMapping(), value.getName());
-                    logger.info("New column name '{}' mapped to '{}' added at index '{}'", value.getName(), value.getMetadataMapping(), index);
-                } else {
-                    logger.warn("Failed to find column '{}' in the column model - has it been removed?", columnName);
-                }
-            }
-        }
+        removeColumns(entries, columnModel);
+        addMetadataColumns(entries);
+        applyColumnWidths(columnSettingsModel);
 
         // We need to order the columns by their position to do this properly
-        List<ColumnSettingModel> settings = new ArrayList<ColumnSettingModel>();
-        for (Entry<String, ColumnSettingModel> entry : entries) {
-            if (entry.getValue().getWidth() > 0) {
-                settings.add(entry.getValue());
-            }
-        }
+        //        List<ColumnSettingModel> settings = sortColumnSettings(entries);
 
-        Collections.sort(settings, new Comparator<ColumnSettingModel>() {
-            @Override
-            public int compare(ColumnSettingModel o1, ColumnSettingModel o2) {
-                return CompareUtils.compare(o1.getOrder(), o2.getOrder());
-            }
-        });
+        //        applyColumnWidths(columnModel, settings);
 
-        for (ColumnSettingModel entry : settings) {
-
-            String columnName = entry.getName();
-
-            try {
-                int columnIndex = columnModel.getColumnIndex(columnName);
-                int width = entry.getWidth();
-                TableColumn column = columnModel.getColumn(columnIndex);
-
-                column.setPreferredWidth(width);
-
-                if (StringUtils.isNotNullOrEmpty(entry.getAlignment())) {
-                    if (entry.getAlignment().equalsIgnoreCase("right")) {
-                        DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
-                        rightRenderer.setHorizontalAlignment(SwingConstants.RIGHT);
-                        column.setCellRenderer(rightRenderer);
-                    } else if (entry.getAlignment().equalsIgnoreCase("left")) {
-                        // Do nothing, this is the default
-                    } else if (entry.getAlignment().equalsIgnoreCase("centre") || entry.getAlignment().equalsIgnoreCase("center")) {
-                        DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
-                        rightRenderer.setHorizontalAlignment(SwingConstants.CENTER);
-                        column.setCellRenderer(rightRenderer);
-                    }
-                }
-
-                int order = entry.getOrder();
-                order = Math.min(order, columnModel.getColumnCount() - 1);
-
-                logger.info("Moving column '{}' from original index {} to new index {}", columnName, columnIndex, order);
-
-                columnModel.moveColumn(columnIndex, order);
-            } catch (IllegalArgumentException e) {
-                logger.warn("Failed to find column '{}' in the column model - has it been removed?", columnName);
-            }
-        }
-
-        tableModel.fireTableStructureChanged();
     }
 
     private void loadColumnSettings() {
@@ -341,6 +314,81 @@ public class DetailedLogEventTable extends JTable {
         });
     }
 
+    private void removeColumns(Set<Entry<String, ColumnSettingModel>> entries, TableColumnModel columnModel) {
+        for (Entry<String, ColumnSettingModel> entry : entries) {
+            String columnName = entry.getKey();
+
+            ColumnSettingModel value = entry.getValue();
+            int width = value.getWidth();
+
+            if (width == 0) {
+                tableModel.removeColumn(columnName);
+                logger.info("Removed column '{}' from the event view", columnName);
+            }
+
+
+        }
+    }
+
+    private void addMetadataColumns(Set<Entry<String, ColumnSettingModel>> entries) {
+        List<ColumnSettingModel> columnSettingModels = sortColumnSettings(entries);
+
+        for (ColumnSettingModel value : columnSettingModels) {
+            if (StringUtils.isNotNullOrEmpty(value.getMetadataMapping())) {
+                int index = value.getOrder();
+
+                // jshaw - try and be a bit more accomodating to dodgy values
+                if (index >= tableModel.getColumnCount()) {
+                    index = tableModel.getColumnCount();
+                }else if(index < 0) {
+                    index = 0;
+                }
+                tableModel.addMetadataColumn(index, value.getMetadataMapping(), value.getName());
+                logger.info("New column name '{}' mapped to '{}' added at index '{}'", value.getName(), value.getMetadataMapping(), index);
+                TableColumnModel columnModel = getColumnModel();
+            }
+        }
+
+    }
+
+    //    private void applyColumnWidths(TableColumnModel columnModel, List<ColumnSettingModel> settings) {
+    //        for (ColumnSettingModel entry : settings) {
+    //
+    //            String columnName = entry.getName();
+    //
+    //            try {
+    //                int columnIndex = columnModel.getColumnIndex(columnName);
+    //                int width = entry.getWidth();
+    //                TableColumn column = columnModel.getColumn(columnIndex);
+    //
+    //                column.setPreferredWidth(width);
+    //
+    //                if (StringUtils.isNotNullOrEmpty(entry.getAlignment())) {
+    //                    if (entry.getAlignment().equalsIgnoreCase("right")) {
+    //                        DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
+    //                        rightRenderer.setHorizontalAlignment(SwingConstants.RIGHT);
+    //                        column.setCellRenderer(rightRenderer);
+    //                    } else if (entry.getAlignment().equalsIgnoreCase("left")) {
+    //                        // Do nothing, this is the default
+    //                    } else if (entry.getAlignment().equalsIgnoreCase("centre") || entry.getAlignment().equalsIgnoreCase("center")) {
+    //                        DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
+    //                        rightRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+    //                        column.setCellRenderer(rightRenderer);
+    //                    }
+    //                }
+    //
+    //                //                int order = entry.getOrder();
+    //                //                order = Math.min(order, columnModel.getColumnCount() - 1);
+    //                //
+    //                //                logger.info("Moving column '{}' from original index {} to new index {}", columnName, columnIndex, order);
+    //                //
+    //                //                columnModel.moveColumn(columnIndex, order);
+    //            } catch (IllegalArgumentException e) {
+    //                logger.warn("Failed to find column '{}' in the column model - has it been removed?", columnName);
+    //            }
+    //        }
+    //    }
+
     private void loadColumnSettings(Properties properties, File source) {
         Set<Object> keySet = properties.keySet();
         for (Object object : keySet) {
@@ -365,6 +413,8 @@ public class DetailedLogEventTable extends JTable {
                             int columnIndex = columnModel.getColumnIndex(column);
                             columnModel.moveColumn(columnIndex, valueInt);
                         }
+
+                        logger.info("Setting column properties from dynamic file {} {} {}", column, part, valueInt);
                     } catch (RuntimeException e) {
                         logger.warn(e,
                                     "Failed to process column setting for key '{}' and value '{}' from properties file '{}' - ignoring, but you might want to delete the columns file and re-layout your columns again to get rid of this warning",
@@ -571,5 +621,22 @@ public class DetailedLogEventTable extends JTable {
             TableColumn column = getColumnModel().getColumn(i);
             column.setPreferredWidth((int) (tableDim.width * (percentages[i] / total)));
         }
+    }
+
+    private List<ColumnSettingModel> sortColumnSettings(Set<Entry<String, ColumnSettingModel>> entries) {
+        List<ColumnSettingModel> settings = new ArrayList<ColumnSettingModel>();
+        for (Entry<String, ColumnSettingModel> entry : entries) {
+            if (entry.getValue().getWidth() > 0) {
+                settings.add(entry.getValue());
+            }
+        }
+
+        Collections.sort(settings, new Comparator<ColumnSettingModel>() {
+            @Override
+            public int compare(ColumnSettingModel o1, ColumnSettingModel o2) {
+                return CompareUtils.compare(o1.getOrder(), o2.getOrder());
+            }
+        });
+        return settings;
     }
 }

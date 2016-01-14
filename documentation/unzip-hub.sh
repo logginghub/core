@@ -1,1 +1,1 @@
-unzip logginghub-1.4.13.zip
+unzip logginghub-1.5.0.zip

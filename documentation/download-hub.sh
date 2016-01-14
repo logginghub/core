@@ -1,1 +1,1 @@
-wget http://www.vertexlabs.co.uk/repository/com/logginghub/archives/1.4.13/logginghub-1.4.13.zip
+wget http://www.vertexlabs.co.uk/repository/com/logginghub/archives/1.5.0/logginghub-1.5.0.zip

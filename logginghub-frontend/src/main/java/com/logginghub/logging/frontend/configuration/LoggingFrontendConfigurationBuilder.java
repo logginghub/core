@@ -61,6 +61,31 @@ public class LoggingFrontendConfigurationBuilder {
             return this;
         }
 
+        public EnvironmentConfigurationBuilder disableColumnsFile() {
+            environmentConfiguration.setDisableColumnFile(true);
+            return this;
+        }
+
+        public EnvironmentConfigurationBuilder columnSettings(String name, int order, int width)  {
+            ColumnConfiguration columnConfiguration = new ColumnConfiguration();
+            columnConfiguration.setName(name);
+            columnConfiguration.setOrder(order);
+            columnConfiguration.setWidth(width);
+            environmentConfiguration.getColumnSetting().add(columnConfiguration);
+            return this;
+        }
+
+        public EnvironmentConfigurationBuilder columnSettings(String name, int order, int width, String metadata)  {
+            ColumnConfiguration columnConfiguration = new ColumnConfiguration();
+            columnConfiguration.setName(name);
+            columnConfiguration.setOrder(order);
+            columnConfiguration.setWidth(width);
+            columnConfiguration.setMetadata(metadata);
+            environmentConfiguration.getColumnSetting().add(columnConfiguration);
+            return this;
+        }
+
+
         public EnvironmentConfiguration toEnvironment() {
             return environmentConfiguration;
 

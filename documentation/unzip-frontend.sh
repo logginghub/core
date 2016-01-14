@@ -1,1 +1,1 @@
-unzip logginghub-frontend-1.4.13.zip
+unzip logginghub-frontend-1.5.0.zip

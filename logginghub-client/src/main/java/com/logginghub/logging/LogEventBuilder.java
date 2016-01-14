@@ -46,6 +46,11 @@ public class LogEventBuilder {
         return this;
     }
 
+    public LogEventBuilder metadata(String key, String value) {
+        event.getMetadata().put(key, value);
+        return this;
+    }
+
     public LogEventBuilder setThreadName(String threadName) {
         event.setThreadName(threadName);
         return this;

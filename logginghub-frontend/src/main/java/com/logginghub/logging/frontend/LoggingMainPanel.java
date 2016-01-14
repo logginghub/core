@@ -457,7 +457,8 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
             tablePanel.addHighlighter(highlighterModel);
         }
 
-        tablePanel.setName(LOG_EVENT_PANEL + environmentModel.getName());
+        String name = LOG_EVENT_PANEL + environmentModel.getName();
+        tablePanel.setName(name);
 
         environmentModel.addLogEventListener(tablePanel);
         tablePanel.setDynamicSettings(proxy.getDynamicSettings());
