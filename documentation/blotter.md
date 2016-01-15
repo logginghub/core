@@ -309,3 +309,49 @@ In order to see the metadata in the frontend you need to add a new attribute to 
 
 This example will create a new column with the title "New Field" and it will populate that with the metadata value from each event. If the event
 doesn't have that bit of metadata set, the column will just appear blank.
+
+# Experimental feature - adding custom quick filters
+
+If you want to enhance the quick filter capability, you can add custom quick filters that target a specific event field or even a metadata key.
+The filters are added to the quick filter bar after the main all-fields filter.
+
+In order to add a custom filter, you need to add one or more *<customFilter>* elements to your *<environment>*.
+
+To add a filter for a standard event field, add
+
+    <customFilter label="App" field="SourceApplication" type="Contains"/>
+
+You can set the width of the filter input, and also provide a default value if required:
+
+    <customFilter label="Host" field="SourceHost" type="Contains" width="100" defaultValue="production"/>
+
+You can use metadata keys instead of an event field if you want to match against custom data values:
+
+    <customFilter label="Custom" field="newfield1" type="StartsWith"/>
+
+This is the full list of standard event fields:
+* Channel
+* Flavour
+* FormattedException
+* FormattedObject
+* HubTime
+* Level
+* LoggerName
+* Message
+* Metadata
+* OriginTime
+* PID
+* SequenceNumber
+* SourceAddress
+* SourceApplication
+* SourceClass
+* SourceMethod
+* SourceHost
+* ThreadName
+
+And this is the full list of comparison types:
+* Contains
+* Equals
+* StartsWith
+* EndsWith
+* Regex

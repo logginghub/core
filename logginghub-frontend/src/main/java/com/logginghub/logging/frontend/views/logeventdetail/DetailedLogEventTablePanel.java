@@ -16,6 +16,7 @@ import com.logginghub.logging.frontend.configuration.RowFormatConfiguration;
 import com.logginghub.logging.frontend.images.Icons;
 import com.logginghub.logging.frontend.images.Icons.IconIdentifier;
 import com.logginghub.logging.frontend.model.ColumnSettingsModel;
+import com.logginghub.logging.frontend.model.CustomQuickFilterModel;
 import com.logginghub.logging.frontend.model.EnvironmentModel;
 import com.logginghub.logging.frontend.model.EventTableColumnModel;
 import com.logginghub.logging.frontend.model.HighlighterModel;
@@ -427,87 +428,6 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         setLayout(new BorderLayout());
     }
 
-    private void setupMenuBar(JMenuBar menuBar) {
-
-        MenuElement[] subElements = menuBar.getSubElements();
-        for (MenuElement menuElement : subElements) {
-            Component component = menuElement.getComponent();
-            if (component instanceof JMenu) {
-                JMenu jMenu = (JMenu) component;
-                if (jMenu.getText().equals("Search")) {
-                    // Already have a menu attacked
-                    return;
-                }
-            }
-        }
-
-        JMenu searchMenu = new JMenu("Search");
-        menuBar.add(searchMenu);
-
-        JMenuItem toggleScrolling = new JMenuItem("Toggle scrolling");
-        toggleScrolling.addActionListener(new ReflectionDispatchActionListener("toggleScrolling", this));
-        toggleScrolling.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
-        searchMenu.add(toggleScrolling);
-
-        JMenuItem clearEvents = new JMenuItem("Clear events");
-        clearEvents.addActionListener(new ReflectionDispatchActionListener("clearEvents", this));
-        clearEvents.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_MASK));
-        searchMenu.add(clearEvents);
-        searchMenu.addSeparator();
-
-        JMenuItem findForwards = new JMenuItem("Find fowards");
-        JMenuItem findForwardsAgain = new JMenuItem("Find forwards again");
-        JMenuItem findBackwards = new JMenuItem("Find backwards");
-        JMenuItem findBackwardsAgain = new JMenuItem("Find backwards again");
-
-        findForwards.addActionListener(new ReflectionDispatchActionListener("findForwards", this));
-        findForwardsAgain.addActionListener(new ReflectionDispatchActionListener("findForwardsAgain", this));
-        findBackwards.addActionListener(new ReflectionDispatchActionListener("findBackwards", this));
-        findBackwardsAgain.addActionListener(new ReflectionDispatchActionListener("findBackwardsAgain", this));
-
-        findForwards.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_MASK));
-        findForwardsAgain.setAccelerator(KeyStroke.getKeyStroke('f'));
-
-        findBackwards.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.CTRL_MASK));
-        findBackwardsAgain.setAccelerator(KeyStroke.getKeyStroke('b'));
-
-        searchMenu.add(findForwards);
-        searchMenu.add(findForwardsAgain);
-        searchMenu.add(findBackwards);
-        searchMenu.add(findBackwardsAgain);
-        searchMenu.addSeparator();
-
-        int bookmarks = 9;
-        for (int i = 1; i < bookmarks; i++) {
-            JMenuItem bookmark = new JMenuItem("Add bookmark " + i);
-            bookmark.addActionListener(new ReflectionDispatchActionListener("addBookmark", new Object[]{i}, this));
-            bookmark.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_0 + i, InputEvent.CTRL_MASK));
-            searchMenu.add(bookmark);
-        }
-
-        searchMenu.addSeparator();
-
-        for (int i = 1; i < bookmarks; i++) {
-            JMenuItem bookmark = new JMenuItem("Go to bookmark " + i);
-            bookmark.addActionListener(new ReflectionDispatchActionListener("gotoBookmark", new Object[]{i}, this));
-            bookmark.setAccelerator(KeyStroke.getKeyStroke((char) ('0' + i)));
-            searchMenu.add(bookmark);
-        }
-
-        JMenu levelMenu = new JMenu("Levels");
-        menuBar.add(levelMenu);
-
-        addLevelFilterMenuOption(levelMenu, Level.SEVERE, KeyEvent.VK_F8);
-        addLevelFilterMenuOption(levelMenu, Level.WARNING, KeyEvent.VK_F7);
-        addLevelFilterMenuOption(levelMenu, Level.INFO, KeyEvent.VK_F6);
-        addLevelFilterMenuOption(levelMenu, Level.CONFIG, KeyEvent.VK_F5);
-        addLevelFilterMenuOption(levelMenu, Level.FINE, KeyEvent.VK_F4);
-        addLevelFilterMenuOption(levelMenu, Level.FINER, KeyEvent.VK_F3);
-        addLevelFilterMenuOption(levelMenu, Level.FINEST, KeyEvent.VK_F2);
-        addLevelFilterMenuOption(levelMenu, Level.ALL, KeyEvent.VK_F1);
-
-    }
-
     protected void pause() {
         tableModel.pause();
         playing = false;
@@ -646,21 +566,6 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         table.scrollRectToVisible(cellRect);
     }
 
-    private void addLevelFilterMenuOption(JMenu levelMenu, final Level level, int key) {
-
-        String name = levelNamesModel.getLevelName(level.intValue());
-
-        JMenuItem levelItem = new JMenuItem(name);
-        levelItem.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                getFirstQuickFilter().getModel().getLevelFilter().get().getSelectedLevel().set(level);
-                // quickLevelFilterCombo.setSelectedItem(level);
-            }
-        });
-        levelItem.setAccelerator(KeyStroke.getKeyStroke(key, InputEvent.CTRL_MASK));
-        levelMenu.add(levelItem);
-    }
-
     private boolean isTimeViewerVisible() {
         return previousTimeSplitterLocation == 0;
     }
@@ -713,10 +618,6 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         }
 
         saveQuickFilterLevel(Level.parse("" + lowestLevel));
-    }
-
-    public QuickFilterRowPanel getFirstQuickFilter() {
-        return quickFilterRowPanels.get(0);
     }
 
     protected void updateFirstFilterState() {
@@ -786,6 +687,13 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         setupMenuBar(menuBar);
 
         QuickFilterModel quickFilterModel = new QuickFilterModel();
+
+        // Build any custom filters from the configuration
+        com.logginghub.logging.frontend.model.ObservableList<CustomQuickFilterModel> customFilters = environmentModel.getCustomFilters();
+        for (CustomQuickFilterModel customFilter : customFilters) {
+            quickFilterModel.getCustomFilters().add(customFilter);
+        }
+
         environmentModel.getQuickFilterModels().add(quickFilterModel);
 
         quickFilterModel.getLevelFilter().get().getSelectedLevel().addListener(new ObservablePropertyListener<Level>() {
@@ -805,7 +713,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         environmentModel.getFilterUpdateCount().addListener(new ObservablePropertyListener<Integer>() {
             @Override
             public void onPropertyChanged(Integer oldValue, Integer newValue) {
-                logger.debug("Environment filter models have changed, starting refresh timer...");
+                logger.info("Environment filter models have changed, starting refresh timer...");
                 updateQuickFilterTimer();
             }
         });
@@ -843,15 +751,100 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
             }
         });
 
-        if(environmentModel.getEventDetailsSeparatorLocation() != -1) {
+        if (environmentModel.getEventDetailsSeparatorLocation() != -1) {
             eventDetailsSplitPane.setDividerLocation(environmentModel.getEventDetailsSeparatorLocation());
-        }else{
+        } else {
             eventDetailsSplitPane.setDividerLocation(0.5d);
         }
 
         if (environmentModel.isDisableAutoScrollPauser()) {
             disableScrollerAutoPause();
         }
+    }
+
+    private void setupMenuBar(JMenuBar menuBar) {
+
+        MenuElement[] subElements = menuBar.getSubElements();
+        for (MenuElement menuElement : subElements) {
+            Component component = menuElement.getComponent();
+            if (component instanceof JMenu) {
+                JMenu jMenu = (JMenu) component;
+                if (jMenu.getText().equals("Search")) {
+                    // Already have a menu attacked
+                    return;
+                }
+            }
+        }
+
+        JMenu searchMenu = new JMenu("Search");
+        menuBar.add(searchMenu);
+
+        JMenuItem toggleScrolling = new JMenuItem("Toggle scrolling");
+        toggleScrolling.addActionListener(new ReflectionDispatchActionListener("toggleScrolling", this));
+        toggleScrolling.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
+        searchMenu.add(toggleScrolling);
+
+        JMenuItem clearEvents = new JMenuItem("Clear events");
+        clearEvents.addActionListener(new ReflectionDispatchActionListener("clearEvents", this));
+        clearEvents.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_MASK));
+        searchMenu.add(clearEvents);
+        searchMenu.addSeparator();
+
+        JMenuItem findForwards = new JMenuItem("Find fowards");
+        JMenuItem findForwardsAgain = new JMenuItem("Find forwards again");
+        JMenuItem findBackwards = new JMenuItem("Find backwards");
+        JMenuItem findBackwardsAgain = new JMenuItem("Find backwards again");
+
+        findForwards.addActionListener(new ReflectionDispatchActionListener("findForwards", this));
+        findForwardsAgain.addActionListener(new ReflectionDispatchActionListener("findForwardsAgain", this));
+        findBackwards.addActionListener(new ReflectionDispatchActionListener("findBackwards", this));
+        findBackwardsAgain.addActionListener(new ReflectionDispatchActionListener("findBackwardsAgain", this));
+
+        findForwards.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_MASK));
+        findForwardsAgain.setAccelerator(KeyStroke.getKeyStroke('f'));
+
+        findBackwards.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.CTRL_MASK));
+        findBackwardsAgain.setAccelerator(KeyStroke.getKeyStroke('b'));
+
+        searchMenu.add(findForwards);
+        searchMenu.add(findForwardsAgain);
+        searchMenu.add(findBackwards);
+        searchMenu.add(findBackwardsAgain);
+        searchMenu.addSeparator();
+
+        int bookmarks = 9;
+        for (int i = 1; i < bookmarks; i++) {
+            JMenuItem bookmark = new JMenuItem("Add bookmark " + i);
+            bookmark.addActionListener(new ReflectionDispatchActionListener("addBookmark", new Object[]{i}, this));
+            bookmark.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_0 + i, InputEvent.CTRL_MASK));
+            searchMenu.add(bookmark);
+        }
+
+        searchMenu.addSeparator();
+
+        for (int i = 1; i < bookmarks; i++) {
+            JMenuItem bookmark = new JMenuItem("Go to bookmark " + i);
+            bookmark.addActionListener(new ReflectionDispatchActionListener("gotoBookmark", new Object[]{i}, this));
+            bookmark.setAccelerator(KeyStroke.getKeyStroke((char) ('0' + i)));
+            searchMenu.add(bookmark);
+        }
+
+        JMenu levelMenu = new JMenu("Levels");
+        menuBar.add(levelMenu);
+
+        addLevelFilterMenuOption(levelMenu, Level.SEVERE, KeyEvent.VK_F8);
+        addLevelFilterMenuOption(levelMenu, Level.WARNING, KeyEvent.VK_F7);
+        addLevelFilterMenuOption(levelMenu, Level.INFO, KeyEvent.VK_F6);
+        addLevelFilterMenuOption(levelMenu, Level.CONFIG, KeyEvent.VK_F5);
+        addLevelFilterMenuOption(levelMenu, Level.FINE, KeyEvent.VK_F4);
+        addLevelFilterMenuOption(levelMenu, Level.FINER, KeyEvent.VK_F3);
+        addLevelFilterMenuOption(levelMenu, Level.FINEST, KeyEvent.VK_F2);
+        addLevelFilterMenuOption(levelMenu, Level.ALL, KeyEvent.VK_F1);
+
+    }
+
+    public QuickFilterRowPanel getFirstQuickFilter() {
+        return quickFilterRowPanels.get(0);
     }
 
     protected synchronized void updateQuickFilterTimer() {
@@ -926,6 +919,21 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
             // The first bit goes bang on macs - need an alternative approach
             tableScrollPane.getVerticalScrollBar().removeMouseListener(autoPauser);
         }
+    }
+
+    private void addLevelFilterMenuOption(JMenu levelMenu, final Level level, int key) {
+
+        String name = levelNamesModel.getLevelName(level.intValue());
+
+        JMenuItem levelItem = new JMenuItem(name);
+        levelItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                getFirstQuickFilter().getModel().getLevelFilter().get().getSelectedLevel().set(level);
+                // quickLevelFilterCombo.setSelectedItem(level);
+            }
+        });
+        levelItem.setAccelerator(KeyStroke.getKeyStroke(key, InputEvent.CTRL_MASK));
+        levelMenu.add(levelItem);
     }
 
     protected void executeQuickFilter() {

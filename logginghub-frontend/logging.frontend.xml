@@ -23,7 +23,7 @@
         <columnSetting name="Market" width="100" order="1"/>
         <columnSetting name="Quantity" width="100" order="2"/>
         <columnSetting name="Instrument" width="240" order="3"/>
-        <columnSetting name="Customer" width="280" order="4"/>
+        <columnSetting name="Customer" width="280" order="4" metadata="Customer"/>
         <columnSetting name="Status" width="110" order="5"/>
         <columnSetting name="Product" width="110" order="6" alignment="center"/>
         <columnSetting name="Time" width="150" order="7"/>
@@ -39,6 +39,10 @@
         <levelMapping from="Finer" to="Switches"/>
         <levelMapping from="Severe" to="Credit"/>
         <levelMapping from="Finest" to="All"/>
+
+        <customFilter label="App" field="SourceApplication" type="Contains" width="100" defaultValue=""/>
+        <customFilter label="Host" field="SourceHost" type="Contains" width="100" defaultValue=""/>
+        <customFilter label="Custom" field="newfield1" type="StartsWith"/>
 
     </environment>
 

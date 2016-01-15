@@ -37,12 +37,13 @@ public class EnvironmentModel extends ObservableModel implements LogEventSource,
 
     private QuickFilterHistoryModel quickFilterHistoryModel = new QuickFilterHistoryModel();
 
-    private com.logginghub.utils.observable.ObservableList<QuickFilterModel> quickFilterModels = new com.logginghub.utils.observable.ObservableList<QuickFilterModel>(new ArrayList<QuickFilterModel>());
+    private com.logginghub.utils.observable.ObservableList<QuickFilterModel> quickFilterModels = new com.logginghub.utils.observable.ObservableList<QuickFilterModel>(
+            new ArrayList<QuickFilterModel>());
     private ObservableInteger filterUpdateCount = new ObservableInteger(0);
 
     private FilterHelper excludeFilter = new FilterHelper();
     private double eventMemoryMB;
-    private String autoRequestHistory= "";
+    private String autoRequestHistory = "";
     private boolean disableAutoScrollPauser = false;
 
     private EventTableColumnModel eventTableColumnModel = new EventTableColumnModel();
@@ -51,111 +52,46 @@ public class EnvironmentModel extends ObservableModel implements LogEventSource,
     private boolean filterUnicode;
     private ColumnSettingsModel columnSettingsModel = new ColumnSettingsModel();
     private int eventDetailsSeparatorLocation = -1;
-
-    public ColumnSettingsModel getColumnSettingsModel() {
-        return columnSettingsModel;
-    }
-
-    public int getEventDetailsSeparatorLocation() {
-        return eventDetailsSeparatorLocation;
-    }
-
-    public double getEventMemoryMB() {
-        return eventMemoryMB;
-    }
-
-    public LevelNamesModel getLevelNamesModel() {
-        return levelNamesModel;
-    }
-
-    public EventTableColumnModel getEventTableColumnModel() {
-        return eventTableColumnModel;
-    }
-
-    public String isAutoRequestHistory() {
-        return autoRequestHistory;
-    }
-
-    public boolean isDisableAutoScrollPauser() {
-        return disableAutoScrollPauser;
-    }
-
-    public boolean isFilterCaseSensitive() {
-        return filterCaseSensitive;
-    }
-
-    public boolean isFilterUnicode() {
-        return filterUnicode;
-    }
-
-    public void setAutoRequestHistory(String autoRequestHistory) {
-        this.autoRequestHistory = autoRequestHistory;
-    }
-
-    public void setColumnSettingsModel(ColumnSettingsModel columnSettingsModel) {
-        this.columnSettingsModel = columnSettingsModel;
-    }
-
-    public void setDisableAutoScrollPauser(boolean disableAutoScrollPauser) {
-        this.disableAutoScrollPauser = disableAutoScrollPauser;
-    }
-
-    public void setEventDetailsSeparatorLocation(int eventDetailsSeparatorLocation) {
-        this.eventDetailsSeparatorLocation = eventDetailsSeparatorLocation;
-    }
-
-    public void setEventMemoryMB(double eventMemoryMB) {
-        this.eventMemoryMB = eventMemoryMB;
-    }
-
-    public void setFilterCaseSensitive(boolean filterCaseSensitive) {
-        this.filterCaseSensitive = filterCaseSensitive;
-    }
-
-    public void setFilterUnicode(boolean filterUnicode) {
-        this.filterUnicode = filterUnicode;
-    }
-
-    public enum Fields implements FieldEnumeration {
-        Name,
-        OpenOnStartup,
-        AutoLocking,
-        RepoEnabled,
-        RepoConnectionPoints,
-        Channel,
-        ShowHistoryTab
-    }
-
     private boolean clustered;
+
+    private ObservableList<CustomQuickFilterModel> customFilters = new ObservableArrayList<CustomQuickFilterModel>();
 
     public EnvironmentModel() {
 
         // We need to write up any hubs that get added to we can multiplex their
         // log events automatically
         final ObservableListListener<HubConnectionModel> listener = new ObservableListListener<HubConnectionModel>() {
-            @Override public void onItemRemoved(HubConnectionModel t) {
-                t.removeLogEventListener(EnvironmentModel.this);
+            @Override
+            public void onItemAdded(HubConnectionModel t) {
+                t.addLogEventListener(EnvironmentModel.this);
             }
 
-            @Override public void onItemAdded(HubConnectionModel t) {
-                t.addLogEventListener(EnvironmentModel.this);
+            @Override
+            public void onItemRemoved(HubConnectionModel t) {
+                t.removeLogEventListener(EnvironmentModel.this);
             }
         };
 
         hubs.addListListener(listener);
 
         logEventContainerController.addLogEventContainerListener(new LogEventContainerListener() {
-            @Override public void onRemoved(LogEvent event) {
-                environmentSummaryModel.onEventRemoved(event);
-            }
-
-            @Override public void onAdded(LogEvent event) {
+            @Override
+            public void onAdded(LogEvent event) {
                 environmentSummaryModel.onNewLogEvent(event);
             }
 
-            @Override public void onCleared() {}
+            @Override
+            public void onPassedFilter(LogEvent event) {
+            }
 
-            @Override public void onPassedFilter(LogEvent event) {}
+            @Override
+            public void onRemoved(LogEvent event) {
+                environmentSummaryModel.onEventRemoved(event);
+            }
+
+            @Override
+            public void onCleared() {
+            }
         });
 
         setAutoLocking(false);
@@ -169,48 +105,70 @@ public class EnvironmentModel extends ObservableModel implements LogEventSource,
         }
     }
 
-    public void setWriteOutputLog(boolean writeOutputLog) {
-        this.writeOutputLog = writeOutputLog;
+    public ObservableList<CustomQuickFilterModel> getCustomFilters() {
+        return customFilters;
     }
 
-    public boolean isWriteOutputLog() {
-        return writeOutputLog;
+    @Override
+    public void addLogEventListener(LogEventListener logEventListener) {
+        multiplexer.addLogEventListener(logEventListener);
     }
 
-    public void setAutoLocking(boolean autoLocking) {
-        set(Fields.AutoLocking, autoLocking);
+    @Override
+    public void removeLogEventListener(LogEventListener logEventListener) {
+        multiplexer.removeLogEventListener(logEventListener);
     }
 
-    public boolean isShowHistoryTab() {
-        return getBoolean(Fields.ShowHistoryTab);
+    public String getChannel() {
+        return channel;
     }
 
-    public boolean isAutoLocking() {
-        return getBoolean(Fields.AutoLocking);
+    public void setChannel(String channel) {
+        this.channel = channel;
     }
 
-    public boolean isOpenOnStartup() {
-        return getBoolean(Fields.OpenOnStartup);
+    public ColumnSettingsModel getColumnSettingsModel() {
+        return columnSettingsModel;
     }
 
-    public TimestampVariableRollingFileLoggerConfiguration getOutputLogConfiguration() {
-        return outputLogConfiguration;
+    public void setColumnSettingsModel(ColumnSettingsModel columnSettingsModel) {
+        this.columnSettingsModel = columnSettingsModel;
     }
 
-    public boolean isRepoEnabled() {
-        return getBoolean(Fields.RepoEnabled);
+    public Stream<ConnectionStateChangedEvent> getConnectionStateStream() {
+        return connectionStateStream;
     }
 
-    public String getRepoConnectionPoints() {
-        return getString(Fields.RepoConnectionPoints);
+    public EnvironmentSummaryModel getEnvironmentSummaryModel() {
+        return environmentSummaryModel;
     }
 
-    public ObservableList<HubConnectionModel> getHubConnectionModels() {
-        return hubs;
+    public LogEventContainerController getEventController() {
+        return logEventContainerController;
     }
 
-    public void setHubConnectionModels(ObservableList<HubConnectionModel> hubs) {
-        this.hubs = hubs;
+    public int getEventDetailsSeparatorLocation() {
+        return eventDetailsSeparatorLocation;
+    }
+
+    public void setEventDetailsSeparatorLocation(int eventDetailsSeparatorLocation) {
+        this.eventDetailsSeparatorLocation = eventDetailsSeparatorLocation;
+    }
+
+    public double getEventMemoryMB() {
+        return eventMemoryMB;
+    }
+
+    public void setEventMemoryMB(double eventMemoryMB) {
+        this.eventMemoryMB = eventMemoryMB;
+    }
+
+    public EventTableColumnModel getEventTableColumnModel() {
+        return eventTableColumnModel;
+    }
+
+    public ObservableInteger getFilterUpdateCount() {
+        return filterUpdateCount;
     }
 
     public ObservableList<HighlighterModel> getHighlighters() {
@@ -221,58 +179,20 @@ public class EnvironmentModel extends ObservableModel implements LogEventSource,
         this.highlighters = highlighters;
     }
 
-    @Override public void addLogEventListener(LogEventListener logEventListener) {
-        multiplexer.addLogEventListener(logEventListener);
+    public ObservableList<HubConnectionModel> getHubConnectionModels() {
+        return hubs;
     }
 
-    @Override public void onNewLogEvent(LogEvent event) {
-        logger.trace("New log event received from environment '{}' - {} : {}", getName(), event.getLevelDescription(), event.getMessage());
-        
-        if (!excludeFilter.passes(event)) {
-            if (event instanceof DefaultLogEvent) {
-                DefaultLogEvent defaultLogEvent = (DefaultLogEvent) event;
-                defaultLogEvent.setSequenceNumber(sequenceIDGenerator.getAndIncrement());
-
-                if (autoLockWarning && event.getLevel() >= LevelConstants.WARNING) {
-                    defaultLogEvent.getMetadata().put("locked", "true");
-                }
-            }
-
-            multiplexer.onNewLogEvent(event);
-        }
+    public void setHubConnectionModels(ObservableList<HubConnectionModel> hubs) {
+        this.hubs = hubs;
     }
 
-    @Override public void removeLogEventListener(LogEventListener logEventListener) {
-        multiplexer.removeLogEventListener(logEventListener);
+    public LevelNamesModel getLevelNamesModel() {
+        return levelNamesModel;
     }
 
-    public String getName() {
-        return get(Fields.Name);
-    }
-
-    public void setName(String name) {
-        set(Fields.Name, name);
-    }
-
-    @Override public String toString() {
-        return "EnvironmentModel [mame =" + getName() + "]";
-    }
-
-    public void setAutoLockWarning(boolean autoLockWarning) {
-        this.autoLockWarning = autoLockWarning;
-    }
-
-    public EnvironmentSummaryModel getEnvironmentSummaryModel() {
-        return environmentSummaryModel;
-    }
-
-    public void updateEachSecond() {
-        logger.trace("Updating environment model {}", getName());
-        environmentSummaryModel.updateEachSecond();
-    }
-
-    public LogEventContainerController getEventController() {
-        return logEventContainerController;
+    public TimestampVariableRollingFileLoggerConfiguration getOutputLogConfiguration() {
+        return outputLogConfiguration;
     }
 
     public void setOutputLogConfiguration(TimestampVariableRollingFileLoggerConfiguration outputLogConfiguration) {
@@ -287,31 +207,130 @@ public class EnvironmentModel extends ObservableModel implements LogEventSource,
         return quickFilterModels;
     }
 
-    public ObservableInteger getFilterUpdateCount() {
-        return filterUpdateCount;
+    public String getRepoConnectionPoints() {
+        return getString(Fields.RepoConnectionPoints);
     }
 
-    public Stream<ConnectionStateChangedEvent> getConnectionStateStream() {
-        return connectionStateStream;
+    public boolean isAutoLocking() {
+        return getBoolean(Fields.AutoLocking);
     }
 
-    public void setChannel(String channel) {
-        this.channel = channel;
+    public void setAutoLocking(boolean autoLocking) {
+        set(Fields.AutoLocking, autoLocking);
     }
 
-    public String getChannel() {
-        return channel;
+    public String isAutoRequestHistory() {
+        return autoRequestHistory;
     }
 
-    @Override public void onNewItem(LogEvent t) {
-        onNewLogEvent(t);
+    public boolean isClustered() {
+        return clustered;
     }
 
     public void setClustered(boolean clustered) {
         this.clustered = clustered;
     }
 
-    public boolean isClustered() {
-        return clustered;
+    public boolean isDisableAutoScrollPauser() {
+        return disableAutoScrollPauser;
+    }
+
+    public void setDisableAutoScrollPauser(boolean disableAutoScrollPauser) {
+        this.disableAutoScrollPauser = disableAutoScrollPauser;
+    }
+
+    public boolean isFilterCaseSensitive() {
+        return filterCaseSensitive;
+    }
+
+    public void setFilterCaseSensitive(boolean filterCaseSensitive) {
+        this.filterCaseSensitive = filterCaseSensitive;
+    }
+
+    public boolean isFilterUnicode() {
+        return filterUnicode;
+    }
+
+    public void setFilterUnicode(boolean filterUnicode) {
+        this.filterUnicode = filterUnicode;
+    }
+
+    public boolean isOpenOnStartup() {
+        return getBoolean(Fields.OpenOnStartup);
+    }
+
+    public boolean isRepoEnabled() {
+        return getBoolean(Fields.RepoEnabled);
+    }
+
+    public boolean isShowHistoryTab() {
+        return getBoolean(Fields.ShowHistoryTab);
+    }
+
+    public boolean isWriteOutputLog() {
+        return writeOutputLog;
+    }
+
+    public void setWriteOutputLog(boolean writeOutputLog) {
+        this.writeOutputLog = writeOutputLog;
+    }
+
+    @Override
+    public void onNewItem(LogEvent t) {
+        onNewLogEvent(t);
+    }
+
+    @Override
+    public void onNewLogEvent(LogEvent event) {
+        logger.trace("New log event received from environment '{}' - {} : {}", getName(), event.getLevelDescription(), event.getMessage());
+
+        if (!excludeFilter.passes(event)) {
+            if (event instanceof DefaultLogEvent) {
+                DefaultLogEvent defaultLogEvent = (DefaultLogEvent) event;
+                defaultLogEvent.setSequenceNumber(sequenceIDGenerator.getAndIncrement());
+
+                if (autoLockWarning && event.getLevel() >= LevelConstants.WARNING) {
+                    defaultLogEvent.getMetadata().put("locked", "true");
+                }
+            }
+
+            multiplexer.onNewLogEvent(event);
+        }
+    }
+
+    public void setAutoLockWarning(boolean autoLockWarning) {
+        this.autoLockWarning = autoLockWarning;
+    }
+
+    public void setAutoRequestHistory(String autoRequestHistory) {
+        this.autoRequestHistory = autoRequestHistory;
+    }
+
+    @Override
+    public String toString() {
+        return "EnvironmentModel [mame =" + getName() + "]";
+    }
+
+    public String getName() {
+        return get(Fields.Name);
+    }
+
+    public void setName(String name) {
+        set(Fields.Name, name);
+    }
+
+    public void updateEachSecond() {
+        logger.trace("Updating environment model {}", getName());
+        environmentSummaryModel.updateEachSecond();
+    }
+
+    public enum Fields implements FieldEnumeration {
+        Name,
+        OpenOnStartup,
+        AutoLocking,
+        RepoEnabled,
+        RepoConnectionPoints,
+        Channel,
+        ShowHistoryTab
     }
 }

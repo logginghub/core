@@ -2,6 +2,7 @@ package com.logginghub.logging.frontend.model;
 
 import com.logginghub.logging.frontend.components.QuickFilterHistoryEntryModel;
 import com.logginghub.logging.frontend.configuration.ColumnConfiguration;
+import com.logginghub.logging.frontend.configuration.CustomFilterConfiguration;
 import com.logginghub.logging.frontend.configuration.EnvironmentConfiguration;
 import com.logginghub.logging.frontend.configuration.HighlighterConfiguration;
 import com.logginghub.logging.frontend.configuration.HubConfiguration;
@@ -103,8 +104,27 @@ public class ModelBuilder {
         loadColumnNameMappings(environmentConfiguration, environmentModel);
         loadLevelNameMappings(environmentConfiguration, environmentModel);
         loadColumnSettings(environmentConfiguration, environmentModel);
+        loadCustomFilters(environmentConfiguration, environmentModel);
 
         return environmentModel;
+    }
+
+    private void loadCustomFilters(EnvironmentConfiguration environmentConfiguration, EnvironmentModel environmentModel) {
+
+        List<CustomFilterConfiguration> customerFilters = environmentConfiguration.getCustomFilters();
+        for (CustomFilterConfiguration customerFilter : customerFilters) {
+
+            CustomQuickFilterModel customQuickFilterModel = new CustomQuickFilterModel();
+
+            customQuickFilterModel.getValue().set(customerFilter.getDefaultValue());
+            customQuickFilterModel.getLabel().set(customerFilter.getLabel());
+            customQuickFilterModel.getField().set(customerFilter.getField());
+            customQuickFilterModel.getType().set(customerFilter.getType());
+            customQuickFilterModel.getWidth().set(customerFilter.getWidth());
+
+            environmentModel.getCustomFilters().add(customQuickFilterModel);
+        }
+
     }
 
     private HubConnectionModel buildModel(HubConfiguration hubConfiguration) {

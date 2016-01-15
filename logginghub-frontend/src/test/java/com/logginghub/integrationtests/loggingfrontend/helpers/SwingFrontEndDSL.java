@@ -22,8 +22,8 @@ import com.logginghub.utils.FormattedRuntimeException;
 import com.logginghub.utils.Metadata;
 import com.logginghub.utils.OSUtils;
 import com.logginghub.utils.Out;
-import com.logginghub.utils.StringUtils;
 import com.logginghub.utils.ThreadUtils;
+import com.logginghub.utils.swing.Utils;
 import org.fest.swing.core.KeyPressInfo;
 import org.fest.swing.core.MouseButton;
 import org.fest.swing.core.MouseClickInfo;
@@ -361,7 +361,7 @@ public class SwingFrontEndDSL {
         ensureSelected(LOG_VIEW);
         JPanelFixture panel = frameFixture.panel(LOG_EVENT_PANEL_DEFAULT);
         Out.out(panel);
-        dump(panel.target, 0);
+        Utils.dumpContainer(panel.target, 0);
         JLabelFixture clear = panel.label("clear");
         clear.click();
     }
@@ -419,20 +419,6 @@ public class SwingFrontEndDSL {
         panelFixture.robot.pressMouse(panelFixture.target, new Point(fromX, fromY), MouseButton.LEFT_BUTTON);
         panelFixture.robot.moveMouse(panelFixture.target, new Point(toX, toY));
         panelFixture.robot.releaseMouse(MouseButton.LEFT_BUTTON);
-    }
-
-    private void dump(Container panel, int indent) {
-
-        String indentString = StringUtils.repeat("   ", indent);
-
-        int children = panel.getComponentCount();
-        for (int i = 0; i < children; i++) {
-            Component component = panel.getComponent(i);
-            Out.out("{}{-50}'{-50}' visible={}", indentString, component.getClass().getSimpleName(), component.getName(), component.isVisible());
-            if (component instanceof Container) {
-                dump((Container) component, indent++);
-            }
-        }
     }
 
     public void enableQuickFilter(String environment, int filterIndex, boolean enabled) {

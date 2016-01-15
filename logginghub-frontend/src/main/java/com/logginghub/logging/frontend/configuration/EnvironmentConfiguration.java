@@ -36,6 +36,7 @@ import java.util.List;
 
     @XmlElement List<FilterConfiguration> filter = new ArrayList<FilterConfiguration>();
     @XmlElement List<ColumnConfiguration> columnSetting = new ArrayList<ColumnConfiguration>();
+    @XmlElement List<CustomFilterConfiguration> customFilter = new ArrayList<CustomFilterConfiguration>();
 
     @XmlElement List<NameMappingConfiguration> columnMapping = new ArrayList<NameMappingConfiguration>();
     @XmlElement private List<NameMappingConfiguration> levelMapping = new ArrayList<NameMappingConfiguration>();
@@ -50,6 +51,10 @@ import java.util.List;
 
     public EnvironmentConfiguration() {
         setupOutputLogConfiguration();
+    }
+
+    public List<CustomFilterConfiguration> getCustomFilters() {
+        return customFilter;
     }
 
     public List<ColumnConfiguration> getColumnSetting() {
