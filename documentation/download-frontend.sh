@@ -1,1 +1,1 @@
-wget http://www.vertexlabs.co.uk/repository/com/logginghub/archives/1.5.0/logginghub-frontend-1.5.0.zip
+wget http://www.vertexlabs.co.uk/repository/com/logginghub/archives/1.5.2/logginghub-frontend-1.5.2.zip
