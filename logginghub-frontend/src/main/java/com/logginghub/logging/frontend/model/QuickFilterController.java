@@ -69,10 +69,9 @@ public class QuickFilterController {
 
                 // If any custom filters get added, wire these up in a similar way
                 t.getCustomFilters()
-                 .addListListenerAndNotifyExisting(new com.logginghub.logging.frontend.model.ObservableListListener<CustomQuickFilterModel>() {
+                 .addListenerAndNotifyCurrent(new ObservableListListener<CustomQuickFilterModel>() {
                      @Override
-                     public void onItemAdded(CustomQuickFilterModel customQuickFilterModel) {
-
+                     public void onAdded(CustomQuickFilterModel customQuickFilterModel) {
                          FieldFilter fieldFilter;
                          Field field;
 
@@ -102,9 +101,15 @@ public class QuickFilterController {
                      }
 
                      @Override
-                     public void onItemRemoved(CustomQuickFilterModel customQuickFilterModel) {
+                     public void onRemoved(CustomQuickFilterModel customQuickFilterModel, int index) {
 
                      }
+
+                     @Override
+                     public void onCleared() {
+
+                     }
+
                  });
 
                 t.getIsRegex().addListenerAndNotifyCurrent(new ObservablePropertyListener<Boolean>() {

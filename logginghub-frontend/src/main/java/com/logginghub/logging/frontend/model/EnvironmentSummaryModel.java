@@ -26,13 +26,13 @@ public class EnvironmentSummaryModel implements LogEventListener {
     private volatile int infoRunningTotal = 0;
 
     public EnvironmentSummaryModel() {
-        severeLevelStatsModel.setLevel(Level.Severe);
-        warningLevelStatsModel.setLevel(Level.Warning);
-        infoLevelStatsModel.setLevel(Level.Info);
+        severeLevelStatsModel.getLevel().set(Level.Severe);
+        warningLevelStatsModel.getLevel().set(Level.Warning);
+        infoLevelStatsModel.getLevel().set(Level.Info);
 
-        severeLevelStatsPerSecondModel.setLevel(Level.Severe);
-        warningLevelStatsPerSecondModel.setLevel(Level.Warning);
-        infoLevelStatsPerSecondModel.setLevel(Level.Info);
+        severeLevelStatsPerSecondModel.getLevel().set(Level.Severe);
+        warningLevelStatsPerSecondModel.getLevel().set(Level.Warning);
+        infoLevelStatsPerSecondModel.getLevel().set(Level.Info);
     }
 
     public void onEventRemoved(LogEvent event) {
@@ -71,13 +71,13 @@ public class EnvironmentSummaryModel implements LogEventListener {
     public void updateEachSecond() {
 
         logger.trace("Updating environment summary model values on timer call");
-        severeLevelStatsModel.setValue(severeRunningTotal);
-        warningLevelStatsModel.setValue(warningRunningTotal);
-        infoLevelStatsModel.setValue(infoRunningTotal);
+        severeLevelStatsModel.getValue().set(severeRunningTotal);
+        warningLevelStatsModel.getValue().set(warningRunningTotal);
+        infoLevelStatsModel.getValue().set(infoRunningTotal);
 
-        severeLevelStatsPerSecondModel.setValue(severeSinceLastUpdate);
-        warningLevelStatsPerSecondModel.setValue(warningSinceLastUpdate);
-        infoLevelStatsPerSecondModel.setValue(infoSinceLastUpdate);
+        severeLevelStatsPerSecondModel.getValue().set(severeSinceLastUpdate);
+        warningLevelStatsPerSecondModel.getValue().set(warningSinceLastUpdate);
+        infoLevelStatsPerSecondModel.getValue().set(infoSinceLastUpdate);
 
         severeSinceLastUpdate = 0;
         warningSinceLastUpdate = 0;

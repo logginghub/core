@@ -1,15 +1,13 @@
 package com.logginghub.logging.frontend.views.environmentsummary;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-
-import javax.swing.JFrame;
-import javax.swing.SwingUtilities;
-
+import com.logginghub.logging.LogEvent;
+import com.logginghub.logging.LogEventBuilder;
+import com.logginghub.logging.frontend.model.EnvironmentModel;
+import com.logginghub.logging.frontend.views.logeventdetail.DetailedLogEventTable;
+import com.logginghub.utils.ThreadUtils;
+import com.logginghub.utils.filter.Filter;
+import com.logginghub.utils.observable.ObservableList;
+import com.logginghub.utils.swing.TestFrame;
 import org.fest.swing.edt.FailOnThreadViolationRepaintManager;
 import org.fest.swing.edt.GuiActionRunner;
 import org.fest.swing.edt.GuiQuery;
@@ -21,15 +19,14 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.logginghub.logging.LogEvent;
-import com.logginghub.logging.LogEventBuilder;
-import com.logginghub.logging.frontend.model.EnvironmentModel;
-import com.logginghub.logging.frontend.model.ObservableArrayList;
-import com.logginghub.logging.frontend.model.ObservableList;
-import com.logginghub.logging.frontend.views.logeventdetail.DetailedLogEventTable;
-import com.logginghub.utils.ThreadUtils;
-import com.logginghub.utils.filter.Filter;
-import com.logginghub.utils.swing.TestFrame;
+import javax.swing.*;
+import java.util.ArrayList;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+
+import static org.hamcrest.MatcherAssert.*;
+import static org.hamcrest.Matchers.*;
 
 @Ignore // works fine when run by itself :/
 public class TestDashboardPanel {
@@ -64,11 +61,11 @@ public class TestDashboardPanel {
         final EnvironmentModel tradingModel = new EnvironmentModel();       
         final EnvironmentModel riskModel = new EnvironmentModel();
         
-        pricingModel.setName("Pricing");
-        tradingModel.setName("Trading");
-        riskModel.setName("Risk");
+        pricingModel.getName().set("Pricing");
+        tradingModel.getName().set("Trading");
+        riskModel.getName().set("Risk");
         
-        final ObservableList<EnvironmentModel> environments = new ObservableArrayList<EnvironmentModel>();
+        final ObservableList<EnvironmentModel> environments = new ObservableList<EnvironmentModel>(EnvironmentModel.class, new ArrayList<EnvironmentModel>());
         environments.add(pricingModel);
         environments.add(tradingModel);
         environments.add(riskModel);        

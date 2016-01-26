@@ -2,6 +2,7 @@ package com.logginghub.logging.frontend.model;
 
 import com.logginghub.logging.frontend.components.QuickFilterHistoryEntryModel;
 import com.logginghub.logging.frontend.configuration.ColumnConfiguration;
+import com.logginghub.logging.frontend.configuration.CustomDateFilterConfiguration;
 import com.logginghub.logging.frontend.configuration.CustomFilterConfiguration;
 import com.logginghub.logging.frontend.configuration.EnvironmentConfiguration;
 import com.logginghub.logging.frontend.configuration.HighlighterConfiguration;
@@ -21,10 +22,10 @@ public class ModelBuilder {
     public LoggingFrontendModel buildModel(LoggingFrontendConfiguration configuration) {
 
         LoggingFrontendModel model = new LoggingFrontendModel();
-        model.setShowDashboard(configuration.isShowDashboard());
-        model.setPopoutCharting(configuration.isPopoutCharting());
-        model.setSelectedRowFormat(RowFormatModel.fromConfiguration(configuration.getSelectedRowFormat()));
-        model.setShowHubClearEvents(configuration.isShowHubClearEvents());
+        model.getShowDashboard().set(configuration.isShowDashboard());
+        model.getPopoutCharting().set(configuration.isPopoutCharting());
+        model.getSelectedRowFormat().set(RowFormatModel.fromConfiguration(configuration.getSelectedRowFormat()));
+        model.getShowHubClearEvents().set(configuration.isShowHubClearEvents());
 
         List<EnvironmentConfiguration> environments = configuration.getEnvironments();
         for (EnvironmentConfiguration environmentConfiguration : environments) {
@@ -39,13 +40,14 @@ public class ModelBuilder {
     private EnvironmentModel buildModel(EnvironmentConfiguration environmentConfiguration) {
 
         EnvironmentModel environmentModel = new EnvironmentModel();
-        environmentModel.set(EnvironmentModel.Fields.Name, environmentConfiguration.getName());
-        environmentModel.set(EnvironmentModel.Fields.Channel, environmentConfiguration.getChannel());
-        environmentModel.set(EnvironmentModel.Fields.OpenOnStartup, environmentConfiguration.isOpenOnStartup());
-        environmentModel.set(EnvironmentModel.Fields.AutoLocking, environmentConfiguration.isAutoLocking());
-        environmentModel.set(EnvironmentModel.Fields.RepoEnabled, environmentConfiguration.isRepoEnabled());
-        environmentModel.set(EnvironmentModel.Fields.RepoConnectionPoints, environmentConfiguration.getRepoConnectionPoints());
-        environmentModel.set(EnvironmentModel.Fields.ShowHistoryTab, environmentConfiguration.isShowHistoryTab());
+        environmentModel.getName().set(environmentConfiguration.getName());
+        environmentModel.getChannel().set(environmentConfiguration.getChannel());
+        environmentModel.getOpenOnStartup().set(environmentConfiguration.isOpenOnStartup());
+        environmentModel.getAutoLocking().set(environmentConfiguration.isAutoLocking());
+        environmentModel.getRepoEnabled().set(environmentConfiguration.isRepoEnabled());
+        environmentModel.getRepoConnectionPoints().set(environmentConfiguration.getRepoConnectionPoints());
+        environmentModel.getShowHistoryTab().set(environmentConfiguration.isShowHistoryTab());
+        environmentModel.getShowHTMLEventDetails().set(environmentConfiguration.isShowHTMLEventDetails());
 
         environmentModel.setEventDetailsSeparatorLocation(environmentConfiguration.getEventDetailsSeparatorLocation());
 
@@ -73,11 +75,11 @@ public class ModelBuilder {
                 model.addConnectionPoint(inetSocketAddress);
             }
 
-            model.set(HubConnectionModel.Fields.Host, "Clustered - N/A");
-            model.set(HubConnectionModel.Fields.Name, "Hub cluster");
-            model.set(HubConnectionModel.Fields.Channel, null);
-            model.set(HubConnectionModel.Fields.Port, -1);
-            model.set(HubConnectionModel.Fields.ConnectionState, HubConnectionModel.ConnectionState.NotConnected);
+            model.getHost().set("Clustered - N/A");
+            model.getName().set("Hub cluster");
+            model.getChannel().set(null);
+            model.getPort().set(-1);
+            model.getConnectionState().set(HubConnectionModel.ConnectionState.NotConnected);
 
             environmentModel.getHubConnectionModels().add(model);
 
@@ -125,6 +127,21 @@ public class ModelBuilder {
             environmentModel.getCustomFilters().add(customQuickFilterModel);
         }
 
+        List<CustomDateFilterConfiguration> customDateFilters =
+                environmentConfiguration.getCustomDateFilters();
+
+        for (CustomDateFilterConfiguration customDateFilter : customDateFilters) {
+
+            CustomDateFilterModel customDateFilterModel = new CustomDateFilterModel();
+
+            customDateFilterModel.getValue().set(customDateFilter.getDefaultValue());
+            customDateFilterModel.getLabel().set(customDateFilter.getLabel());
+            customDateFilterModel.getField().set(customDateFilter.getField());
+            customDateFilterModel.getType().set(customDateFilter.getType());
+            customDateFilterModel.getWidth().set(customDateFilter.getWidth());
+
+            environmentModel.getCustomDateFilters().add(customDateFilterModel);
+        }
     }
 
     private HubConnectionModel buildModel(HubConfiguration hubConfiguration) {
@@ -133,19 +150,19 @@ public class ModelBuilder {
         int port = hubConfiguration.getPort();
         InetSocketAddress inetSocketAddress = NetUtils.toInetSocketAddress(hubConfiguration.getHost(), port);
 
-        hubModel.set(HubConnectionModel.Fields.Host, inetSocketAddress.getHostName());
-        hubModel.set(HubConnectionModel.Fields.Name, hubConfiguration.getName());
-        hubModel.set(HubConnectionModel.Fields.Channel, hubConfiguration.getChannel());
-        hubModel.set(HubConnectionModel.Fields.Port, inetSocketAddress.getPort());
-        hubModel.set(HubConnectionModel.Fields.ConnectionState, HubConnectionModel.ConnectionState.NotConnected);
-        hubModel.setOverrideTime(hubConfiguration.getOverrideTime());
+        hubModel.getHost().set(inetSocketAddress.getHostName());
+        hubModel.getName().set(hubConfiguration.getName());
+        hubModel.getChannel().set(hubConfiguration.getChannel());
+        hubModel.getPort().set(inetSocketAddress.getPort());
+        hubModel.getConnectionState().set(HubConnectionModel.ConnectionState.NotConnected);
+        hubModel.getOverrideTime().set(hubConfiguration.getOverrideTime());
         return hubModel;
     }
 
     private HighlighterModel buildModel(HighlighterConfiguration highlighterConfiguration) {
         HighlighterModel model = new HighlighterModel();
-        model.set(HighlighterModel.Fields.Phrase, highlighterConfiguration.getPhrase());
-        model.set(HighlighterModel.Fields.ColourHex, highlighterConfiguration.getColourHex());
+        model.getPhrase().set(highlighterConfiguration.getPhrase());
+        model.getColourHex().set(highlighterConfiguration.getColourHex());
         return model;
     }
 

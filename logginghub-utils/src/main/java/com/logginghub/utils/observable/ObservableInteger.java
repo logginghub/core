@@ -54,4 +54,10 @@ public class ObservableInteger extends AbstractObservableProperty<Integer> {
         ObservableInteger duplicate = new ObservableInteger(value);        
         return duplicate;
     }
+
+    public synchronized void setIfGreater(int newValue) {
+        if(newValue > value) {
+            value = newValue;
+        }
+    }
 }

@@ -1,16 +1,14 @@
 package com.logginghub.logging.frontend;
 
-import java.util.List;
-
-import javax.swing.JPanel;
-import javax.swing.border.TitledBorder;
-
-import net.miginfocom.swing.MigLayout;
-
 import com.logginghub.logging.frontend.model.EnvironmentModel;
 import com.logginghub.logging.frontend.model.HubConnectionModel;
 import com.logginghub.logging.frontend.model.LoggingFrontendModel;
-import com.logginghub.logging.frontend.model.ObservableList;
+import com.logginghub.utils.observable.ObservableList;
+import net.miginfocom.swing.MigLayout;
+
+import javax.swing.*;
+import javax.swing.border.TitledBorder;
+import java.util.List;
 
 public class ConnectionsPanel extends JPanel {
     private static final long serialVersionUID = 1L;

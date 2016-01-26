@@ -1,19 +1,16 @@
 package com.logginghub.logging.frontend.views.environmentsummary;
 
-import java.awt.Color;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-
-import javax.swing.BorderFactory;
-import javax.swing.JPanel;
-
-import net.miginfocom.swing.MigLayout;
-
 import com.logginghub.logging.frontend.model.EnvironmentLevelStatsModel;
+import com.logginghub.logging.frontend.model.EnvironmentLevelStatsModel.Level;
 import com.logginghub.logging.frontend.model.EnvironmentModel;
 import com.logginghub.logging.frontend.model.EnvironmentSummaryModel;
-import com.logginghub.logging.frontend.model.EnvironmentLevelStatsModel.Level;
 import com.logginghub.utils.swing.TestFrame;
+import net.miginfocom.swing.MigLayout;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class EnvironmentSummaryPanel extends JPanel {
     private ResizingLabel environmentName;
@@ -60,7 +57,7 @@ public class EnvironmentSummaryPanel extends JPanel {
     }
 
     public void bind(EnvironmentModel environmentModel, DashboardSelectionListener listener) {
-        environmentName.setText(environmentModel.getName());
+        environmentName.setText(environmentModel.getName().get());
 
         EnvironmentSummaryModel environmentSummaryModel = environmentModel.getEnvironmentSummaryModel();
 

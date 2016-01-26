@@ -1,14 +1,23 @@
 package com.logginghub.logging.frontend.model;
 
-public class HighlighterModel extends ObservableModel {
+import com.logginghub.utils.observable.Observable;
+import com.logginghub.utils.observable.ObservableProperty;
 
-    public enum Fields implements FieldEnumeration {
-        ColourHex,
-        Phrase;
-    }
+public class HighlighterModel extends Observable {
+
+    private ObservableProperty<String> colourHex = createStringProperty("colourHex", "");
+    private ObservableProperty<String> phrase = createStringProperty("phrase", "");
 
     public HighlighterModel() {
-        set(Fields.ColourHex, "no colour hex");
-        set(Fields.Phrase, "no phrase");
+        getColourHex().set("no colour hex");
+        getPhrase().set("no phrase");
+    }
+
+    public ObservableProperty<String> getColourHex() {
+        return colourHex;
+    }
+
+    public ObservableProperty<String> getPhrase() {
+        return phrase;
     }
 }

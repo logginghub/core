@@ -1,18 +1,13 @@
 package com.logginghub.logging.frontend.views.environmentsummary;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-
+import com.logginghub.logging.frontend.model.EnvironmentModel;
+import com.logginghub.utils.observable.ObservableList;
+import com.logginghub.utils.observable.ObservableListListener;
+import com.logginghub.utils.swing.TestFrame;
 import net.miginfocom.swing.MigLayout;
 
-import com.logginghub.logging.frontend.model.EnvironmentModel;
-import com.logginghub.logging.frontend.model.ObservableList;
-import com.logginghub.logging.frontend.model.ObservableListListener;
-import com.logginghub.utils.swing.TestFrame;
+import javax.swing.*;
+import java.awt.*;
 
 public class DashboardPanel extends JPanel {
     private DashboardSelectionListener dashboardSelectionListener = null;
@@ -42,15 +37,23 @@ public class DashboardPanel extends JPanel {
     public void bind(ObservableList<EnvironmentModel> environments) {
         removeAll();
         add(lblDashboard, "wrap");
-        environments.addListListenerAndNotifyExisting(new ObservableListListener<EnvironmentModel>() {
-            @Override public void onItemAdded(EnvironmentModel t) {
-                addEnvironment(t);
+        environments.addListenerAndNotifyCurrent(new ObservableListListener<EnvironmentModel>() {
+            @Override
+            public void onAdded(EnvironmentModel environmentModel) {
+                addEnvironment(environmentModel);
             }
 
-            @Override public void onItemRemoved(EnvironmentModel t) {
-                removeEnvironmet(t);
+            @Override
+            public void onRemoved(EnvironmentModel environmentModel, int index) {
+                removeEnvironmet(environmentModel);
+            }
+
+            @Override
+            public void onCleared() {
+
             }
         });
+
     }
 
     public void setDashboardSelectionListener(DashboardSelectionListener dashboardSelectionListener) {

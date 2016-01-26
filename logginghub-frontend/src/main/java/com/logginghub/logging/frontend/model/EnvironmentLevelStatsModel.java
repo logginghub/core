@@ -1,19 +1,64 @@
 package com.logginghub.logging.frontend.model;
 
-import java.awt.Color;
+import com.logginghub.utils.observable.Observable;
+import com.logginghub.utils.observable.ObservableInteger;
+import com.logginghub.utils.observable.ObservableProperty;
 
-import com.logginghub.logging.LogEvent;
+import java.awt.*;
 
-public class EnvironmentLevelStatsModel extends ObservableModel {
+public class EnvironmentLevelStatsModel extends Observable {
 
-    private int count;
+    private ObservableInteger count = createIntProperty("count", 0);
+    private ObservableInteger value = createIntProperty("value", 0);
+    private ObservableProperty<Level> level = createProperty("level", Level.class, Level.Info);
+    private ObservableProperty<Trend> trend = createProperty("trend", Trend.class, Trend.Same);
+    private ObservableProperty<Color> foreground = createProperty("foreground", Color.class, Color.white);
+    private ObservableProperty<Color> background = createProperty("background", Color.class, Color.green);
 
-    public enum Fields implements FieldEnumeration {
-        Value,
-        Level,
-        Trend,
-        Foreground,
-        Background;
+    public EnvironmentLevelStatsModel() {
+        getValue().set(0);
+        getLevel().set(Level.Info);
+        getTrend().set(Trend.Same);
+        getForeground().set(Color.white);
+        getBackground().set(Color.green);
+    }
+
+    public void decrementCount() {
+        count.increment(-1);
+        getValue().set(count.get());
+    }
+
+    public ObservableInteger getCount() {
+        return count;
+    }
+
+    public ObservableInteger getValue() {
+        return value;
+    }
+
+    public ObservableProperty<Color> getBackground() {
+        return background;
+    }
+
+    public ObservableProperty<Color> getForeground() {
+        return foreground;
+    }
+
+    public ObservableProperty<Level> getLevel() {
+        return level;
+    }
+
+    public ObservableProperty<Trend> getTrend() {
+        return trend;
+    }
+
+    public void incrementCount() {
+        incrementCount(1);
+    }
+
+    public void incrementCount(int amount) {
+        count.increment(amount);
+        value.set(count.get());
     }
 
     public enum Trend {
@@ -21,57 +66,11 @@ public class EnvironmentLevelStatsModel extends ObservableModel {
         Down,
         Same;
     }
-    
+
     public enum Level {
         Severe,
         Warning,
         Info
-    }
-
-    public EnvironmentLevelStatsModel() {
-        set(Fields.Value, 0);
-        set(Fields.Level, "No level");
-        set(Fields.Trend, Trend.Same);
-        set(Fields.Foreground, Color.white);
-        set(Fields.Background, Color.green);
-    }
-    
-    public void setValue(int value) {
-        set(Fields.Value, value);
-    }
-
-    public void setLevel(Level level) {
-        set(Fields.Level, level);
-    }
-
-    public void setTrend(Trend trend) {
-        set(Fields.Trend, trend);
-    }
-
-    public int getValue() {
-        return getInt(Fields.Value);
-    }
-
-    public Level getLevel() {
-        return get(Fields.Level);
-    }
-
-    public Trend getTrend() {
-        return getEnum(Fields.Trend);
-    }
-
-    
-    public void incrementCount(int amount) {
-        count+=amount;
-        setValue(count);
-    }
-    public void incrementCount() {
-        incrementCount(1);
-    }
-    
-    public void decrementCount() {
-        count--;
-        setValue(count);
     }
 
 

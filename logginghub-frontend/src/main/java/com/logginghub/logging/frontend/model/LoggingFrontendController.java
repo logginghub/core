@@ -1,17 +1,18 @@
 package com.logginghub.logging.frontend.model;
 
-import java.io.File;
-
 import com.logginghub.logging.frontend.PathHelper;
 import com.logginghub.logging.frontend.components.QuickFilterHistoryEntryModel;
 import com.logginghub.utils.FileUtils;
 import com.logginghub.utils.StringUtils;
 import com.logginghub.utils.StringUtils.StringUtilsBuilder;
 import com.logginghub.utils.logging.Logger;
+import com.logginghub.utils.observable.ObservableList;
 import com.logginghub.utils.observable.ObservableListListener;
 import com.logginghub.utils.persistence.Bag;
 import com.logginghub.utils.persistence.ReflectionBinder;
 import com.logginghub.utils.persistence.TextPersistence;
+
+import java.io.File;
 
 public class LoggingFrontendController {
 

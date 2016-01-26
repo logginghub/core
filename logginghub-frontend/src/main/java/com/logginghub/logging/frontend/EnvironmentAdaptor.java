@@ -4,10 +4,6 @@ import com.logginghub.logging.exceptions.LoggingMessageSenderException;
 import com.logginghub.logging.frontend.model.EnvironmentModel;
 import com.logginghub.logging.frontend.model.HubConnectionModel;
 import com.logginghub.logging.frontend.model.HubConnectionModel.ConnectionState;
-import com.logginghub.logging.frontend.model.ObservableList;
-import com.logginghub.logging.frontend.model.ObservableListListener;
-import com.logginghub.logging.frontend.model.ObservableModel.FieldEnumeration;
-import com.logginghub.logging.frontend.model.ObservableModelListener;
 import com.logginghub.logging.frontend.modules.EnvironmentMessagingService;
 import com.logginghub.logging.frontend.modules.EnvironmentNotificationListener;
 import com.logginghub.logging.frontend.modules.SocketClientDirectAccessService;
@@ -21,6 +17,9 @@ import com.logginghub.logging.messages.RequestResponseMessage;
 import com.logginghub.logging.messaging.SocketClient;
 import com.logginghub.utils.Destination;
 import com.logginghub.utils.FormattedRuntimeException;
+import com.logginghub.utils.observable.ObservableList;
+import com.logginghub.utils.observable.ObservableListAdaptor;
+import com.logginghub.utils.observable.ObservablePropertyListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,24 +36,23 @@ public class EnvironmentAdaptor implements EnvironmentNotificationService, Envir
         this.environmentModel = environmentModel;
 
         ObservableList<HubConnectionModel> hubConnectionModels = environmentModel.getHubConnectionModels();
-        hubConnectionModels.addListListenerAndNotifyExisting(new ObservableListListener<HubConnectionModel>() {
-            @Override public void onItemRemoved(HubConnectionModel t) {}
+        hubConnectionModels.addListenerAndNotifyCurrent(new ObservableListAdaptor<HubConnectionModel>() {
+            @Override
+            public void onAdded(final HubConnectionModel hubConnectionModel) {
 
-            @Override public void onItemAdded(final HubConnectionModel t) {
-                t.addListener(HubConnectionModel.Fields.ConnectionState, new ObservableModelListener() {
-                    @Override public void onFieldChanged(FieldEnumeration fe, Object value) {
-                        updateState(t);
+                hubConnectionModel.getConnectionState().addListenerAndNotifyCurrent(new ObservablePropertyListener<ConnectionState>() {
+                    @Override
+                    public void onPropertyChanged(ConnectionState oldValue, ConnectionState newValue) {
+                        updateState(hubConnectionModel);
                     }
                 });
-
-                updateState(t);
             }
         });
 
     }
 
     private void updateState(final HubConnectionModel t) {
-        ConnectionState connectionState = t.getConnectionState();
+        ConnectionState connectionState = t.getConnectionState().get();
         if (connectionState == ConnectionState.Connected) {
             environmentConnectionEstablished = true;
 

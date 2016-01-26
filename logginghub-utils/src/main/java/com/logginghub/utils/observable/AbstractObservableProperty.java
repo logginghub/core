@@ -1,9 +1,9 @@
 package com.logginghub.utils.observable;
 
+import com.logginghub.utils.Xml.XmlEntry;
+
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-
-import com.logginghub.utils.Xml.XmlEntry;
 
 public abstract class AbstractObservableProperty<T> implements ObservableItem {
 
@@ -17,7 +17,6 @@ public abstract class AbstractObservableProperty<T> implements ObservableItem {
     public AbstractObservableProperty(ObservableItemContainer parent) {
         setParent(parent);
     }
-    
 
     public abstract AbstractObservableProperty<?> duplicate();
     

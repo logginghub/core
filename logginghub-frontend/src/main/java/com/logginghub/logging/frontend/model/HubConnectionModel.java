@@ -7,6 +7,9 @@ import com.logginghub.logging.interfaces.LogEventSource;
 import com.logginghub.logging.listeners.LogEventListener;
 import com.logginghub.logging.messaging.SocketClient;
 import com.logginghub.logging.messaging.SocketClientManager;
+import com.logginghub.utils.observable.Observable;
+import com.logginghub.utils.observable.ObservableInteger;
+import com.logginghub.utils.observable.ObservableProperty;
 
 import java.io.Closeable;
 import java.net.InetSocketAddress;
@@ -18,11 +21,15 @@ import java.util.List;
  *
  * @author James
  */
-public class HubConnectionModel extends ObservableModel implements LogEventSource, LogEventListener, Closeable {
+public class HubConnectionModel extends Observable implements LogEventSource, LogEventListener, Closeable {
 
-    public enum Fields implements FieldEnumeration {
-        Name, Host, Port, ConnectionState, Channel
-    }
+    private ObservableProperty<String> name = createStringProperty("name", "");
+    private ObservableProperty<String> host = createStringProperty("host", "");
+    private ObservableInteger port = createIntProperty("port", -1);
+    private ObservableProperty<ConnectionState> connectionState = createProperty("connectionState", ConnectionState.class, ConnectionState.NotConnected);
+    private ObservableProperty<String> channel = createStringProperty("channel", "");
+    private ObservableProperty<Boolean> overrideTime = createBooleanProperty("overrideTime", false);
+
 
     public enum ConnectionState {
         Connected, NotConnected, AttemptingConnection
@@ -30,38 +37,34 @@ public class HubConnectionModel extends ObservableModel implements LogEventSourc
 
     private LogEventMultiplexer multiplexer = new LogEventMultiplexer();
     private SocketClientManager socketClientManager;
-    private boolean overrideTime = false;
 
     private List<InetSocketAddress> clusteredConnectionPoints = new ArrayList<InetSocketAddress>();
 
     public HubConnectionModel() {
-        set(Fields.Name, "no name");
-        set(Fields.Host, "no host");
-        set(Fields.Port, "-1");
+        getName().set("no name");
+        getHost().set("no host");
+        getPort().set(-1);
     }
 
-    public void setOverrideTime(boolean overrideTime) {
-        this.overrideTime = overrideTime;
+
+    public ObservableProperty<ConnectionState> getConnectionState() {
+        return connectionState;
     }
 
-    public String getName() {
-        return get(Fields.Name);
+    public ObservableProperty<String> getChannel() {
+        return channel;
     }
 
-    public String getHost() {
-        return get(Fields.Host);
+    public ObservableProperty<String> getHost() {
+        return host;
     }
 
-    public int getPort() {
-        return getInt(Fields.Port);
+    public ObservableProperty<String> getName() {
+        return name;
     }
 
-    public ConnectionState getConnectionState() {
-        return (ConnectionState) getObject(Fields.ConnectionState);
-    }
-
-    public void setConnectionState(ConnectionState state) {
-        set(Fields.ConnectionState, state);
+    public ObservableInteger getPort() {
+        return port;
     }
 
     @Override public void addLogEventListener(LogEventListener listener) {
@@ -72,10 +75,14 @@ public class HubConnectionModel extends ObservableModel implements LogEventSourc
         multiplexer.removeLogEventListener(listener);
     }
 
+    public ObservableProperty<Boolean> getOverrideTime() {
+        return overrideTime;
+    }
+
     @Override public void onNewLogEvent(LogEvent event) {
-        if (overrideTime) {
+        if (overrideTime.get()) {
             DefaultLogEvent dle = (DefaultLogEvent) event;
-            dle.setLocalCreationTimeMillis(System.currentTimeMillis());
+            dle.setOriginTime(System.currentTimeMillis());
         }
         multiplexer.onNewLogEvent(event);
     }

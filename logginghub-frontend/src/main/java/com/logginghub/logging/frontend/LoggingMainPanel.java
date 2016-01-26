@@ -15,9 +15,9 @@ import com.logginghub.logging.frontend.images.Icons;
 import com.logginghub.logging.frontend.model.ConnectionStateChangedEvent;
 import com.logginghub.logging.frontend.model.EnvironmentLevelStatsModel;
 import com.logginghub.logging.frontend.model.EnvironmentModel;
+import com.logginghub.logging.frontend.model.HighlighterModel;
 import com.logginghub.logging.frontend.model.HubConnectionModel;
 import com.logginghub.logging.frontend.model.LoggingFrontendModel;
-import com.logginghub.logging.frontend.model.ObservableList;
 import com.logginghub.logging.frontend.modules.MainFrameModule;
 import com.logginghub.logging.frontend.modules.MenuBarModule;
 import com.logginghub.logging.frontend.modules.PatterniserModule;
@@ -59,6 +59,7 @@ import com.logginghub.utils.StringUtils;
 import com.logginghub.utils.WorkerThread;
 import com.logginghub.utils.Xml;
 import com.logginghub.utils.logging.Logger;
+import com.logginghub.utils.observable.ObservableList;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
@@ -162,7 +163,7 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
 
     private void addEnvironmentLoggingDetailsTab(EnvironmentModel environmentModel) {
         DetailedLogEventTablePanel tablePanel = createNewDetailedLogEventTablePanel(environmentModel);
-        String name = environmentModel.get(EnvironmentModel.Fields.Name);
+        String name = environmentModel.getName().get();
         int tabIndex = tabbedPane.getTabCount();
         tabbedPane.addTab(name, tablePanel);
         TabColourManager.bind(tabbedPane, tabIndex, tablePanel, environmentModel);
@@ -177,7 +178,7 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
         //        module.setMessagingService(environmentAdaptor);
         //        module.setEnvironmentNotificationService(environmentAdaptor);
 
-        final String name = environmentModel.get(EnvironmentModel.Fields.Name) + " history";
+        final String name = environmentModel.getName().get() + " history";
         module.setLayoutService(new LayoutService() {
             @Override
             public void add(Component component, String layout) {
@@ -418,7 +419,7 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
         dashboardPanel.setDashboardSelectionListener(new DashboardSelectionListener() {
             @Override
             public void onSelected(EnvironmentModel model, EnvironmentLevelStatsModel.Level level) {
-                int tabIndex = findIndexForEnvironmentDetailView(model.getName());
+                int tabIndex = findIndexForEnvironmentDetailView(model.getName().get());
                 tabbedPane.setSelectedIndex(tabIndex);
                 DetailedLogEventTablePanel panel = (DetailedLogEventTablePanel) tabbedPane.getComponentAt(tabIndex);
 
@@ -442,7 +443,7 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
     private DetailedLogEventTablePanel createNewDetailedLogEventTablePanel(final EnvironmentModel environmentModel) {
 
         final DetailedLogEventTablePanel tablePanel = new DetailedLogEventTablePanel(menuBar,
-                                                                                     environmentModel.getName(),
+                                                                                     environmentModel.getName().get(),
                                                                                      environmentModel.getEventTableColumnModel(),
                                                                                      environmentModel.getLevelNamesModel(),
                                                                                      environmentModel.getColumnSettingsModel(),
@@ -450,9 +451,9 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
                                                                                      timeProvider,
                                                                                      proxy.getLoggingFrontendConfiguration().isShowHeapSlider());
         tablePanel.bind(environmentModel);
-        tablePanel.setSelectedRowFormat(model.getSelectedRowFormat());
+        tablePanel.setSelectedRowFormat(model.getSelectedRowFormat().get());
 
-        ObservableList<com.logginghub.logging.frontend.model.HighlighterModel> highlighters2 = environmentModel.getHighlighters();
+        ObservableList<HighlighterModel> highlighters2 = environmentModel.getHighlighters();
         for (com.logginghub.logging.frontend.model.HighlighterModel highlighterModel : highlighters2) {
             tablePanel.addHighlighter(highlighterModel);
         }
@@ -606,20 +607,20 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
             if (previouslySelectedPane != null) {
                 // Reset the state, this will redraw the background
                 // correctly now its not selected
-                previouslySelectedPane.getHighestStateSinceLastSelected().set(0);
+                previouslySelectedPane.getEnvironmentModel().getHighestLevelSinceLastSelected().set(0);
             }
 
             // Setting this value to zero will make the tab clear again
-            selected.getHighestStateSinceLastSelected().set(0);
+            selected.getEnvironmentModel().getHighestLevelSinceLastSelected().set(0);
             previouslySelectedPane = selected;
 
             autoLockWarnings.setEnabled(true);
-            autoLockWarnings.setSelected(selected.getEnvironmentModel().isAutoLocking());
+            autoLockWarnings.setSelected(selected.getEnvironmentModel().getAutoLocking().get());
 
             setupWriteOutputLogState(selected);
 
             EnvironmentModel environmentModel = selected.getEnvironmentModel();
-            if (environmentModel.isRepoEnabled()) {
+            if (environmentModel.getRepoEnabled().get()) {
                 viewRepo.setVisible(true);
             } else {
                 viewRepo.setVisible(false);
@@ -742,9 +743,9 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
                     // final Stream<LogEvent> eventStream = new Stream<LogEvent>();
 
                     EnvironmentModel fileModel = new EnvironmentModel();
-                    fileModel.setName(file.getName());
+                    fileModel.getName().set(file.getName());
                     DetailedLogEventTablePanel detailPanel = createNewDetailedLogEventTablePanel(fileModel);
-                    tabbedPane.add(fileModel.getName(), detailPanel);
+                    tabbedPane.add(fileModel.getName().get(), detailPanel);
                     tabbedPane.setSelectedComponent(detailPanel);
                     TimeController timeFilterController = detailPanel.getTimeFilterController();
                     final ImportController importHandler = new ImportController(timeFilterController);
@@ -999,13 +1000,13 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
             EnvironmentModel environmentModel = environments.get(0);
             setupSingleEnvironmentMode(environmentModel, proxy, model);
 
-            if (environmentModel.isRepoEnabled()) {
+            if (environmentModel.getRepoEnabled().get()) {
                 viewRepo.setVisible(true);
             } else {
                 viewRepo.setVisible(false);
             }
         } else {
-            if (model.getShowDashboard()) {
+            if (model.getShowDashboard().get()) {
                 createDashboard(model);
             }
 
@@ -1015,7 +1016,7 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
 
             JTabbedPane chartingTabsOld = new JTabbedPane();
 
-            if (model.isPopoutCharting()) {
+            if (model.getPopoutCharting().get()) {
                 if (swingFrontEnd.getProxy().getLoggingFrontendConfiguration().isShowOldCharting()) {
                     chartingPopoutFrameOldx = new SmartJFrame("charting", settings);
                     chartingPopoutFrameOldx.setTitle("LogViewer Charting Popout");
@@ -1029,23 +1030,23 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
 
             for (EnvironmentModel environmentModel : environments) {
 
-                if (environmentModel.isOpenOnStartup()) {
+                if (environmentModel.getOpenOnStartup().get()) {
                     addEnvironmentLoggingDetailsTab(environmentModel);
                 }
 
-                if (environmentModel.isShowHistoryTab()) {
+                if (environmentModel.getShowHistoryTab().get()) {
                     addHistoryTab(environmentModel);
                 }
 
                 environmentModel.addLogEventListener(chartingController.getLogEventMultiplexer());
 
-                if (model.isPopoutCharting()) {
+                if (model.getPopoutCharting().get()) {
                     EnvironmentConfiguration config = getEnvironmentConfigurationFromModel(environmentModel, proxy);
                     OldChartingPanel chartingPanel = new OldChartingPanel(config.getChartingConfiguration(), proxy.getParsersLocation());
                     chartingPanelsx.add(chartingPanel);
                     environmentModel.addLogEventListener(chartingPanel);
 
-                    chartingTabsOld.addTab(environmentModel.getName(), chartingPanel);
+                    chartingTabsOld.addTab(environmentModel.getName().get(), chartingPanel);
 
                     // TODO : create a new charting panel for this environment
                     // chartingTabsNew.addTab(environmentModel.getName(),
@@ -1063,12 +1064,12 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
 
             DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
             if (currentSelectedTabx != null) {
-                autoLockWarnings.setSelected(currentSelectedTabx.getEnvironmentModel().isAutoLocking());
+                autoLockWarnings.setSelected(currentSelectedTabx.getEnvironmentModel().getAutoLocking().get());
 
                 setupWriteOutputLogState(currentSelectedTabx);
 
                 EnvironmentModel environmentModel = currentSelectedTabx.getEnvironmentModel();
-                if (environmentModel.isRepoEnabled()) {
+                if (environmentModel.getRepoEnabled().get()) {
                     viewRepo.setVisible(true);
                 } else {
                     viewRepo.setVisible(false);
@@ -1221,7 +1222,7 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
             }
         });
 
-        if (model.isPopoutCharting()) {
+        if (model.getPopoutCharting().get()) {
             addMenuItem(editMenu, "Show charting popout", new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     if (proxy.getLoggingFrontendConfiguration().isShowOldCharting()) {
@@ -1299,7 +1300,7 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
         sourcesMenu.add(hubLevelFiltering);
         sourcesMenu.addSeparator();
 
-        if (getModel().isShowHubClearEvents()) {
+        if (getModel().getShowHubClearEvents().get()) {
             hubClearEvents = new JMenuItem("Hub clear events");
             hubClearEvents.addActionListener(new ActionListener() {
                 @Override
@@ -1428,7 +1429,7 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
 
     private void setupSingleEnvironmentMode(EnvironmentModel environmentModel, ConfigurationProxy proxy, LoggingFrontendModel newGoodModel) {
 
-        if (model.getShowDashboard()) {
+        if (model.getShowDashboard().get()) {
             createDashboard(model);
         }
 
@@ -1446,7 +1447,7 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
         // to use the model instead.
         EnvironmentConfiguration config = getEnvironmentConfigurationFromModel(environmentModel, proxy);
 
-        if (newGoodModel.isPopoutCharting()) {
+        if (newGoodModel.getPopoutCharting().get()) {
             if (proxy.getLoggingFrontendConfiguration().isShowOldCharting()) {
                 chartingPopoutFrameOldx = new SmartJFrame("charting", proxy.getDynamicSettings());
                 chartingPopoutFrameOldx.setTitle("LogViewer Charting Popout");
@@ -1481,7 +1482,7 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
             }
         });
 
-        if (newGoodModel.isPopoutCharting()) {
+        if (newGoodModel.getPopoutCharting().get()) {
             if (proxy.getLoggingFrontendConfiguration().isShowOldCharting()) {
                 chartingPopoutFrameOldx.getContentPane().add(chartingPanelOld);
             }
@@ -1603,13 +1604,14 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
 
                 ObservableList<EnvironmentModel> environments = model.getEnvironments();
                 for (EnvironmentModel environmentModel : environments) {
-                    if (environmentModel.get(EnvironmentModel.Fields.Name).equals(environmentConfiguration.getName())) {
+                    if (environmentModel.getName().get().equals(environmentConfiguration.getName())) {
                         addEnvironmentLoggingDetailsTab(environmentModel);
                         startConnections(environmentModel);
                     }
                 }
             }
         });
+
         connectionManagerPanel.populate(proxy.getLoggingFrontendConfiguration());
         dialog.getContentPane().add(connectionManagerPanel);
         dialog.setSize(500, 400);
@@ -1842,9 +1844,9 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
                 SocketClientManager socketClientManager = new SocketClientManager(socketClient);
                 socketClientManager.setReconnectionTime(0);
 
-                String hubChannel = hubModel.get(HubConnectionModel.Fields.Channel);
+                String hubChannel = hubModel.getChannel().get();
                 if (hubChannel == null) {
-                    hubChannel = environmentModel.get(EnvironmentModel.Fields.Channel);
+                    hubChannel = environmentModel.getChannel().get();
                 }
 
                 if (hubChannel != null) {
@@ -1859,7 +1861,7 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
                 if (environmentModel.isClustered()) {
                     socketClient.addConnectionPoints(hubModel.getClusteredConnectionPoints());
                 } else {
-                    final InetSocketAddress address = new InetSocketAddress(hubModel.getHost(), hubModel.getPort());
+                    final InetSocketAddress address = new InetSocketAddress(hubModel.getHost().get(), hubModel.getPort().get());
                     socketClient.addConnectionPoint(address);
                 }
 
@@ -1871,7 +1873,7 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
                                 @Override
                                 public void run() {
                                     logger.info("Clear events due to a remote clear message for enviroment '{}'", environmentModel.getName());
-                                    getDetailedLogEventTablePanelForEnvironment(environmentModel.getName()).clearEvents();
+                                    getDetailedLogEventTablePanelForEnvironment(environmentModel.getName().get()).clearEvents();
                                 }
                             });
                         }
@@ -1884,17 +1886,17 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
                         switch (toState) {
                             case Connected:
                                 logger.info("Socket client manager - connected to '{}'", address);
-                                hubModel.setConnectionState(HubConnectionModel.ConnectionState.Connected);
+                                hubModel.getConnectionState().set(HubConnectionModel.ConnectionState.Connected);
                                 sendHistoricalIndexRequests(environmentModel);
                                 sendHistoricalDataRequests(environmentModel);
                                 break;
                             case Connecting:
                                 logger.fine("Socket client manager - connecting to '{}'", address);
-                                hubModel.setConnectionState(HubConnectionModel.ConnectionState.AttemptingConnection);
+                                hubModel.getConnectionState().set(HubConnectionModel.ConnectionState.AttemptingConnection);
                                 break;
                             case NotConnected:
                                 logger.fine("Socket client manager - not connected to '{}'", address);
-                                hubModel.setConnectionState(HubConnectionModel.ConnectionState.NotConnected);
+                                hubModel.getConnectionState().set(HubConnectionModel.ConnectionState.NotConnected);
                                 break;
                         }
 

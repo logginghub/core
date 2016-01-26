@@ -8,7 +8,6 @@ import com.logginghub.logging.frontend.model.EnvironmentModel;
 import com.logginghub.logging.frontend.model.LoggingFrontendController;
 import com.logginghub.logging.frontend.model.LoggingFrontendModel;
 import com.logginghub.logging.frontend.model.ModelBuilder;
-import com.logginghub.logging.frontend.model.ObservableList;
 import com.logginghub.logging.frontend.modules.AggregatedDataViewModule;
 import com.logginghub.logging.frontend.modules.InstanceViewModule;
 import com.logginghub.logging.frontend.modules.PatternisedDataViewModule;
@@ -28,14 +27,11 @@ import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.module.ClassResolver;
 import com.logginghub.utils.module.Container2;
 import com.logginghub.utils.observable.ObservableItemContainer;
+import com.logginghub.utils.observable.ObservableList;
 import com.logginghub.utils.observable.ObservableListener;
 
-import javax.swing.JFrame;
-import javax.swing.JTabbedPane;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.EventQueue;
-import java.awt.Toolkit;
+import javax.swing.*;
+import java.awt.*;
 import java.io.Closeable;
 import java.io.File;
 import java.util.Timer;
@@ -320,7 +316,7 @@ public class SwingFrontEnd extends SmartJFrame implements Closeable {
         swingFrontEnd.setVisible(true);
 
         LoggingFrontendModel model = swingFrontEnd.getModel();
-        if (model.isPopoutCharting()) {
+        if (model.getPopoutCharting().get()) {
             LoggingMainPanel mainPanel = swingFrontEnd.getMainPanel();
 
             JFrame oldFrame = mainPanel.getChartingPopoutFrameOld();
@@ -371,7 +367,7 @@ public class SwingFrontEnd extends SmartJFrame implements Closeable {
         logger.info("Starting connections for Swing front end...");
         ObservableList<EnvironmentModel> environments = model.getEnvironments();
         for (EnvironmentModel environmentModel : environments) {
-            if (environmentModel.isOpenOnStartup()) {
+            if (environmentModel.getOpenOnStartup().get()) {
                 mainPanel.startConnections(environmentModel);
             }
         }

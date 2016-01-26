@@ -9,7 +9,8 @@
                  autoRequestHistory="all"
                  disableAutoScrollPauser="true"
                  disableColumnFile="true"
-                 eventDetailsSeparatorLocation="1000">
+                 eventDetailsSeparatorLocation="1000"
+                 showHTMLEventDetails="true">
 
         <hub name="local" host="localhost:9000"/>
 
@@ -43,6 +44,9 @@
         <customFilter label="App" field="SourceApplication" type="Contains" width="100" defaultValue=""/>
         <customFilter label="Host" field="SourceHost" type="Contains" width="100" defaultValue=""/>
         <customFilter label="Custom" field="newfield1" type="StartsWith"/>
+
+        <customDateFilter label="Earliest Time" field="HubTime" type="GreaterThan" width="200"/>
+        <customDateFilter label="Latest Time" field="HubTime" type="LessThan" width="200"/>
 
     </environment>
 

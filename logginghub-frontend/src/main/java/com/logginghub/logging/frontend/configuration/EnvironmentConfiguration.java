@@ -37,6 +37,7 @@ import java.util.List;
     @XmlElement List<FilterConfiguration> filter = new ArrayList<FilterConfiguration>();
     @XmlElement List<ColumnConfiguration> columnSetting = new ArrayList<ColumnConfiguration>();
     @XmlElement List<CustomFilterConfiguration> customFilter = new ArrayList<CustomFilterConfiguration>();
+    @XmlElement List<CustomDateFilterConfiguration> customDateFilter = new ArrayList<CustomDateFilterConfiguration>();
 
     @XmlElement List<NameMappingConfiguration> columnMapping = new ArrayList<NameMappingConfiguration>();
     @XmlElement private List<NameMappingConfiguration> levelMapping = new ArrayList<NameMappingConfiguration>();
@@ -48,6 +49,7 @@ import java.util.List;
     @XmlAttribute private boolean filterUnicode = false;
     @XmlAttribute private boolean disableColumnFile = false;
     @XmlAttribute private int eventDetailsSeparatorLocation = -1;
+    @XmlAttribute private boolean showHTMLEventDetails = false;
 
     public EnvironmentConfiguration() {
         setupOutputLogConfiguration();
@@ -56,6 +58,11 @@ import java.util.List;
     public List<CustomFilterConfiguration> getCustomFilters() {
         return customFilter;
     }
+
+    public List<CustomDateFilterConfiguration> getCustomDateFilters() {
+        return customDateFilter;
+    }
+
 
     public List<ColumnConfiguration> getColumnSetting() {
         return columnSetting;
@@ -97,6 +104,10 @@ import java.util.List;
         return filterUnicode;
     }
 
+    public boolean isShowHTMLEventDetails() {
+        return showHTMLEventDetails;
+    }
+
     public void setAutoRequestHistory(String autoRequestHistory) {
         this.autoRequestHistory = autoRequestHistory;
     }
@@ -131,6 +142,10 @@ import java.util.List;
 
     public void setLevelMappings(List<NameMappingConfiguration> levelMappings) {
         this.levelMapping = levelMappings;
+    }
+
+    public void setShowHTMLEventDetails(boolean showHTMLEventDetails) {
+        this.showHTMLEventDetails = showHTMLEventDetails;
     }
 
     private void setupOutputLogConfiguration() {

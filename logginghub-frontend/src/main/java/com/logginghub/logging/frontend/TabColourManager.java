@@ -1,19 +1,15 @@
 package com.logginghub.logging.frontend;
 
-import java.awt.Color;
-import java.util.logging.Level;
-
-import javax.swing.JTabbedPane;
-import javax.swing.SwingUtilities;
-
 import com.logginghub.logging.frontend.model.EnvironmentModel;
 import com.logginghub.logging.frontend.model.HubConnectionModel;
-import com.logginghub.logging.frontend.model.ObservableFieldListener;
-import com.logginghub.logging.frontend.model.ObservableList;
-import com.logginghub.logging.frontend.model.ObservableModelListener;
 import com.logginghub.logging.frontend.model.HubConnectionModel.ConnectionState;
-import com.logginghub.logging.frontend.model.ObservableModel.FieldEnumeration;
 import com.logginghub.logging.frontend.views.logeventdetail.DetailedLogEventTablePanel;
+import com.logginghub.utils.observable.ObservableList;
+import com.logginghub.utils.observable.ObservablePropertyListener;
+
+import javax.swing.*;
+import java.awt.*;
+import java.util.logging.Level;
 
 public class TabColourManager {
 
@@ -30,18 +26,23 @@ public class TabColourManager {
     }
 
     public static void bind(JTabbedPane tabbedPane, int tabIndex, DetailedLogEventTablePanel tablePanel, EnvironmentModel environmentModel) {
+
         final TabColourManager manager = new TabColourManager(tabbedPane, tabIndex, tablePanel, environmentModel);
+
         ObservableList<HubConnectionModel> hubs = environmentModel.getHubConnectionModels();
+
         for (HubConnectionModel hubModel : hubs) {
-            hubModel.addListener(HubConnectionModel.Fields.ConnectionState, new ObservableModelListener() {
-                @Override public void onFieldChanged(FieldEnumeration fe, Object value) {
+            hubModel.getConnectionState().addListener(new ObservablePropertyListener<ConnectionState>() {
+                @Override
+                public void onPropertyChanged(ConnectionState oldValue, ConnectionState newValue) {
                     invokeResolve(manager);
                 }
             });
         }
 
-        tablePanel.getHighestStateSinceLastSelected().addListener(new ObservableFieldListener<Integer>() {
-            @Override public void onChanged(Integer oldValue, Integer newValue) {
+        environmentModel.getHighestLevelSinceLastSelected().addListener(new ObservablePropertyListener<Integer>() {
+            @Override
+            public void onPropertyChanged(Integer oldValue, Integer newValue) {
                 invokeResolve(manager);
             }
         });
@@ -65,7 +66,7 @@ public class TabColourManager {
 
         ObservableList<HubConnectionModel> hubs = environmentModel.getHubConnectionModels();
         for (HubConnectionModel hubModel : hubs) {
-            ConnectionState connectionState = hubModel.getConnectionState();
+            ConnectionState connectionState = hubModel.getConnectionState().get();
             switch (connectionState) {
                 case AttemptingConnection:
                     connecting++;
@@ -84,16 +85,14 @@ public class TabColourManager {
         if (connected == 0) {
             if (connecting == 0) {
                 overall = ConnectionState.NotConnected;
-            }
-            else {
+            } else {
                 overall = ConnectionState.AttemptingConnection;
             }
-        }
-        else {
+        } else {
             overall = ConnectionState.Connected;
         }
-        
-        if(hubs.size() == 0){
+
+        if (hubs.size() == 0) {
             // No hubs have been provided, so it might be a local view of a binary file?
             overall = ConnectionState.Connected;
         }
@@ -117,7 +116,7 @@ public class TabColourManager {
         if (backgroundColor == null) {
             // Need to decide based on the highest coloured event in the logeventdetail
             // display
-            int highestStateSinceLastSelected = tablePanel.getHighestStateSinceLastSelected().get().intValue();
+            int highestStateSinceLastSelected = environmentModel.getHighestLevelSinceLastSelected().get();
 
             if (highestStateSinceLastSelected >= Level.WARNING.intValue()) {
                 backgroundColor = Utils.getBackgroundColourForLevel(highestStateSinceLastSelected);
@@ -128,8 +127,7 @@ public class TabColourManager {
         if (tabbedPane.getSelectedIndex() == tabIndex) {
             tabbedPane.setForegroundAt(tabIndex, foregroundColor);
             tabbedPane.setBackgroundAt(tabIndex, Color.gray);
-        }
-        else {
+        } else {
             tabbedPane.setBackgroundAt(tabIndex, backgroundColor);
             tabbedPane.setForegroundAt(tabIndex, Color.DARK_GRAY);
         }

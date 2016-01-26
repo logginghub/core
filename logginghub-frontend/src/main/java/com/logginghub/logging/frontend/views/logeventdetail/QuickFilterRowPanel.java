@@ -3,22 +3,29 @@ package com.logginghub.logging.frontend.views.logeventdetail;
 import com.logginghub.logging.frontend.components.LevelsCheckboxListView;
 import com.logginghub.logging.frontend.components.QuickFilterHistoryController;
 import com.logginghub.logging.frontend.components.QuickFilterHistoryTextField;
+import com.logginghub.logging.frontend.model.CustomDateFilterModel;
 import com.logginghub.logging.frontend.model.CustomQuickFilterModel;
 import com.logginghub.logging.frontend.model.LevelNamesModel;
-import com.logginghub.logging.frontend.model.ObservableListListener;
 import com.logginghub.logging.frontend.model.QuickFilterModel;
 import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.observable.Binder;
 import com.logginghub.utils.observable.Binder2;
+import com.logginghub.utils.observable.ObservableListListener;
 import com.logginghub.utils.observable.ObservableProperty;
 import com.logginghub.utils.observable.ObservablePropertyListener;
 import net.miginfocom.swing.MigLayout;
+import net.sourceforge.jdatepicker.impl.JDatePanelImpl;
+import net.sourceforge.jdatepicker.impl.JDatePickerImpl;
+import net.sourceforge.jdatepicker.impl.UtilDateModel;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 public class QuickFilterRowPanel extends JPanel {
@@ -99,14 +106,36 @@ public class QuickFilterRowPanel extends JPanel {
 
         quickLevelFilterCombo.bind(model.getLevelFilter().get());
 
-        model.getCustomFilters().addListListenerAndNotifyExisting(new ObservableListListener<CustomQuickFilterModel>() {
+        model.getCustomFilters().addListenerAndNotifyCurrent(new ObservableListListener<CustomQuickFilterModel>() {
             @Override
-            public void onItemAdded(CustomQuickFilterModel customQuickFilterModel) {
+            public void onAdded(CustomQuickFilterModel customQuickFilterModel) {
                 addCustomFilter(customQuickFilterModel);
             }
 
             @Override
-            public void onItemRemoved(CustomQuickFilterModel customQuickFilterModel) {
+            public void onRemoved(CustomQuickFilterModel customQuickFilterModel, int index) {
+
+            }
+
+            @Override
+            public void onCleared() {
+
+            }
+        });
+
+        model.getCustomDateFilters().addListenerAndNotifyCurrent(new ObservableListListener<CustomDateFilterModel>() {
+            @Override
+            public void onAdded(CustomDateFilterModel customDateFilterModel) {
+                addCustomDateFilter(customDateFilterModel);
+            }
+
+            @Override
+            public void onRemoved(CustomDateFilterModel customDateFilterModel, int index) {
+
+            }
+
+            @Override
+            public void onCleared() {
 
             }
         });
@@ -126,6 +155,62 @@ public class QuickFilterRowPanel extends JPanel {
                 binder.bind(customQuickFilterModel.getValue(), filter);
 
                 Dimension dimension = new Dimension(customQuickFilterModel.getWidth().get(), 16);
+                filter.setPreferredSize(dimension);
+                filter.setMinimumSize(dimension);
+
+                customFiltersPanel.add(label);
+                customFiltersPanel.add(filter);
+
+                customFiltersPanel.doLayout();
+            }
+        });
+
+    }
+
+    private void addCustomDateFilter(final CustomDateFilterModel customDateFilterModel) {
+
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                JLabel label = new JLabel(customDateFilterModel.getLabel().get());
+
+                final UtilDateModel model = new UtilDateModel();
+                model.setDate(1990, 8, 24);
+                model.setSelected(true);
+                JDatePanelImpl datePanel = new JDatePanelImpl(model);
+                JDatePickerImpl filter = new JDatePickerImpl(datePanel, null);
+
+                final ObservablePropertyListener<Long> listener = new ObservablePropertyListener<Long>() {
+                    @Override
+                    public void onPropertyChanged(Long oldValue, Long newValue) {
+                        Calendar calendar = new GregorianCalendar();
+                        calendar.setTimeInMillis(newValue);
+                        model.setDate(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+                    }
+                };
+
+                filter.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        Date value = model.getValue();
+                        logger.info("Action performed on hte date filter : {} {} {} {}", model.getDay(), model.getMonth(), model.getYear(), value );
+                        if(value == null) {
+                            // This is the "cleared" state - turn off the filter
+                        }
+                    }
+                });
+
+                customDateFilterModel.getValue().addListenerAndNotifyCurrent(listener);
+
+                Binder2 binder = new Binder2();
+                binder.addUnbinder(new Runnable() {
+                    @Override
+                    public void run() {
+                        customDateFilterModel.getValue().removeListener(listener);
+                    }
+                });
+
+                Dimension dimension = new Dimension(customDateFilterModel.getWidth().get(), 16);
                 filter.setPreferredSize(dimension);
                 filter.setMinimumSize(dimension);
 

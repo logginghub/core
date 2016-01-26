@@ -2,8 +2,8 @@ package com.logginghub.logging.frontend;
 
 import com.logginghub.logging.frontend.model.HubConnectionModel;
 import com.logginghub.logging.frontend.model.HubConnectionModel.ConnectionState;
-import com.logginghub.logging.frontend.model.ObservableModel.FieldEnumeration;
-import com.logginghub.logging.frontend.model.ObservableModelListener;
+import com.logginghub.utils.observable.ObservableItemContainer;
+import com.logginghub.utils.observable.ObservableListener;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
@@ -33,8 +33,10 @@ public class ConnectionPanel extends JPanel {
     }
 
     public void setModel(final HubConnectionModel socketSourceModel) {
-        socketSourceModel.addListener(new ObservableModelListener() {
-            @Override public void onFieldChanged(FieldEnumeration fe, Object value) {
+
+        socketSourceModel.addListener(new ObservableListener() {
+            @Override
+            public void onChanged(ObservableItemContainer observable, Object childPropertyThatChanged) {
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override public void run() {
                         update(socketSourceModel);
@@ -48,12 +50,12 @@ public class ConnectionPanel extends JPanel {
 
     protected void update(HubConnectionModel socketSourceModel) {
 
-        nameLabel.setText(socketSourceModel.getName());
+        nameLabel.setText(socketSourceModel.getName().get());
 
         String text;
         List<InetSocketAddress> clusteredConnectionPoints = socketSourceModel.getClusteredConnectionPoints();
         if (clusteredConnectionPoints.isEmpty()) {
-            text = String.format("%s:%d", socketSourceModel.getHost(), socketSourceModel.getPort());
+            text = String.format("%s:%d", socketSourceModel.getHost().get(), socketSourceModel.getPort().get());
         } else {
             StringBuilder builder = new StringBuilder();
             String div = "";
@@ -74,7 +76,7 @@ public class ConnectionPanel extends JPanel {
         connectionPointlabel.setText(text);
 
         ImageIcon icon = null;
-        ConnectionState connectionState = socketSourceModel.getConnectionState();
+        ConnectionState connectionState = socketSourceModel.getConnectionState().get();
         switch (connectionState) {
             case AttemptingConnection: {
                 icon = blue;

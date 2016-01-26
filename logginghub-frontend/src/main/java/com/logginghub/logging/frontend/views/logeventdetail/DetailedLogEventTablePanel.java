@@ -16,16 +16,15 @@ import com.logginghub.logging.frontend.configuration.RowFormatConfiguration;
 import com.logginghub.logging.frontend.images.Icons;
 import com.logginghub.logging.frontend.images.Icons.IconIdentifier;
 import com.logginghub.logging.frontend.model.ColumnSettingsModel;
+import com.logginghub.logging.frontend.model.CustomDateFilterModel;
 import com.logginghub.logging.frontend.model.CustomQuickFilterModel;
 import com.logginghub.logging.frontend.model.EnvironmentModel;
 import com.logginghub.logging.frontend.model.EventTableColumnModel;
-import com.logginghub.logging.frontend.model.HighlighterModel;
 import com.logginghub.logging.frontend.model.HubConnectionModel;
 import com.logginghub.logging.frontend.model.LevelNamesModel;
 import com.logginghub.logging.frontend.model.LogEventContainer;
 import com.logginghub.logging.frontend.model.LogEventContainerController;
 import com.logginghub.logging.frontend.model.LogEventContainerListener;
-import com.logginghub.logging.frontend.model.ObservableField;
 import com.logginghub.logging.frontend.model.QuickFilterController;
 import com.logginghub.logging.frontend.model.QuickFilterModel;
 import com.logginghub.logging.frontend.model.RowFormatModel;
@@ -59,6 +58,7 @@ import com.logginghub.utils.VisualStopwatchController;
 import com.logginghub.utils.WorkerThread;
 import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.module.ProxyServiceDiscovery;
+import com.logginghub.utils.observable.BindableToModel;
 import com.logginghub.utils.observable.Binder2;
 import com.logginghub.utils.observable.ObservableList;
 import com.logginghub.utils.observable.ObservablePropertyListener;
@@ -95,7 +95,7 @@ import java.util.logging.Level;
  *
  * @author James
  */
-public class DetailedLogEventTablePanel extends JPanel implements LogEventListener {
+public class DetailedLogEventTablePanel extends JPanel implements LogEventListener, BindableToModel<EnvironmentModel> {
 
     private static final int dummyEventsDelayMS = 100;
     private static final Logger logger = Logger.getLoggerFor(DetailedLogEventTablePanel.class);
@@ -103,7 +103,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
     private final static long quickFilterTimeout = 200;
     private final static int eventBatchSizeWarningLevel = 100000;
     private static int nextDummyApplicationIndex;
-    private final ObservableField<Integer> highestLevelSinceLastSelected = new ObservableField<Integer>(0);
+
     private final Object incommingEventBatchLock = new Object();
     private MouseWheelListener mouseWheelPauser;
     private boolean autoScroll = true;
@@ -183,7 +183,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         this.levelNamesModel = levelNamesModel;
 
         this.eventController = eventController;
-        this.eventDetailPanel = new EventDetailPanel(levelNamesModel, eventTableColumnModel);
+        this.eventDetailPanel = new EventDetailPanel();
 
         tableModel = new DetailedLogEventTableModel(eventTableColumnModel, levelNamesModel, eventController);
         table = new DetailedLogEventTable(tableModel, rowHighlighter, propertiesName, columnSettingsModel);
@@ -684,14 +684,21 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
     public void bind(EnvironmentModel environmentModel) {
         this.environmentModel = environmentModel;
 
+        eventDetailPanel.bind(environmentModel);
+
         setupMenuBar(menuBar);
 
         QuickFilterModel quickFilterModel = new QuickFilterModel();
 
         // Build any custom filters from the configuration
-        com.logginghub.logging.frontend.model.ObservableList<CustomQuickFilterModel> customFilters = environmentModel.getCustomFilters();
+        ObservableList<CustomQuickFilterModel> customFilters = environmentModel.getCustomFilters();
         for (CustomQuickFilterModel customFilter : customFilters) {
             quickFilterModel.getCustomFilters().add(customFilter);
+        }
+
+        ObservableList<CustomDateFilterModel> customDateFilters = environmentModel.getCustomDateFilters();
+        for (CustomDateFilterModel customDateFilter : customDateFilters) {
+            quickFilterModel.getCustomDateFilters().add(customDateFilter);
         }
 
         environmentModel.getQuickFilterModels().add(quickFilterModel);
@@ -760,6 +767,11 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         if (environmentModel.isDisableAutoScrollPauser()) {
             disableScrollerAutoPause();
         }
+    }
+
+    @Override
+    public void unbind(EnvironmentModel environmentModel) {
+
     }
 
     private void setupMenuBar(JMenuBar menuBar) {
@@ -1093,7 +1105,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
             addHighlighter(highlighterModel);
         }
 
-        setAutoLockWarning(model.isAutoLocking());
+        setAutoLockWarning(model.getAutoLocking().get());
 
         TimestampVariableRollingFileLoggerConfiguration outputLogConfiguration = model.getOutputLogConfiguration();
         if (outputLogConfiguration != null) {
@@ -1104,8 +1116,8 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
     }
 
     public void addHighlighter(com.logginghub.logging.frontend.model.HighlighterModel phraseHighlighterModel) {
-        final PhraseHighlighter highlighter = new PhraseHighlighter(phraseHighlighterModel.getString(HighlighterModel.Fields.Phrase));
-        Color background = ColourUtils.parseColor(phraseHighlighterModel.getString(HighlighterModel.Fields.ColourHex));
+        final PhraseHighlighter highlighter = new PhraseHighlighter(phraseHighlighterModel.getPhrase().get());
+        Color background = ColourUtils.parseColor(phraseHighlighterModel.getColourHex().get());
         highlighter.setHighlightBackgroundColour(background);
         table.addHighlighter(highlighter);
     }
@@ -1197,10 +1209,6 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         return incommingEventBatch.size();
     }
 
-    public ObservableField<Integer> getHighestStateSinceLastSelected() {
-        return highestLevelSinceLastSelected;
-    }
-
     public int getLevelFilter() {
         return getFirstQuickFilter().getModel().getLevelFilter().get().getSelectedLevel().get().intValue();
     }
@@ -1246,8 +1254,8 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         Stopwatch sw = Stopwatch.start("DetailedLogEventPanel.onNewLogEvent");
         eventsReceived++;
 
-        synchronized (highestLevelSinceLastSelected) {
-            highestLevelSinceLastSelected.setIfGreater(event.getLevel());
+        synchronized (environmentModel.getHighestLevelSinceLastSelected()) {
+            environmentModel.getHighestLevelSinceLastSelected().setIfGreater(event.getLevel());
         }
 
         synchronized (incommingEventBatchLock) {
@@ -1287,7 +1295,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
 
     public void sendHistoricalDataRequest(String autoRequestHistory) {
 
-        com.logginghub.logging.frontend.model.ObservableList<HubConnectionModel> hubConnectionModels = environmentModel.getHubConnectionModels();
+        ObservableList<HubConnectionModel> hubConnectionModels = environmentModel.getHubConnectionModels();
         for (HubConnectionModel hubConnectionModel : hubConnectionModels) {
             SocketClientManager socketClientManager = hubConnectionModel.getSocketClientManager();
             final SocketClient client = socketClientManager.getClient();
@@ -1352,7 +1360,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
 
     public void sendHistoricalIndexRequest() {
 
-        com.logginghub.logging.frontend.model.ObservableList<HubConnectionModel> hubConnectionModels = environmentModel.getHubConnectionModels();
+        ObservableList<HubConnectionModel> hubConnectionModels = environmentModel.getHubConnectionModels();
         for (HubConnectionModel hubConnectionModel : hubConnectionModels) {
             SocketClientManager socketClientManager = hubConnectionModel.getSocketClientManager();
             final SocketClient client = socketClientManager.getClient();

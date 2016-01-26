@@ -12,7 +12,6 @@ import com.logginghub.logging.frontend.model.EnvironmentModel;
 import com.logginghub.logging.frontend.model.HubConnectionModel;
 import com.logginghub.logging.frontend.model.HubConnectionModel.ConnectionState;
 import com.logginghub.logging.frontend.model.LoggingFrontendModel;
-import com.logginghub.logging.frontend.model.ObservableList;
 import com.logginghub.logging.frontend.views.logeventdetail.DetailedLogEventTablePanel;
 import com.logginghub.logging.messages.LogEventMessage;
 import com.logginghub.logging.servers.SocketHub;
@@ -22,6 +21,7 @@ import com.logginghub.utils.SwingHelper;
 import com.logginghub.utils.TestUtils;
 import com.logginghub.utils.TestUtils.BooleanOperation;
 import com.logginghub.utils.ThreadUtils;
+import com.logginghub.utils.observable.ObservableList;
 import org.fest.swing.fixture.FrameFixture;
 import org.fest.swing.fixture.JTabbedPaneFixture;
 import org.junit.Ignore;
@@ -129,7 +129,7 @@ public class TestTabsChangeColourWhenEventsComeIn {
             @Override public boolean run() {
                 boolean done = true;
                 for (HubConnectionModel hubModel : hubModels) {
-                    ConnectionState connectionState = hubModel.getConnectionState();
+                    ConnectionState connectionState = hubModel.getConnectionState().get();
                     done &= (connectionState == ConnectionState.Connected);
                 }
                 return done;
