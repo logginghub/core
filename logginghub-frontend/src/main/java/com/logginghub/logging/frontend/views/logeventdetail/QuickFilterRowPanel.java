@@ -1,5 +1,6 @@
 package com.logginghub.logging.frontend.views.logeventdetail;
 
+import com.logginghub.logging.filters.TimeFieldFilter;
 import com.logginghub.logging.frontend.components.LevelsCheckboxListView;
 import com.logginghub.logging.frontend.components.QuickFilterHistoryController;
 import com.logginghub.logging.frontend.components.QuickFilterHistoryTextField;
@@ -7,6 +8,7 @@ import com.logginghub.logging.frontend.model.CustomDateFilterModel;
 import com.logginghub.logging.frontend.model.CustomQuickFilterModel;
 import com.logginghub.logging.frontend.model.LevelNamesModel;
 import com.logginghub.logging.frontend.model.QuickFilterModel;
+import com.logginghub.utils.TimeUtils;
 import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.observable.Binder;
 import com.logginghub.utils.observable.Binder2;
@@ -147,19 +149,33 @@ public class QuickFilterRowPanel extends JPanel {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                JLabel label = new JLabel(customQuickFilterModel.getLabel().get());
 
-                JTextField filter = new JTextField();
-
+                JComponent target;
                 Binder2 binder = new Binder2();
-                binder.bind(customQuickFilterModel.getValue(), filter);
+
+                JLabel label = new JLabel(customQuickFilterModel.getLabel().get());
+                if (customQuickFilterModel.getChoices().isEmpty()) {
+                    JTextField filter = new JTextField();
+                    target = filter;
+                    binder.bind(customQuickFilterModel.getValue(), filter);
+                } else {
+
+                    DefaultComboBoxModel comboModel = new DefaultComboBoxModel();
+                    comboModel.addElement("");
+                    for (String choice : customQuickFilterModel.getChoices()) {
+                        comboModel.addElement(choice);
+                    }
+                    JComboBox comboBox = new JComboBox(comboModel);
+                    target = comboBox;
+                    binder.bind(customQuickFilterModel.getValue(), comboBox);
+                }
 
                 Dimension dimension = new Dimension(customQuickFilterModel.getWidth().get(), 16);
-                filter.setPreferredSize(dimension);
-                filter.setMinimumSize(dimension);
+                target.setPreferredSize(dimension);
+                target.setMinimumSize(dimension);
 
                 customFiltersPanel.add(label);
-                customFiltersPanel.add(filter);
+                customFiltersPanel.add(target);
 
                 customFiltersPanel.doLayout();
             }
@@ -175,17 +191,33 @@ public class QuickFilterRowPanel extends JPanel {
                 JLabel label = new JLabel(customDateFilterModel.getLabel().get());
 
                 final UtilDateModel model = new UtilDateModel();
-                model.setDate(1990, 8, 24);
+
+                Calendar calendar = new GregorianCalendar();
+                TimeUtils.clearHoursMinutesSecondsMillis(calendar);
+
+                model.setValue(calendar.getTime());
                 model.setSelected(true);
                 JDatePanelImpl datePanel = new JDatePanelImpl(model);
                 JDatePickerImpl filter = new JDatePickerImpl(datePanel, null);
 
+                // Default to clear
+                model.setValue(null);
+
+                // TODO : process default value if there is one in the model
+
                 final ObservablePropertyListener<Long> listener = new ObservablePropertyListener<Long>() {
                     @Override
                     public void onPropertyChanged(Long oldValue, Long newValue) {
-                        Calendar calendar = new GregorianCalendar();
-                        calendar.setTimeInMillis(newValue);
-                        model.setDate(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+
+                        if (newValue == TimeFieldFilter.ACCEPT_ALL) {
+                            logger.info("Setting calendar value to NULL due to change in the model");
+                            model.setValue(null);
+                        } else {
+                            logger.info("Setting calendar value to {} due to change in the model", newValue);
+                            Calendar calendar = new GregorianCalendar();
+                            calendar.setTimeInMillis(newValue);
+                            model.setDate(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+                        }
                     }
                 };
 
@@ -193,9 +225,16 @@ public class QuickFilterRowPanel extends JPanel {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         Date value = model.getValue();
-                        logger.info("Action performed on hte date filter : {} {} {} {}", model.getDay(), model.getMonth(), model.getYear(), value );
-                        if(value == null) {
+                        logger.info("Action performed on hte date filter : {} {} {} {}", model.getDay(), model.getMonth(), model.getYear(), value);
+                        if (value == null) {
                             // This is the "cleared" state - turn off the filter
+                            logger.info("Setting date filter model value to TimeFieldFilter.ACCEPT_ALL due to change in the gui");
+                            customDateFilterModel.getValue().set(TimeFieldFilter.ACCEPT_ALL);
+                        } else {
+                            // Apply
+                            long time = value.getTime();
+                            logger.info("Setting date filter model value to {} due to change in the gui", time);
+                            customDateFilterModel.getValue().set(time);
                         }
                     }
                 });
@@ -216,7 +255,6 @@ public class QuickFilterRowPanel extends JPanel {
 
                 customFiltersPanel.add(label);
                 customFiltersPanel.add(filter);
-
                 customFiltersPanel.doLayout();
             }
         });

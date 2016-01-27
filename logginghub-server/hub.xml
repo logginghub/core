@@ -23,12 +23,15 @@
                  trendMax="1"
                  random="false"
                  level="INFO"
-                 patternFile="message.template">
+                 patternFile="message.template"
+                 startTime="25 January 2016"
+                 timeIncrement="5 seconds">
 
             <template>
                 <metadata key="newfield" value="123"/>
                 <metadata key="newfield2" value="abc"/>
             </template>
+
         </message>
 
     </generator>

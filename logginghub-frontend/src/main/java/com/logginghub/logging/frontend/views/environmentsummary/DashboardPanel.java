@@ -62,7 +62,7 @@ public class DashboardPanel extends JPanel {
 
     protected void addEnvironment(EnvironmentModel environmentModel) {
         EnvironmentSummaryPanel environmentSummaryPanel = new EnvironmentSummaryPanel();
-        environmentSummaryPanel.setName("EnvironmentSummaryPanel-" + environmentModel.getName());
+        environmentSummaryPanel.setName("EnvironmentSummaryPanel-" + environmentModel.getName().get());
         environmentSummaryPanel.bind(environmentModel, dashboardSelectionListener);
         environmentSummaryPanel.setMaximumSize(new Dimension(10000,  400));
         add(environmentSummaryPanel, "wrap");

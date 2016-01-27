@@ -56,7 +56,7 @@ public class LoggingFrontendController {
     }
 
     private File getQuickFiltersFileForEnvironment(File logViewerSettingsPath, final EnvironmentModel environmentModel) {
-        File quickFiltersFile = new File(logViewerSettingsPath, environmentModel.getName() + ".quickfilters");
+        File quickFiltersFile = new File(logViewerSettingsPath, environmentModel.getName().get() + ".quickfilters");
         return quickFiltersFile;
     }
 

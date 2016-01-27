@@ -48,7 +48,9 @@ import java.util.List;
     @XmlAttribute private boolean filterCaseSensitive = false;
     @XmlAttribute private boolean filterUnicode = false;
     @XmlAttribute private boolean disableColumnFile = false;
-    @XmlAttribute private int eventDetailsSeparatorLocation = -1;
+    @XmlAttribute private String eventDetailsSeparatorLocation = "-1";
+    @XmlAttribute private boolean eventDetailsSeparatorHorizontalOrientiation = true;
+
     @XmlAttribute private boolean showHTMLEventDetails = false;
 
     public EnvironmentConfiguration() {
@@ -57,6 +59,14 @@ import java.util.List;
 
     public List<CustomFilterConfiguration> getCustomFilters() {
         return customFilter;
+    }
+
+    public boolean isEventDetailsSeparatorHorizontalOrientiation() {
+        return eventDetailsSeparatorHorizontalOrientiation;
+    }
+
+    public void setEventDetailsSeparatorHorizontalOrientiation(boolean eventDetailsSeparatorHorizontalOrientiation) {
+        this.eventDetailsSeparatorHorizontalOrientiation = eventDetailsSeparatorHorizontalOrientiation;
     }
 
     public List<CustomDateFilterConfiguration> getCustomDateFilters() {
@@ -80,9 +90,6 @@ import java.util.List;
         return disableAutoScrollPauser;
     }
 
-    public int getEventDetailsSeparatorLocation() {
-        return eventDetailsSeparatorLocation;
-    }
 
     public List<NameMappingConfiguration> getLevelMappings() {
         return levelMapping;
@@ -128,7 +135,12 @@ import java.util.List;
         this.disableColumnFile = disableColumnFile;
     }
 
-    public void setEventDetailsSeparatorLocation(int eventDetailsSeparatorLocation) {
+
+    public String getEventDetailsSeparatorLocation() {
+        return eventDetailsSeparatorLocation;
+    }
+
+    public void setEventDetailsSeparatorLocation(String eventDetailsSeparatorLocation) {
         this.eventDetailsSeparatorLocation = eventDetailsSeparatorLocation;
     }
 

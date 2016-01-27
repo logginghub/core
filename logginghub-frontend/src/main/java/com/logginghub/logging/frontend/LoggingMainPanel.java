@@ -458,7 +458,7 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
             tablePanel.addHighlighter(highlighterModel);
         }
 
-        String name = LOG_EVENT_PANEL + environmentModel.getName();
+        String name = LOG_EVENT_PANEL + environmentModel.getName().get();
         tablePanel.setName(name);
 
         environmentModel.addLogEventListener(tablePanel);
@@ -497,7 +497,7 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
             Component component = tabbedPane.getComponentAt(i);
             if (component instanceof DetailedLogEventTablePanel) {
                 DetailedLogEventTablePanel detailedLogEventTablePanel = (DetailedLogEventTablePanel) component;
-                if (detailedLogEventTablePanel.getEnvironmentModel().getName().equals(name)) {
+                if (detailedLogEventTablePanel.getEnvironmentModel().getName().get().equals(name)) {
                     foundIndex = i;
                     break;
                 }
@@ -535,7 +535,7 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
         DetailedLogEventTablePanel found = null;
         List<DetailedLogEventTablePanel> detailedLogEventTablePanels = getDetailedLogEventTablePanels();
         for (DetailedLogEventTablePanel detailedLogEventTablePanel : detailedLogEventTablePanels) {
-            if (detailedLogEventTablePanel.getEnvironmentModel().getName().equals(environment)) {
+            if (detailedLogEventTablePanel.getEnvironmentModel().getName().get().equals(environment)) {
                 found = detailedLogEventTablePanel;
                 break;
             }
@@ -576,7 +576,7 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
         EnvironmentConfiguration config = null;
         List<EnvironmentConfiguration> environments = proxy.getLoggingFrontendConfiguration().getEnvironments();
         for (EnvironmentConfiguration environmentConfiguration : environments) {
-            if (environmentConfiguration.getName().equals(environmentModel.getName())) {
+            if (environmentConfiguration.getName().equals(environmentModel.getName().get())) {
                 config = environmentConfiguration;
                 break;
             }
@@ -851,7 +851,7 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
         List<DetailedLogEventTablePanel> detailedLogEventTablePanels = getDetailedLogEventTablePanels();
         for (DetailedLogEventTablePanel detailedLogEventTablePanel : detailedLogEventTablePanels) {
             EnvironmentModel panelModel = detailedLogEventTablePanel.getEnvironmentModel();
-            if (panelModel != null && panelModel.getName().equals(environmentModel.getName())) {
+            if (panelModel != null && panelModel.getName().get().equals(environmentModel.getName().get())) {
                 detailedLogEventTablePanel.sendHistoricalIndexRequest();
             }
         }
@@ -865,7 +865,7 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
             List<DetailedLogEventTablePanel> detailedLogEventTablePanels = getDetailedLogEventTablePanels();
             for (DetailedLogEventTablePanel detailedLogEventTablePanel : detailedLogEventTablePanels) {
                 EnvironmentModel panelModel = detailedLogEventTablePanel.getEnvironmentModel();
-                if (panelModel != null && panelModel.getName().equals(environmentModel.getName())) {
+                if (panelModel != null && panelModel.getName().get().equals(environmentModel.getName().get())) {
                     detailedLogEventTablePanel.sendHistoricalDataRequest(autoRequestHistory);
                 }
             }
@@ -903,9 +903,10 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
         autoScroll.setSelected(autoScrollProperty);
         setAutoScroll(autoScrollProperty);
 
-        boolean horinzontalSplit = proxy.getDynamicSettings().getBoolean("loggingMainPanel.horizontalSplit", true);
-        horizontalDetailView.setSelected(horinzontalSplit);
-        setDetailViewOrientation(horinzontalSplit);
+        // jshaw - disabled this, the property is now controlled in the EnvironmentModel
+//        boolean horinzontalSplit = proxy.getDynamicSettings().getBoolean("loggingMainPanel.horizontalSplit", true);
+//        horizontalDetailView.setSelected(horinzontalSplit);
+//        setDetailViewOrientation(horinzontalSplit);
     }
 
     private void setServerSideFiltering(boolean selected) {
@@ -936,10 +937,10 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
     protected void setDetailViewOrientation(boolean selected) {
         DetailedLogEventTablePanel currentSelectedTabx = getCurrentSelectedTabx();
         if (currentSelectedTabx != null) {
-            currentSelectedTabx.setDetailPaneOrientation(selected);
+            currentSelectedTabx.getEnvironmentModel().getEventDetailsSeparatorHorizontalOrientiation().set(selected);
         }
 
-        proxy.getDynamicSettings().set("loggingMainPanel.horizontalSplit", selected);
+//        proxy.getDynamicSettings().set("loggingMainPanel.horizontalSplit", selected);
     }
 
     private void sendFilterToHubs(int levelFilter) {
@@ -1832,7 +1833,7 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
     }
 
     public void startConnections(final EnvironmentModel environmentModel) {
-        logger.info("Starting connections for environment '{}'", environmentModel.getName());
+        logger.info("Starting connections for environment '{}'", environmentModel.getName().get());
 
         int pid = ProcessUtils.getPid();
 
@@ -1872,7 +1873,7 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
                             SwingUtilities.invokeLater(new Runnable() {
                                 @Override
                                 public void run() {
-                                    logger.info("Clear events due to a remote clear message for enviroment '{}'", environmentModel.getName());
+                                    logger.info("Clear events due to a remote clear message for enviroment '{}'", environmentModel.getName().get());
                                     getDetailedLogEventTablePanelForEnvironment(environmentModel.getName().get()).clearEvents();
                                 }
                             });
@@ -1931,7 +1932,7 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
     //    }
 
     public void stopConnections(EnvironmentModel environmentModel) {
-        logger.info("Stopping connections for environment '{}'", environmentModel.getName());
+        logger.info("Stopping connections for environment '{}'", environmentModel.getName().get());
 
         ObservableList<HubConnectionModel> hubs = environmentModel.getHubConnectionModels();
         for (final HubConnectionModel hubModel : hubs) {

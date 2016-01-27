@@ -1,15 +1,9 @@
 package com.logginghub.logging.frontend.charting;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-
-import org.junit.Test;
-
 import com.logginghub.logging.DefaultLogEvent;
 import com.logginghub.logging.LogEventBuilder;
 import com.logginghub.logging.frontend.analysis.ChunkedResult;
 import com.logginghub.logging.frontend.analysis.ChunkedResultHandler;
-import com.logginghub.logging.frontend.charting.ChartingController;
 import com.logginghub.logging.frontend.charting.model.ChartingModel;
 import com.logginghub.logging.frontend.charting.model.ParserModel;
 import com.logginghub.logging.frontend.charting.model.TimeChunkerModel;
@@ -17,6 +11,10 @@ import com.logginghub.logging.messages.AggregationType;
 import com.logginghub.logging.messaging.PatternModel;
 import com.logginghub.utils.Bucket;
 import com.logginghub.utils.logging.Logger;
+import org.junit.Test;
+
+import static org.hamcrest.MatcherAssert.*;
+import static org.hamcrest.Matchers.*;
 
 public class TestChartingController {
 
@@ -72,8 +70,8 @@ public class TestChartingController {
 
         assertThat(bucket.size(), is(expected));
 
-        ChunkedResult chunkedResult1 = bucket.get(11);
-        ChunkedResult chunkedResult2 = bucket.get(1);
+        ChunkedResult chunkedResult2 = bucket.get(11);
+        ChunkedResult chunkedResult1 = bucket.get(1);
 
         assertThat(chunkedResult1.getChunkDuration(), is(100L));
         assertThat(chunkedResult1.getSource(), is("sourceHost/sourceApplication/value1/Sum"));

@@ -11,6 +11,7 @@ import com.logginghub.logging.frontend.configuration.LoggingFrontendConfiguratio
 import com.logginghub.logging.frontend.configuration.NameMappingConfiguration;
 import com.logginghub.logging.frontend.model.ColumnSettingsModel.ColumnSettingModel;
 import com.logginghub.utils.NetUtils;
+import com.logginghub.utils.StringUtils;
 
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -49,7 +50,8 @@ public class ModelBuilder {
         environmentModel.getShowHistoryTab().set(environmentConfiguration.isShowHistoryTab());
         environmentModel.getShowHTMLEventDetails().set(environmentConfiguration.isShowHTMLEventDetails());
 
-        environmentModel.setEventDetailsSeparatorLocation(environmentConfiguration.getEventDetailsSeparatorLocation());
+        environmentModel.getEventDetailsSeparatorHorizontalOrientiation().set(environmentConfiguration.isEventDetailsSeparatorHorizontalOrientiation());
+        environmentModel.getEventDetailsSeparatorLocation().set(environmentConfiguration.getEventDetailsSeparatorLocation());
 
         environmentConfiguration.setupDefaultLogConfiguration();
         environmentModel.setClustered(environmentConfiguration.isClustered());
@@ -123,6 +125,15 @@ public class ModelBuilder {
             customQuickFilterModel.getField().set(customerFilter.getField());
             customQuickFilterModel.getType().set(customerFilter.getType());
             customQuickFilterModel.getWidth().set(customerFilter.getWidth());
+
+            String choices = customerFilter.getChoices();
+            if(StringUtils.isNotNullOrEmpty(choices)) {
+                String[] split = choices.split(",");
+                for (String choice : split) {
+                    String trimmed = choice.trim();
+                    customQuickFilterModel.getChoices().add(trimmed);
+                }
+            }
 
             environmentModel.getCustomFilters().add(customQuickFilterModel);
         }

@@ -13,27 +13,6 @@ public class MultipleEventContainsFilterBenchmark
 
     private FilterFactory factory = new FilterFactory(false, false);
 
-    @Test public void test()
-    {
-        MultipleEventContainsFilter filter = new MultipleEventContainsFilter("", false, factory);
-        filter.setEventContainsString("+one +two -three");
-
-        DefaultLogEvent eventA = new DefaultLogEvent();
-        eventA.setMessage("one two three");
-        assertThat(filter.passes(eventA), is(false));
-
-        eventA.setMessage("one two four");
-        assertThat(filter.passes(eventA), is(true));
-
-        eventA.setSourceApplication("one");
-        eventA.setSourceClassName("two");
-        eventA.setMessage("three");
-        assertThat(filter.passes(eventA), is(false));
-
-        eventA.setMessage("four");
-        assertThat(filter.passes(eventA), is(true));
-    }
-
     @Test public void testPerformanceContains()
     {
         final MultipleEventContainsFilter filter = new MultipleEventContainsFilter("", false, factory);

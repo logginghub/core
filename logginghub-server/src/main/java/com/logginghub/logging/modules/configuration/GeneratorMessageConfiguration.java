@@ -19,10 +19,47 @@ import java.util.List;
     @XmlAttribute private boolean random = false;
     @XmlAttribute private String pattern;
     @XmlAttribute private String patternFile;
+    @XmlAttribute private String startTime = null;
+    @XmlAttribute private String timeIncrement = null;
     @XmlElement private LogEventTemplateConfiguration template = new LogEventTemplateConfiguration();
 
     @XmlElement private List<VariableConfiguration> variable = new ArrayList<VariableConfiguration>();
     @XmlAttribute private String level = "INFO";
+
+    private long timeValue = -1;
+    private long timeIncrementValue = -1;
+
+    public long getTimeIncrementValue() {
+        return timeIncrementValue;
+    }
+
+    public void setTimeIncrementValue(long timeIncrementValue) {
+        this.timeIncrementValue = timeIncrementValue;
+    }
+
+    public void setTimeValue(long timeValue) {
+        this.timeValue = timeValue;
+    }
+
+    public long getTimeValue() {
+        return timeValue;
+    }
+
+    public void setStartTime(String startTime) {
+        this.startTime = startTime;
+    }
+
+    public String getStartTime() {
+        return startTime;
+    }
+
+    public String getTimeIncrement() {
+        return timeIncrement;
+    }
+
+    public void setTimeIncrement(String timeIncrement) {
+        this.timeIncrement = timeIncrement;
+    }
 
     public void setLimit(int limit) {
         this.limit = limit;

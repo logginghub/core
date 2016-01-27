@@ -13,6 +13,7 @@ import com.logginghub.utils.Is;
 import com.logginghub.utils.Stream;
 import com.logginghub.utils.StreamListener;
 import com.logginghub.utils.StringUtils;
+import com.logginghub.utils.TimeUtils;
 import com.logginghub.utils.module.Module;
 import com.logginghub.utils.module.ServiceDiscovery;
 
@@ -55,6 +56,14 @@ public class GeneratorModule implements Module<GeneratorConfiguration> {
             Is.notNullOrEmpty(message.getPattern(), "Pattern must be set on the generator message configuration element");
             Is.notNullOrEmpty(message.getLevel(), "Level must be set on the generator message configuration element");
             Level.parse(message.getLevel());
+
+            if(StringUtils.isNotNullOrEmpty(message.getStartTime())) {
+                message.setTimeValue(TimeUtils.parseTime(message.getStartTime()));
+            }
+
+            if(StringUtils.isNotNullOrEmpty(message.getTimeIncrement())) {
+                message.setTimeIncrementValue(TimeUtils.parseInterval(message.getTimeIncrement()));
+            }
         }
     }
 
@@ -78,6 +87,14 @@ public class GeneratorModule implements Module<GeneratorConfiguration> {
                     if (StringUtils.isNotNullOrEmpty(generator.getLevel())) {
                         event.setLevel(Level.parse(generator.getLevel()).intValue());
                     }
+
+                    long timeValue = generator.getTimeValue();
+                    if(timeValue != -1) {
+                        event.setOriginTime(timeValue);
+                        event.setHubTime(timeValue);
+                        generator.setTimeValue(timeValue + generator.getTimeIncrementValue());
+                    }
+
                     event.setMessage(message);
                     logEventStream.onNewItem(event);
                 }

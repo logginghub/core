@@ -2,6 +2,7 @@ package com.logginghub.logging.frontend.model;
 
 import com.logginghub.utils.observable.Observable;
 import com.logginghub.utils.observable.ObservableInteger;
+import com.logginghub.utils.observable.ObservableList;
 import com.logginghub.utils.observable.ObservableProperty;
 
 public class CustomQuickFilterModel extends Observable {
@@ -11,6 +12,12 @@ public class CustomQuickFilterModel extends Observable {
     private ObservableProperty<String> value =  createStringProperty("value","");
     private ObservableProperty<String> field =  createStringProperty("field","");
     private ObservableInteger width =  createIntProperty("width", 100);
+
+    private ObservableList<String> choices =  createListProperty("choices", String.class);
+
+    public ObservableList<String> getChoices() {
+        return choices;
+    }
 
     public ObservableInteger getWidth() {
         return width;

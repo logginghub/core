@@ -1,13 +1,18 @@
 package com.logginghub.integrationtests.loggingfrontend.oldera;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.startsWith;
-import static org.junit.Assert.assertThat;
-
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
-
+import com.logginghub.integrationtests.loggingfrontend.helpers.SwingFrontEndDSL;
+import com.logginghub.logging.DefaultLogEvent;
+import com.logginghub.logging.LogEventFactory;
+import com.logginghub.logging.frontend.ComponentKeys;
+import com.logginghub.logging.frontend.ConfigurationProxy;
+import com.logginghub.logging.frontend.LoggingMainPanel;
+import com.logginghub.logging.frontend.SwingFrontEnd;
+import com.logginghub.logging.frontend.configuration.LoggingFrontendConfiguration;
+import com.logginghub.logging.frontend.configuration.LoggingFrontendConfigurationBuilder;
+import com.logginghub.logging.frontend.views.logeventdetail.DetailedLogEventTable;
+import com.logginghub.utils.Metadata;
+import com.logginghub.utils.OSUtils;
+import com.logginghub.utils.ThreadUtils;
 import org.fest.swing.core.MouseButton;
 import org.fest.swing.data.TableCell;
 import org.fest.swing.edt.FailOnThreadViolationRepaintManager;
@@ -24,18 +29,13 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.logginghub.logging.DefaultLogEvent;
-import com.logginghub.logging.LogEventFactory;
-import com.logginghub.logging.frontend.ComponentKeys;
-import com.logginghub.logging.frontend.ConfigurationProxy;
-import com.logginghub.logging.frontend.LoggingMainPanel;
-import com.logginghub.logging.frontend.SwingFrontEnd;
-import com.logginghub.logging.frontend.configuration.LoggingFrontendConfiguration;
-import com.logginghub.logging.frontend.configuration.LoggingFrontendConfigurationBuilder;
-import com.logginghub.logging.frontend.views.logeventdetail.DetailedLogEventTable;
-import com.logginghub.utils.Metadata;
-import com.logginghub.utils.ThreadUtils;
-import com.logginghub.integrationtests.loggingfrontend.helpers.SwingFrontEndDSL;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.startsWith;
+import static org.junit.Assert.*;
 
 public class FrontEndTest {
 
@@ -74,6 +74,13 @@ public class FrontEndTest {
                 ConfigurationProxy proxy = new ConfigurationProxy(settings, "propertiesName", configuration, "parsers.xml");
                 SwingFrontEnd swingFrontEnd = new SwingFrontEnd(proxy);
                 swingFrontEnd.setVisible(true);
+
+                // jshaw - there is bug on osx that means fest thinks all the buttons are off-screen in a multiple monitor setup, so force the
+                // window to be whereever 0,0 happens to be...
+                if (OSUtils.isMac()) {
+                    swingFrontEnd.setLocation(0, 0);
+                }
+
                 return swingFrontEnd;
             }
         });

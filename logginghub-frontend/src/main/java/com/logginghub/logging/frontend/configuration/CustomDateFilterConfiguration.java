@@ -1,5 +1,7 @@
 package com.logginghub.logging.frontend.configuration;
 
+import com.logginghub.logging.filters.TimeFieldFilter;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
@@ -11,7 +13,7 @@ public class CustomDateFilterConfiguration {
     @XmlAttribute private String label;
     @XmlAttribute private String field;
     @XmlAttribute private String type;
-    @XmlAttribute private long defaultValue = System.currentTimeMillis();
+    @XmlAttribute private long defaultValue = TimeFieldFilter.ACCEPT_ALL;
     @XmlAttribute private int width = 100;
 
     public String getType() {

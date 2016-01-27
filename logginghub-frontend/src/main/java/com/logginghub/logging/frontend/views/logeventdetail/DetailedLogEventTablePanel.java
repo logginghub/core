@@ -50,6 +50,7 @@ import com.logginghub.utils.MemorySnapshot;
 import com.logginghub.utils.Metadata;
 import com.logginghub.utils.MovingAverage;
 import com.logginghub.utils.Stopwatch;
+import com.logginghub.utils.ThreadUtils;
 import com.logginghub.utils.Throttler;
 import com.logginghub.utils.TimeProvider;
 import com.logginghub.utils.TimeUtils;
@@ -86,6 +87,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -758,11 +760,27 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
             }
         });
 
-        if (environmentModel.getEventDetailsSeparatorLocation() != -1) {
-            eventDetailsSplitPane.setDividerLocation(environmentModel.getEventDetailsSeparatorLocation());
-        } else {
-            eventDetailsSplitPane.setDividerLocation(0.5d);
-        }
+        environmentModel.getEventDetailsSeparatorHorizontalOrientiation().addListenerAndNotifyCurrent(new ObservablePropertyListener<Boolean>() {
+            @Override
+            public void onPropertyChanged(Boolean oldValue, Boolean newValue) {
+                setDetailPaneOrientation(newValue);
+            }
+        });
+
+        environmentModel.getEventDetailsSeparatorLocation().addListenerAndNotifyCurrent(new ObservablePropertyListener<String>() {
+            @Override
+            public void onPropertyChanged(String oldValue, final String newValue) {
+
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        setSplitPaneLocation(newValue);
+                    }
+                });
+
+            }
+        });
+
 
         if (environmentModel.isDisableAutoScrollPauser()) {
             disableScrollerAutoPause();
@@ -914,6 +932,65 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
 
             scrollToCenter(table, row, 0);
         }
+    }
+
+    public void setDetailPaneOrientation(final boolean horizontal) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                if (horizontal) {
+                    eventDetailsSplitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
+                } else {
+                    eventDetailsSplitPane.setOrientation(JSplitPane.HORIZONTAL_SPLIT);
+                }
+
+                setSplitPaneLocation(environmentModel.getEventDetailsSeparatorLocation().get());
+            }
+        });
+
+    }
+
+    private void setSplitPaneLocation(String newValue) {
+        // This property supports a few different styles - integer number of pixels, double value factor, string percentage
+        String trimmed = newValue.trim();
+        if (trimmed.endsWith("%")) {
+            String valueString = trimmed.substring(0, trimmed.length() - 1).trim();
+
+            double value = Double.parseDouble(valueString);
+
+            // Turn it into a factor
+            value = value / 100d;
+
+            final double finalValue = value;
+            setDividerLocationRelative(finalValue);
+        } else {
+
+            try {
+                int integerValue = Integer.parseInt(trimmed);
+                if (integerValue != -1) {
+                    logger.info("Setting divider location to '{}'", integerValue);
+                    eventDetailsSplitPane.setDividerLocation(integerValue);
+                } else {
+                    eventDetailsSplitPane.setDividerLocation(0.5d);
+                }
+            } catch (NumberFormatException e) {
+                double value = Double.parseDouble(trimmed);
+                setDividerLocationRelative(value);
+            }
+        }
+    }
+
+    private void setDividerLocationRelative(final double finalValue) {
+        // Thanks to swing, setting based on a double value will only work once the component has been laid out, so we have to hack it
+        ThreadUtils.untilTrue(500, TimeUnit.MILLISECONDS, new Callable<Boolean>() {
+            @Override
+            public Boolean call() throws Exception {
+                logger.info("Setting divider location to '{}'", finalValue);
+                eventDetailsSplitPane.setDividerLocation(finalValue);
+                int dividerLocation = eventDetailsSplitPane.getDividerLocation();
+                return dividerLocation > 0;
+            }
+        });
     }
 
     private void disableScrollerAutoPause() {
@@ -1077,7 +1154,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
 
             LocalDiskRepositoryConfiguration config = new LocalDiskRepositoryConfiguration();
             config.setDataFolder(file.getAbsolutePath());
-            config.setPrefix(environmentModel.getName() + ".");
+            config.setPrefix(environmentModel.getName().get() + ".");
             config.setFileDurationMilliseconds(10 * TimeUtils.minutes);
 
             binaryExporter = new LocalDiskRepository(config);
@@ -1087,7 +1164,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
     }
 
     public String getBinaryFileSettingsKey() {
-        return "binaryFolder-" + environmentModel.getName();
+        return "binaryFolder-" + environmentModel.getName().get();
     }
 
     public EnvironmentModel getEnvironmentModel() {
@@ -1213,25 +1290,25 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         return getFirstQuickFilter().getModel().getLevelFilter().get().getSelectedLevel().get().intValue();
     }
 
-    public TimestampVariableRollingFileLogger getOutputLogger() {
-        return outputLogger;
-    }
-
     //    public DetailedLogEventTableModel getTableModel() {
     //        return tableModel;
     //    }
+
+    public TimestampVariableRollingFileLogger getOutputLogger() {
+        return outputLogger;
+    }
 
     public TimeController getTimeFilterController() {
         return timeController;
     }
 
-    public TimeView getTimeView() {
-        return timeView;
-    }
-
     //    public void gotoBookmark(Integer bookmark) {
     //        table.gotoBookmark(bookmark.intValue());
     //    }
+
+    public TimeView getTimeView() {
+        return timeView;
+    }
 
     public synchronized boolean isDemoSourceActive() {
         return demoLogEventProducer != null;
@@ -1291,7 +1368,6 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
             }
         }
     }
-
 
     public void sendHistoricalDataRequest(String autoRequestHistory) {
 
@@ -1393,14 +1469,6 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
 
     public void setAutoScroll(boolean selected) {
         autoScroll = selected;
-    }
-
-    public void setDetailPaneOrientation(boolean horizontal) {
-        if (horizontal) {
-            eventDetailsSplitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
-        } else {
-            eventDetailsSplitPane.setOrientation(JSplitPane.HORIZONTAL_SPLIT);
-        }
     }
 
     public void setDynamicSettings(Metadata dynamicSettings) {

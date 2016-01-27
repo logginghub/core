@@ -13,6 +13,11 @@ public class CustomFilterConfiguration {
     @XmlAttribute private String type;
     @XmlAttribute private String defaultValue = "";
     @XmlAttribute private int width = 100;
+    @XmlAttribute private String choices = "";
+
+    public String getChoices() {
+        return choices;
+    }
 
     public String getType() {
         return type;

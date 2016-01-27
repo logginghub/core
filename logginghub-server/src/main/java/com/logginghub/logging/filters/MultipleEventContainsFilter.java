@@ -4,42 +4,36 @@ import com.logginghub.logging.LogEvent;
 import com.logginghub.utils.filter.Filter;
 
 /**
- * An enhancement to the standard event contains filter, this one supports
- * multiple search strings using google style + and - operators.
- * 
+ * An enhancement to the standard event contains filter, this one supports multiple search strings using google style + and - operators.
+ *
  * @author James
  */
-public class MultipleEventContainsFilter extends CompositeAndFilter {
-    private boolean useRegex = false;
+public class MultipleEventContainsFilter extends SwitchingAndOrFilter {
     private final FilterFactory filterFactory;
+    private boolean useRegex = false;
     private String value;
 
     public MultipleEventContainsFilter(String value, boolean useRegex, FilterFactory filterFactory) {
-        this.value  = value;
+        this.value = value;
         this.useRegex = useRegex;
         this.filterFactory = filterFactory;
         setEventContainsString(value);
     }
 
-    public void setUseRegex(boolean useRegex) {
-        this.useRegex = useRegex;
-        // Need to rebuild the filters
-        setEventContainsString(value);
-    }
-
     public void setEventContainsString(String value) {
         this.value = value;
-        
+
         clearFilters();
         if (looksLikeComplexSearch(value)) {
             value = fixComplexQuery(value);
             char currentModifier = ' ';
+            boolean orFlag = false;
             StringBuilder currentPhrase = new StringBuilder();
             boolean escapeNext = false;
             for (int i = 0; i < value.length(); i++) {
                 char c = value.charAt(i);
 
-                if ((c == '+' || c == '-') && !escapeNext) {
+                if ((c == '+' || c == '-' || c == ',') && !escapeNext) {
                     if (currentPhrase != null && currentPhrase.length() > 0) {
                         String phrase = currentPhrase.toString().trim();
                         smartAddFilter(currentModifier, phrase);
@@ -47,11 +41,13 @@ public class MultipleEventContainsFilter extends CompositeAndFilter {
                     currentModifier = c;
                     currentPhrase = new StringBuilder();
                     escapeNext = false;
-                }
-                else if (c == '\\') {
+
+                    if (c == ',') {
+                        orFlag = true;
+                    }
+                } else if (c == '\\') {
                     escapeNext = true;
-                }
-                else {
+                } else {
                     currentPhrase.append(c);
                     escapeNext = false;
                 }
@@ -62,23 +58,45 @@ public class MultipleEventContainsFilter extends CompositeAndFilter {
                 String phrase = currentPhrase.toString().trim();
                 smartAddFilter(currentModifier, phrase);
             }
-        }
-        else {
+
+            // Check for the or flag (un-escaped commas)
+            if (orFlag) {
+                setApplyAndLogic(false);
+            }
+        } else {
             Filter<LogEvent> filter;
             if (useRegex) {
                 filter = new EventMatchesFilter(value);
-            }
-            else {
+            } else {
                 filter = filterFactory.createFilter(value);
             }
             addFilter(filter);
         }
     }
 
+    private boolean looksLikeComplexSearch(String value) {
+
+        String[] tokens = value.split("\\s");
+
+        boolean looksLikeComplexSearch = false;
+        for (String string : tokens) {
+            if (string.startsWith("+") || string.startsWith("-") || string.endsWith(",")) {
+                looksLikeComplexSearch = true;
+                break;
+            }
+        }
+
+        if (!looksLikeComplexSearch) {
+            tokens = value.split("^\\,");
+            looksLikeComplexSearch = tokens.length > 0;
+        }
+
+        return looksLikeComplexSearch;
+    }
+
     /**
-     * Adds + to any tokens in a complex query that might be missing one to make
-     * the next parsing stage easier.
-     * 
+     * Adds + to any tokens in a complex query that might be missing one to make the next parsing stage easier.
+     *
      * @param value
      * @return
      */
@@ -92,8 +110,7 @@ public class MultipleEventContainsFilter extends CompositeAndFilter {
             pad = " ";
             if (string.startsWith("+") || string.startsWith("-")) {
                 // Fine, no need to fix
-            }
-            else {
+            } else {
                 builder.append("+");
             }
 
@@ -104,35 +121,24 @@ public class MultipleEventContainsFilter extends CompositeAndFilter {
         return fixed;
     }
 
-    private boolean looksLikeComplexSearch(String value) {
-
-        String[] tokens = value.split("\\s");
-
-        boolean looksLikeComplexSearch = false;
-        for (String string : tokens) {
-            if (string.startsWith("+") || string.startsWith("-")) {
-                looksLikeComplexSearch = true;
-                break;
-            }
-        }
-
-        return looksLikeComplexSearch;
-    }
-
     private void smartAddFilter(char currentModifier, String phrase) {
         Filter<LogEvent> filter;
         if (useRegex) {
             filter = new EventMatchesFilter(phrase);
-        }
-        else {
+        } else {
             filter = filterFactory.createFilter(phrase);
         }
 
-        if (currentModifier == '+') {
+        if (currentModifier == '-') {
+            addFilter(new NotFilter<LogEvent>(filter));
+        } else {
             addFilter(filter);
         }
-        else {
-            addFilter(new NotFilter<LogEvent>(filter));
-        }
+    }
+
+    public void setUseRegex(boolean useRegex) {
+        this.useRegex = useRegex;
+        // Need to rebuild the filters
+        setEventContainsString(value);
     }
 }

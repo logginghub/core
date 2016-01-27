@@ -604,4 +604,7 @@ public class DefaultLogEvent implements LogEvent, Serializable, SerialisableObje
         this.originTime = localCreationTimeMillis;
     }
 
+    public void setHubTime(long hubTime) {
+        this.hubTime = hubTime;
+    }
 }

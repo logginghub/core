@@ -12,8 +12,27 @@ public class LogEventBuilder {
         event.setLocalCreationTimeMillis(System.currentTimeMillis());
     }
 
+    public static LogEventBuilder logEvent() {
+        return new LogEventBuilder();
+    }
+
     public static LogEventBuilder start() {
         return new LogEventBuilder();
+    }
+
+    public LogEventBuilder hubTime(long hubTime) {
+        event.setHubTime(hubTime);
+        return this;
+    }
+
+    public LogEventBuilder originTime(long time) {
+        event.setOriginTime(time);
+        return this;
+    }
+
+    public LogEventBuilder sequence(long sequence) {
+        event.setSequenceNumber(sequence);
+        return this;
     }
 
     public LogEventBuilder setLevel(int level) {

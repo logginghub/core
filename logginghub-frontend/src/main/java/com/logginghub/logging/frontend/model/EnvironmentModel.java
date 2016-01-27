@@ -26,50 +26,54 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class EnvironmentModel extends Observable implements LogEventSource, LogEventListener, StreamListener<LogEvent> {
 
     private static final Logger logger = Logger.getLoggerFor(EnvironmentModel.class);
-    private ObservableList<HubConnectionModel> hubs = createListProperty("hubs", HubConnectionModel.class);
-    private ObservableList<HighlighterModel> highlighters = createListProperty("highlighters", HighlighterModel.class);
+
+    // Core event flow helper
     private LogEventMultiplexer multiplexer = new LogEventMultiplexer();
+
+    // Sub-controllers - should these really be outside of this model?
+    private LogEventContainerController logEventContainerController = new LogEventContainerController();
+
+    // Non-observable items - should these be observable?
     private AtomicInteger sequenceIDGenerator = new AtomicInteger(0);
     private boolean autoLockWarning;
     private boolean writeOutputLog = false;
-    private EnvironmentSummaryModel environmentSummaryModel = new EnvironmentSummaryModel();
-    private LogEventContainerController logEventContainerController = new LogEventContainerController();
     private TimestampVariableRollingFileLoggerConfiguration outputLogConfiguration = null;
     private Stream<ConnectionStateChangedEvent> connectionStateStream = new Stream<ConnectionStateChangedEvent>();
-
-
     private QuickFilterHistoryModel quickFilterHistoryModel = new QuickFilterHistoryModel();
-
-    private ObservableList<QuickFilterModel> quickFilterModels = createListProperty("quickFilterModels", QuickFilterModel.class);
-    private ObservableInteger filterUpdateCount = new ObservableInteger(0);
-
     private FilterHelper excludeFilter = new FilterHelper();
     private double eventMemoryMB;
     private String autoRequestHistory = "";
     private boolean disableAutoScrollPauser = false;
-
-    private EventTableColumnModel eventTableColumnModel = new EventTableColumnModel();
-    private LevelNamesModel levelNamesModel = new LevelNamesModel();
     private boolean filterCaseSensitive;
     private boolean filterUnicode;
     private ColumnSettingsModel columnSettingsModel = new ColumnSettingsModel();
-    private int eventDetailsSeparatorLocation = -1;
     private boolean clustered;
 
+    // Sub-models
+    private EventTableColumnModel eventTableColumnModel = new EventTableColumnModel();
+    private EnvironmentSummaryModel environmentSummaryModel = new EnvironmentSummaryModel();
+    private LevelNamesModel levelNamesModel = new LevelNamesModel();
+
+    // Observable items
+    private ObservableList<FilterBookmarkValueModel> filterBookmarks = createListProperty("filterBookmarks", FilterBookmarkValueModel.class);
+    private ObservableList<HubConnectionModel> hubs = createListProperty("hubs", HubConnectionModel.class);
+    private ObservableList<HighlighterModel> highlighters = createListProperty("highlighters", HighlighterModel.class);
     private ObservableList<CustomQuickFilterModel> customFilters = createListProperty("customFilters", CustomQuickFilterModel.class);
     private ObservableList<CustomDateFilterModel> customDateFilters = createListProperty("customDateFilters", CustomDateFilterModel.class);
-
-
     private ObservableProperty<String> name = createStringProperty("name", "");
     private ObservableProperty<String> repoConnectionPoints = createStringProperty("repoConnectionPoints", "");
     private ObservableProperty<Boolean> openOnStartup = createBooleanProperty("openOnStartup", true);
     private ObservableProperty<Boolean> showHTMLEventDetails = createBooleanProperty("showHTMLEventDetails", false);
     private ObservableProperty<Boolean> autoLocking = createBooleanProperty("autoLocking", true);
     private ObservableProperty<Boolean> showHistoryTab = createBooleanProperty("showHistoryTab", true);
+    private ObservableProperty<String> eventDetailsSeparatorLocation = createStringProperty("eventDetailsSeparatorLocation", "-1");
+    private ObservableProperty<Boolean> eventDetailsSeparatorHorizontalOrientiation = createBooleanProperty("eventDetailsSeparatorHorizontalOrientiation",
+                                                                                                          true);
     private ObservableProperty<Boolean> repoEnabled = createBooleanProperty("repoEnabled", true);
     private ObservableProperty<String> channel = createStringProperty("channel", "");
-    private final ObservableInteger highestLevelSinceLastSelected = createIntProperty("highestLevelSinceLastSelected", -1);
-
+    private ObservableList<QuickFilterModel> quickFilterModels = createListProperty("quickFilterModels", QuickFilterModel.class);
+    private ObservableInteger filterUpdateCount = new ObservableInteger(0);
+    private ObservableInteger highestLevelSinceLastSelected = createIntProperty("highestLevelSinceLastSelected", -1);
 
     public EnvironmentModel() {
 
@@ -117,6 +121,10 @@ public class EnvironmentModel extends Observable implements LogEventSource, LogE
         getAutoLocking().set(false);
 
         getRepoEnabled().set(false);
+    }
+
+    public ObservableProperty<Boolean> getAutoLocking() {
+        return autoLocking;
     }
 
     public ObservableProperty<Boolean> getRepoEnabled() {
@@ -172,12 +180,12 @@ public class EnvironmentModel extends Observable implements LogEventSource, LogE
         return logEventContainerController;
     }
 
-    public int getEventDetailsSeparatorLocation() {
+    public ObservableProperty<String> getEventDetailsSeparatorLocation() {
         return eventDetailsSeparatorLocation;
     }
 
-    public void setEventDetailsSeparatorLocation(int eventDetailsSeparatorLocation) {
-        this.eventDetailsSeparatorLocation = eventDetailsSeparatorLocation;
+    public ObservableProperty<Boolean> getEventDetailsSeparatorHorizontalOrientiation() {
+        return eventDetailsSeparatorHorizontalOrientiation;
     }
 
     public double getEventMemoryMB() {
@@ -192,8 +200,16 @@ public class EnvironmentModel extends Observable implements LogEventSource, LogE
         return eventTableColumnModel;
     }
 
+    public ObservableList<FilterBookmarkValueModel> getFilterBookmarks() {
+        return filterBookmarks;
+    }
+
     public ObservableInteger getFilterUpdateCount() {
         return filterUpdateCount;
+    }
+
+    public ObservableInteger getHighestLevelSinceLastSelected() {
+        return highestLevelSinceLastSelected;
     }
 
     public ObservableList<HighlighterModel> getHighlighters() {
@@ -212,8 +228,16 @@ public class EnvironmentModel extends Observable implements LogEventSource, LogE
         this.hubs = hubs;
     }
 
+    public ObservableList<HubConnectionModel> getHubs() {
+        return hubs;
+    }
+
     public LevelNamesModel getLevelNamesModel() {
         return levelNamesModel;
+    }
+
+    public ObservableProperty<Boolean> getOpenOnStartup() {
+        return openOnStartup;
     }
 
     public TimestampVariableRollingFileLoggerConfiguration getOutputLogConfiguration() {
@@ -230,6 +254,18 @@ public class EnvironmentModel extends Observable implements LogEventSource, LogE
 
     public com.logginghub.utils.observable.ObservableList<QuickFilterModel> getQuickFilterModels() {
         return quickFilterModels;
+    }
+
+    public ObservableProperty<String> getRepoConnectionPoints() {
+        return repoConnectionPoints;
+    }
+
+    public ObservableProperty<Boolean> getShowHTMLEventDetails() {
+        return showHTMLEventDetails;
+    }
+
+    public ObservableProperty<Boolean> getShowHistoryTab() {
+        return showHistoryTab;
     }
 
 
@@ -269,26 +305,6 @@ public class EnvironmentModel extends Observable implements LogEventSource, LogE
         this.filterUnicode = filterUnicode;
     }
 
-    public ObservableList<HubConnectionModel> getHubs() {
-        return hubs;
-    }
-
-    public ObservableProperty<Boolean> getAutoLocking() {
-        return autoLocking;
-    }
-
-    public ObservableProperty<Boolean> getOpenOnStartup() {
-        return openOnStartup;
-    }
-
-    public ObservableProperty<Boolean> getShowHistoryTab() {
-        return showHistoryTab;
-    }
-
-    public ObservableProperty<String> getRepoConnectionPoints() {
-        return repoConnectionPoints;
-    }
-
     public boolean isWriteOutputLog() {
         return writeOutputLog;
     }
@@ -304,7 +320,7 @@ public class EnvironmentModel extends Observable implements LogEventSource, LogE
 
     @Override
     public void onNewLogEvent(LogEvent event) {
-        logger.trace("New log event received from environment '{}' - {} : {}", getName(), event.getLevelDescription(), event.getMessage());
+        logger.trace("New log event received from environment '{}' - {} : {}", getName().get(), event.getLevelDescription(), event.getMessage());
 
         if (!excludeFilter.passes(event)) {
             if (event instanceof DefaultLogEvent) {
@@ -334,19 +350,11 @@ public class EnvironmentModel extends Observable implements LogEventSource, LogE
 
     @Override
     public String toString() {
-        return "EnvironmentModel [mame =" + getName() + "]";
+        return "EnvironmentModel [mame =" + getName().get() + "]";
     }
 
     public void updateEachSecond() {
-        logger.trace("Updating environment model {}", getName());
+        logger.trace("Updating environment model {}", getName().get());
         environmentSummaryModel.updateEachSecond();
-    }
-
-    public ObservableInteger getHighestLevelSinceLastSelected() {
-        return highestLevelSinceLastSelected;
-    }
-
-    public ObservableProperty<Boolean> getShowHTMLEventDetails() {
-        return showHTMLEventDetails;
     }
 }

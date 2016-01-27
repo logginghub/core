@@ -283,6 +283,17 @@ than the size of your screen should be a comfortable way of maximising the scrol
 Using a value of zero will maximise the event details view, and you won't be able to see any streaming events. We are yet to hear of a use for this
 configuration.
 
+You can also control the orientiation of the view using *eventDetailsSeparatorHorizontalOrientiation*.
+
+To have a vertical view, use:
+
+    <environment name="local"
+                 eventDetailsSeparatorLocation="10000"
+                 eventDetailsSeparatorHorizontalOrientiation="false"
+                 ...
+                 >
+
+
 # Experimental feature - Adding custom data to your log events, and then show this data in the column view
 
 If the column renaming feature isn't enough for you, and you find yourself wanting to start defining your own event attributes, you can use the event
@@ -355,3 +366,14 @@ And this is the full list of comparison types:
 * StartsWith
 * EndsWith
 * Regex
+
+# Experimental feature - Rendering HTML in the event view
+
+You can activate HTML rendering in the message content using:
+
+    <environment name="local"
+                 showHTMLEventDetails="true"
+                  ...
+                  >
+
+Rendering is done via the very basic Swing JEditorPane, which is very limited in its HTML support (just HTML 3.2, no CSS, no scripting).

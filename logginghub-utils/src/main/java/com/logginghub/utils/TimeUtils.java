@@ -492,6 +492,13 @@ public class TimeUtils {
         return parseTime(string, DateFormatFactory.utc);
     }
 
+    public static void clearHoursMinutesSecondsMillis(Calendar calendar) {
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+    }
+
     public static long parseTime(String string, TimeZone timeZone) {
 
         boolean success = false;
