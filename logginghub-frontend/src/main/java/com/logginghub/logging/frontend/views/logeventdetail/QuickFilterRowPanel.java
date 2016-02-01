@@ -214,9 +214,13 @@ public class QuickFilterRowPanel extends JPanel {
                             model.setValue(null);
                         } else {
                             logger.info("Setting calendar value to {} due to change in the model", newValue);
-                            Calendar calendar = new GregorianCalendar();
-                            calendar.setTimeInMillis(newValue);
-                            model.setDate(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+//                            Calendar calendar = new GregorianCalendar();
+//                            calendar.setTimeInMillis(newValue);
+//                            int year = calendar.get(Calendar.YEAR);
+//                            int month = calendar.get(Calendar.MONTH);
+//                            int day = calendar.get(Calendar.DAY_OF_MONTH);
+//                            model.setDate(year, month, day);
+                            model.setValue(new Date(newValue));
                         }
                     }
                 };

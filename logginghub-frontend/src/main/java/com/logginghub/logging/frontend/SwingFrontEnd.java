@@ -78,7 +78,7 @@ public class SwingFrontEnd extends SmartJFrame implements Closeable {
 
         mainPanel = new LoggingMainPanel();
         mainPanel.setConfigurationProxy(proxy);
-        mainPanel.setModel(model, proxy.getDynamicSettings(), this);
+        mainPanel.bind(model, proxy.getDynamicSettings(), this);
 
         getContentPane().add(mainPanel);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -131,7 +131,7 @@ public class SwingFrontEnd extends SmartJFrame implements Closeable {
         setTitle("Logging Front End - " + proxy.getLoggingFrontendConfiguration().getTitle());
 
         mainPanel.setConfigurationProxy(proxy);
-        mainPanel.setModel(model, proxy.getDynamicSettings(), this);
+        mainPanel.bind(model, proxy.getDynamicSettings(), this);
     }
 
     private void startModelUpdateTimer(final LoggingFrontendModel model) {

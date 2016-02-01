@@ -55,7 +55,7 @@ public class EnvironmentModel extends Observable implements LogEventSource, LogE
     private LevelNamesModel levelNamesModel = new LevelNamesModel();
 
     // Observable items
-    private ObservableList<FilterBookmarkValueModel> filterBookmarks = createListProperty("filterBookmarks", FilterBookmarkValueModel.class);
+    private ObservableList<FilterBookmarkModel> filterBookmarks = createListProperty("filterBookmarks", FilterBookmarkModel.class);
     private ObservableList<HubConnectionModel> hubs = createListProperty("hubs", HubConnectionModel.class);
     private ObservableList<HighlighterModel> highlighters = createListProperty("highlighters", HighlighterModel.class);
     private ObservableList<CustomQuickFilterModel> customFilters = createListProperty("customFilters", CustomQuickFilterModel.class);
@@ -69,11 +69,16 @@ public class EnvironmentModel extends Observable implements LogEventSource, LogE
     private ObservableProperty<String> eventDetailsSeparatorLocation = createStringProperty("eventDetailsSeparatorLocation", "-1");
     private ObservableProperty<Boolean> eventDetailsSeparatorHorizontalOrientiation = createBooleanProperty("eventDetailsSeparatorHorizontalOrientiation",
                                                                                                           true);
+
+    private ObservableProperty<String> configurationFolder = createStringProperty("configurationFolder", ".");
+    private ObservableProperty<String> savedSearchesFilename = createStringProperty("savedSearchesFilename", "savedsearches.json");
+
     private ObservableProperty<Boolean> repoEnabled = createBooleanProperty("repoEnabled", true);
     private ObservableProperty<String> channel = createStringProperty("channel", "");
     private ObservableList<QuickFilterModel> quickFilterModels = createListProperty("quickFilterModels", QuickFilterModel.class);
     private ObservableInteger filterUpdateCount = new ObservableInteger(0);
     private ObservableInteger highestLevelSinceLastSelected = createIntProperty("highestLevelSinceLastSelected", -1);
+    private ObservableProperty<FilterBookmarkModel> activeBookmark = createProperty("activeBookmark", FilterBookmarkModel.class, null);
 
     public EnvironmentModel() {
 
@@ -121,6 +126,10 @@ public class EnvironmentModel extends Observable implements LogEventSource, LogE
         getAutoLocking().set(false);
 
         getRepoEnabled().set(false);
+    }
+
+    public ObservableProperty<FilterBookmarkModel> getActiveBookmark() {
+        return activeBookmark;
     }
 
     public ObservableProperty<Boolean> getAutoLocking() {
@@ -200,7 +209,7 @@ public class EnvironmentModel extends Observable implements LogEventSource, LogE
         return eventTableColumnModel;
     }
 
-    public ObservableList<FilterBookmarkValueModel> getFilterBookmarks() {
+    public ObservableList<FilterBookmarkModel> getFilterBookmarks() {
         return filterBookmarks;
     }
 
@@ -250,6 +259,14 @@ public class EnvironmentModel extends Observable implements LogEventSource, LogE
 
     public QuickFilterHistoryModel getQuickFilterHistoryModel() {
         return quickFilterHistoryModel;
+    }
+
+    public ObservableProperty<String> getConfigurationFolder() {
+        return configurationFolder;
+    }
+
+    public ObservableProperty<String> getSavedSearchesFilename() {
+        return savedSearchesFilename;
     }
 
     public com.logginghub.utils.observable.ObservableList<QuickFilterModel> getQuickFilterModels() {

@@ -59,17 +59,17 @@ public class DetailedLogEventTableModel extends DefaultTableModel implements Log
         this.levelNamesModel = levelNamesModel;
         this.eventController = eventController;
 
-        visibleColumns[0] = new ColumnTarget("Time", COLUMN_TIME, null);
-        visibleColumns[1] = new ColumnTarget("Source", COLUMN_SOURCE, null);
-        visibleColumns[2] = new ColumnTarget("Host", COLUMN_HOST, null);
-        visibleColumns[3] = new ColumnTarget("Level", COLUMN_LEVEL, null);
-        visibleColumns[4] = new ColumnTarget("Thread", COLUMN_THREAD, null);
-        visibleColumns[5] = new ColumnTarget("Method", COLUMN_CLASS_METHOD, null);
-        visibleColumns[6] = new ColumnTarget("Message", COLUMN_MESSAGE, null);
-        visibleColumns[7] = new ColumnTarget("DC", COLUMN_DIAGNOSTIC_CONTEXT, null);
-        visibleColumns[8] = new ColumnTarget("Locked", COLUMN_LOCKED, null);
-        visibleColumns[9] = new ColumnTarget("PID", COLUMN_PID, null);
-        visibleColumns[10] = new ColumnTarget("Channel", COLUMN_CHANNEL, null);
+        visibleColumns[0] = new ColumnTarget("Time", COLUMN_TIME, null, ColumnTarget.Renderer.Normal);
+        visibleColumns[1] = new ColumnTarget("Source", COLUMN_SOURCE, null, ColumnTarget.Renderer.Normal);
+        visibleColumns[2] = new ColumnTarget("Host", COLUMN_HOST, null, ColumnTarget.Renderer.Normal);
+        visibleColumns[3] = new ColumnTarget("Level", COLUMN_LEVEL, null, ColumnTarget.Renderer.Normal);
+        visibleColumns[4] = new ColumnTarget("Thread", COLUMN_THREAD, null, ColumnTarget.Renderer.Normal);
+        visibleColumns[5] = new ColumnTarget("Method", COLUMN_CLASS_METHOD, null, ColumnTarget.Renderer.Normal);
+        visibleColumns[6] = new ColumnTarget("Message", COLUMN_MESSAGE, null, ColumnTarget.Renderer.Normal);
+        visibleColumns[7] = new ColumnTarget("DC", COLUMN_DIAGNOSTIC_CONTEXT, null, ColumnTarget.Renderer.Normal);
+        visibleColumns[8] = new ColumnTarget("Locked", COLUMN_LOCKED, null, ColumnTarget.Renderer.Normal);
+        visibleColumns[9] = new ColumnTarget("PID", COLUMN_PID, null, ColumnTarget.Renderer.Normal);
+        visibleColumns[10] = new ColumnTarget("Channel", COLUMN_CHANNEL, null, ColumnTarget.Renderer.Normal);
     }
 
     public void addFilter(Filter<LogEvent> filter, LogEvent currentSelection) {
@@ -83,6 +83,7 @@ public class DetailedLogEventTableModel extends DefaultTableModel implements Log
             public void run() {
                 synchronized (eventLock) {
                     Stopwatch refiltering = Stopwatch.start("Refiltering");
+//                    Out.out("Filters : {}", ObjectUtils.recursiveDump(filters));
                     eventController.refilter(filters);
                     logger.info(refiltering);
                     eventController.getLiveEventsThatPassFilter().indexOf(currentSelection);
@@ -92,32 +93,40 @@ public class DetailedLogEventTableModel extends DefaultTableModel implements Log
         });
     }
 
-    public void addMetadataColumn(int index, String metadataKey, String name) {
+    public void fireTableDataChanged() {
+        super.fireTableDataChanged();
+    }
 
-//        ColumnTarget[] newVisibleColumns;
-//        if(visibleColumns.length == 0) {
-//            newVisibleColumns = new ColumnTarget[1];
-//            newVisibleColumns[0] = new ColumnTarget(name, -1, metadataKey);
-//        }else {
-//
-//            int newLength = visibleColumns.length + 1;
-//            newVisibleColumns = new ColumnTarget[newLength];
-//
-//            // Copy the first chunk up to the insertion point
-//            System.arraycopy(visibleColumns, 0, newVisibleColumns, 0, index);
-//
-//            // Add the new item
-//            newVisibleColumns[index] = new ColumnTarget(name, -1, metadataKey);
-//
-//            // Copy the second chunk passed the removed item to the end
-//            System.arraycopy(visibleColumns, index, newVisibleColumns, index + 1, visibleColumns.length - index);
-//        }
-//
-//        // Switch over the arrays
-//        visibleColumns = newVisibleColumns;
-//
-//        // Tell the views the model has changed
-//        fireTableStructureChanged();
+    public void fireTableStructureChanged() {
+        super.fireTableStructureChanged();
+    }
+
+    public void addMetadataColumn(int index, String metadataKey, String name, ColumnTarget.Renderer renderer) {
+
+        //        ColumnTarget[] newVisibleColumns;
+        //        if(visibleColumns.length == 0) {
+        //            newVisibleColumns = new ColumnTarget[1];
+        //            newVisibleColumns[0] = new ColumnTarget(name, -1, metadataKey);
+        //        }else {
+        //
+        //            int newLength = visibleColumns.length + 1;
+        //            newVisibleColumns = new ColumnTarget[newLength];
+        //
+        //            // Copy the first chunk up to the insertion point
+        //            System.arraycopy(visibleColumns, 0, newVisibleColumns, 0, index);
+        //
+        //            // Add the new item
+        //            newVisibleColumns[index] = new ColumnTarget(name, -1, metadataKey);
+        //
+        //            // Copy the second chunk passed the removed item to the end
+        //            System.arraycopy(visibleColumns, index, newVisibleColumns, index + 1, visibleColumns.length - index);
+        //        }
+        //
+        //        // Switch over the arrays
+        //        visibleColumns = newVisibleColumns;
+        //
+        //        // Tell the views the model has changed
+        //        fireTableStructureChanged();
 
         int newLength = visibleColumns.length + 1;
         ColumnTarget[] newVisibleColumns = new ColumnTarget[newLength];
@@ -126,7 +135,7 @@ public class DetailedLogEventTableModel extends DefaultTableModel implements Log
         System.arraycopy(visibleColumns, 0, newVisibleColumns, 0, index);
 
         // Add the new item
-        newVisibleColumns[index] = new ColumnTarget(name, -1, metadataKey);
+        newVisibleColumns[index] = new ColumnTarget(name, -1, metadataKey, renderer);
 
         // Copy the second chunk passed the removed item to the end
         System.arraycopy(visibleColumns, index, newVisibleColumns, index + 1, visibleColumns.length - index);
@@ -141,14 +150,6 @@ public class DetailedLogEventTableModel extends DefaultTableModel implements Log
 
     public void clear() {
         fireTableDataChanged();
-    }
-
-    public void fireTableStructureChanged() {
-        super.fireTableStructureChanged();
-    }
-
-    public void fireTableDataChanged() {
-        super.fireTableDataChanged();
     }
 
     public int findFirstTime(long time) {
@@ -532,9 +533,15 @@ public class DetailedLogEventTableModel extends DefaultTableModel implements Log
             String metadatakey = visibleColumn.metadata;
             if (metadatakey != null && logEvent.getMetadata() != null) {
                 value = logEvent.getMetadata().get(metadatakey);
+
                 if (value == null) {
                     value = "";
                 }
+
+                if (visibleColumn.renderer == ColumnTarget.Renderer.Date) {
+                    value = Logger.toLocalDateString(Long.parseLong(value.toString())).toString();
+                }
+
             } else {
                 value = "???";
             }
@@ -647,15 +654,21 @@ public class DetailedLogEventTableModel extends DefaultTableModel implements Log
 
     }
 
-    private final static class ColumnTarget {
+    public final static class ColumnTarget {
         int eventFieldIndex;
         String metadata;
         String columnName;
+        Renderer renderer = Renderer.Normal;
 
-        public ColumnTarget(String columnName, int eventFieldIndex, String metadata) {
+        public ColumnTarget(String columnName, int eventFieldIndex, String metadata, Renderer renderer) {
             this.columnName = columnName;
             this.eventFieldIndex = eventFieldIndex;
             this.metadata = metadata;
+            this.renderer = renderer;
+        }
+
+        public enum Renderer {
+            Normal, Date
         }
     }
 

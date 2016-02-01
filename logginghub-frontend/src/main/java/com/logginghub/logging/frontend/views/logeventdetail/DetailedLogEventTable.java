@@ -6,6 +6,7 @@ import com.logginghub.logging.frontend.PathHelper;
 import com.logginghub.logging.frontend.Utils;
 import com.logginghub.logging.frontend.model.ColumnSettingsModel;
 import com.logginghub.logging.frontend.model.ColumnSettingsModel.ColumnSettingModel;
+import com.logginghub.logging.frontend.views.logeventdetail.DetailedLogEventTableModel.ColumnTarget;
 import com.logginghub.utils.CompareUtils;
 import com.logginghub.utils.DelayedAction;
 import com.logginghub.utils.FileUtils;
@@ -343,7 +344,7 @@ public class DetailedLogEventTable extends JTable {
                 }else if(index < 0) {
                     index = 0;
                 }
-                tableModel.addMetadataColumn(index, value.getMetadataMapping(), value.getName());
+                tableModel.addMetadataColumn(index, value.getMetadataMapping(), value.getName(), ColumnTarget.Renderer.valueOf(value.getRenderer()));
                 logger.info("New column name '{}' mapped to '{}' added at index '{}'", value.getName(), value.getMetadataMapping(), index);
                 TableColumnModel columnModel = getColumnModel();
             }

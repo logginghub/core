@@ -201,7 +201,8 @@ public class ModelBuilder {
                                                         columnConfiguration.getWidth(),
                                                         columnConfiguration.getOrder(),
                                                         columnConfiguration.getAlignment(),
-                                                        columnConfiguration.getMetadata()
+                                                        columnConfiguration.getMetadata(),
+                                                        columnConfiguration.getRenderer()
                                                         ));
 
         }

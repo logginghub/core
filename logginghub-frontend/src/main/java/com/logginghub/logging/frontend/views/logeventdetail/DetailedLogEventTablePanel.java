@@ -18,8 +18,10 @@ import com.logginghub.logging.frontend.images.Icons.IconIdentifier;
 import com.logginghub.logging.frontend.model.ColumnSettingsModel;
 import com.logginghub.logging.frontend.model.CustomDateFilterModel;
 import com.logginghub.logging.frontend.model.CustomQuickFilterModel;
+import com.logginghub.logging.frontend.model.EnvironmentController;
 import com.logginghub.logging.frontend.model.EnvironmentModel;
 import com.logginghub.logging.frontend.model.EventTableColumnModel;
+import com.logginghub.logging.frontend.model.FilterBookmarkModel;
 import com.logginghub.logging.frontend.model.HubConnectionModel;
 import com.logginghub.logging.frontend.model.LevelNamesModel;
 import com.logginghub.logging.frontend.model.LogEventContainer;
@@ -171,6 +173,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
     private TimeView timeView;
     private JSplitPane eventDetailsSplitPane;
     private LevelNamesModel levelNamesModel;
+    private EnvironmentController environmentController;
 
     public DetailedLogEventTablePanel(JMenuBar menuBar,
                                       String propertiesName,
@@ -430,10 +433,34 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         setLayout(new BorderLayout());
     }
 
+    public void deleteSearch() {
+
+        ObservableList<FilterBookmarkModel> filterBookmarks = environmentModel.getFilterBookmarks();
+        String[] selectionValues = new String[filterBookmarks.size()];
+        int index = 0;
+        for (FilterBookmarkModel filterBookmark : filterBookmarks) {
+            selectionValues[index++] = filterBookmark.getName().get();
+        }
+
+        Object result = JOptionPane.showInputDialog(null, "Please choose a search to delete", "Delete Search",
+                                                        JOptionPane.QUESTION_MESSAGE, null,
+                                                        selectionValues, null);
+
+        String searchName = result.toString();
+
+        if (searchName != null) {
+            environmentController.deleteSearch(searchName);
+        }
+    }
+
     protected void pause() {
         tableModel.pause();
         playing = false;
         autoScrollButton.setIcon(playIcon);
+    }
+
+    public void selectSearch(String name) {
+        environmentController.selectSearch(name);
     }
 
     protected void toggleTimeViewer() {
@@ -676,6 +703,21 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         listeners.add(listener);
     }
 
+    private void addLevelFilterMenuOption(JMenu levelMenu, final Level level, int key) {
+
+        String name = levelNamesModel.getLevelName(level.intValue());
+
+        JMenuItem levelItem = new JMenuItem(name);
+        levelItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                getFirstQuickFilter().getModel().getLevelFilter().get().getSelectedLevel().set(level);
+                // quickLevelFilterCombo.setSelectedItem(level);
+            }
+        });
+        levelItem.setAccelerator(KeyStroke.getKeyStroke(key, InputEvent.CTRL_MASK));
+        levelMenu.add(levelItem);
+    }
+
     @Override
     public synchronized void addMouseMotionListener(MouseMotionListener l) {
         super.addMouseMotionListener(l);
@@ -685,6 +727,9 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
 
     public void bind(EnvironmentModel environmentModel) {
         this.environmentModel = environmentModel;
+        this.environmentController = new EnvironmentController(environmentModel);
+
+        environmentController.loadSearches();
 
         eventDetailPanel.bind(environmentModel);
 
@@ -760,6 +805,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
             }
         });
 
+
         environmentModel.getEventDetailsSeparatorHorizontalOrientiation().addListenerAndNotifyCurrent(new ObservablePropertyListener<Boolean>() {
             @Override
             public void onPropertyChanged(Boolean oldValue, Boolean newValue) {
@@ -790,243 +836,6 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
     @Override
     public void unbind(EnvironmentModel environmentModel) {
 
-    }
-
-    private void setupMenuBar(JMenuBar menuBar) {
-
-        MenuElement[] subElements = menuBar.getSubElements();
-        for (MenuElement menuElement : subElements) {
-            Component component = menuElement.getComponent();
-            if (component instanceof JMenu) {
-                JMenu jMenu = (JMenu) component;
-                if (jMenu.getText().equals("Search")) {
-                    // Already have a menu attacked
-                    return;
-                }
-            }
-        }
-
-        JMenu searchMenu = new JMenu("Search");
-        menuBar.add(searchMenu);
-
-        JMenuItem toggleScrolling = new JMenuItem("Toggle scrolling");
-        toggleScrolling.addActionListener(new ReflectionDispatchActionListener("toggleScrolling", this));
-        toggleScrolling.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
-        searchMenu.add(toggleScrolling);
-
-        JMenuItem clearEvents = new JMenuItem("Clear events");
-        clearEvents.addActionListener(new ReflectionDispatchActionListener("clearEvents", this));
-        clearEvents.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_MASK));
-        searchMenu.add(clearEvents);
-        searchMenu.addSeparator();
-
-        JMenuItem findForwards = new JMenuItem("Find fowards");
-        JMenuItem findForwardsAgain = new JMenuItem("Find forwards again");
-        JMenuItem findBackwards = new JMenuItem("Find backwards");
-        JMenuItem findBackwardsAgain = new JMenuItem("Find backwards again");
-
-        findForwards.addActionListener(new ReflectionDispatchActionListener("findForwards", this));
-        findForwardsAgain.addActionListener(new ReflectionDispatchActionListener("findForwardsAgain", this));
-        findBackwards.addActionListener(new ReflectionDispatchActionListener("findBackwards", this));
-        findBackwardsAgain.addActionListener(new ReflectionDispatchActionListener("findBackwardsAgain", this));
-
-        findForwards.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_MASK));
-        findForwardsAgain.setAccelerator(KeyStroke.getKeyStroke('f'));
-
-        findBackwards.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.CTRL_MASK));
-        findBackwardsAgain.setAccelerator(KeyStroke.getKeyStroke('b'));
-
-        searchMenu.add(findForwards);
-        searchMenu.add(findForwardsAgain);
-        searchMenu.add(findBackwards);
-        searchMenu.add(findBackwardsAgain);
-        searchMenu.addSeparator();
-
-        int bookmarks = 9;
-        for (int i = 1; i < bookmarks; i++) {
-            JMenuItem bookmark = new JMenuItem("Add bookmark " + i);
-            bookmark.addActionListener(new ReflectionDispatchActionListener("addBookmark", new Object[]{i}, this));
-            bookmark.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_0 + i, InputEvent.CTRL_MASK));
-            searchMenu.add(bookmark);
-        }
-
-        searchMenu.addSeparator();
-
-        for (int i = 1; i < bookmarks; i++) {
-            JMenuItem bookmark = new JMenuItem("Go to bookmark " + i);
-            bookmark.addActionListener(new ReflectionDispatchActionListener("gotoBookmark", new Object[]{i}, this));
-            bookmark.setAccelerator(KeyStroke.getKeyStroke((char) ('0' + i)));
-            searchMenu.add(bookmark);
-        }
-
-        JMenu levelMenu = new JMenu("Levels");
-        menuBar.add(levelMenu);
-
-        addLevelFilterMenuOption(levelMenu, Level.SEVERE, KeyEvent.VK_F8);
-        addLevelFilterMenuOption(levelMenu, Level.WARNING, KeyEvent.VK_F7);
-        addLevelFilterMenuOption(levelMenu, Level.INFO, KeyEvent.VK_F6);
-        addLevelFilterMenuOption(levelMenu, Level.CONFIG, KeyEvent.VK_F5);
-        addLevelFilterMenuOption(levelMenu, Level.FINE, KeyEvent.VK_F4);
-        addLevelFilterMenuOption(levelMenu, Level.FINER, KeyEvent.VK_F3);
-        addLevelFilterMenuOption(levelMenu, Level.FINEST, KeyEvent.VK_F2);
-        addLevelFilterMenuOption(levelMenu, Level.ALL, KeyEvent.VK_F1);
-
-    }
-
-    public QuickFilterRowPanel getFirstQuickFilter() {
-        return quickFilterRowPanels.get(0);
-    }
-
-    protected synchronized void updateQuickFilterTimer() {
-        logger.trace("Updating the quick filter timer...");
-
-        // Kill off the existing task if it exists
-        if (executeQuickFilter != null) {
-            executeQuickFilter.cancel();
-            executeQuickFilter = null;
-        }
-
-        // Create a new instance
-        executeQuickFilter = new TimerTask() {
-            @Override
-            public void run() {
-                try {
-                    executeQuickFilter();
-                } catch (Exception e) {
-                    logger.warning(e, "Quick filter execution failed");
-                }
-            }
-        };
-
-        quickFilterTimer.schedule(executeQuickFilter, quickFilterTimeout);
-    }
-
-    public static void scrollToCenter(JTable table, int rowIndex, int vColIndex) {
-        if (!(table.getParent() instanceof JViewport)) {
-            return;
-        }
-        JViewport viewport = (JViewport) table.getParent();
-        Rectangle rect = table.getCellRect(rowIndex, vColIndex, true);
-        Rectangle viewRect = viewport.getViewRect();
-        rect.setLocation(rect.x - viewRect.x, rect.y - viewRect.y);
-
-        int centerX = (viewRect.width - rect.width) / 2;
-        int centerY = (viewRect.height - rect.height) / 2;
-        if (rect.x < centerX) {
-            centerX = -centerX;
-        }
-        if (rect.y < centerY) {
-            centerY = -centerY;
-        }
-        rect.translate(centerX, centerY);
-        viewport.scrollRectToVisible(rect);
-    }
-
-    protected void navigateToTime(long time) {
-        int row = tableModel.findFirstTime(time);
-        logger.fine("Navigating to time '{}' - found row index '{}'", Logger.toDateString(time), row);
-        if (row != -1) {
-            table.changeSelection(row, -1, false, false);
-            Rectangle cellRect = table.getCellRect(row, 0, true);
-            logger.fine("CellRect is '{}'", cellRect);
-
-            scrollToCenter(table, row, 0);
-        }
-    }
-
-    public void setDetailPaneOrientation(final boolean horizontal) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                if (horizontal) {
-                    eventDetailsSplitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
-                } else {
-                    eventDetailsSplitPane.setOrientation(JSplitPane.HORIZONTAL_SPLIT);
-                }
-
-                setSplitPaneLocation(environmentModel.getEventDetailsSeparatorLocation().get());
-            }
-        });
-
-    }
-
-    private void setSplitPaneLocation(String newValue) {
-        // This property supports a few different styles - integer number of pixels, double value factor, string percentage
-        String trimmed = newValue.trim();
-        if (trimmed.endsWith("%")) {
-            String valueString = trimmed.substring(0, trimmed.length() - 1).trim();
-
-            double value = Double.parseDouble(valueString);
-
-            // Turn it into a factor
-            value = value / 100d;
-
-            final double finalValue = value;
-            setDividerLocationRelative(finalValue);
-        } else {
-
-            try {
-                int integerValue = Integer.parseInt(trimmed);
-                if (integerValue != -1) {
-                    logger.info("Setting divider location to '{}'", integerValue);
-                    eventDetailsSplitPane.setDividerLocation(integerValue);
-                } else {
-                    eventDetailsSplitPane.setDividerLocation(0.5d);
-                }
-            } catch (NumberFormatException e) {
-                double value = Double.parseDouble(trimmed);
-                setDividerLocationRelative(value);
-            }
-        }
-    }
-
-    private void setDividerLocationRelative(final double finalValue) {
-        // Thanks to swing, setting based on a double value will only work once the component has been laid out, so we have to hack it
-        ThreadUtils.untilTrue(500, TimeUnit.MILLISECONDS, new Callable<Boolean>() {
-            @Override
-            public Boolean call() throws Exception {
-                logger.info("Setting divider location to '{}'", finalValue);
-                eventDetailsSplitPane.setDividerLocation(finalValue);
-                int dividerLocation = eventDetailsSplitPane.getDividerLocation();
-                return dividerLocation > 0;
-            }
-        });
-    }
-
-    private void disableScrollerAutoPause() {
-
-        tableScrollPane.removeMouseWheelListener(mouseWheelPauser);
-
-        try {
-            Component topButton = tableScrollPane.getVerticalScrollBar().getComponent(0);
-            Component bottomButton = tableScrollPane.getVerticalScrollBar().getComponent(1);
-            topButton.removeMouseListener(autoPauser);
-            bottomButton.removeMouseListener(autoPauser);
-
-            tableScrollPane.getVerticalScrollBar().removeMouseListener(autoPauser);
-        } catch (Exception e) {
-            // The first bit goes bang on macs - need an alternative approach
-            tableScrollPane.getVerticalScrollBar().removeMouseListener(autoPauser);
-        }
-    }
-
-    private void addLevelFilterMenuOption(JMenu levelMenu, final Level level, int key) {
-
-        String name = levelNamesModel.getLevelName(level.intValue());
-
-        JMenuItem levelItem = new JMenuItem(name);
-        levelItem.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                getFirstQuickFilter().getModel().getLevelFilter().get().getSelectedLevel().set(level);
-                // quickLevelFilterCombo.setSelectedItem(level);
-            }
-        });
-        levelItem.setAccelerator(KeyStroke.getKeyStroke(key, InputEvent.CTRL_MASK));
-        levelMenu.add(levelItem);
-    }
-
-    protected void executeQuickFilter() {
-        tableModel.refreshFilters(null);
     }
 
     /**
@@ -1115,6 +924,44 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         });
     }
 
+    private void disableScrollerAutoPause() {
+
+        tableScrollPane.removeMouseWheelListener(mouseWheelPauser);
+
+        try {
+            Component topButton = tableScrollPane.getVerticalScrollBar().getComponent(0);
+            Component bottomButton = tableScrollPane.getVerticalScrollBar().getComponent(1);
+            topButton.removeMouseListener(autoPauser);
+            bottomButton.removeMouseListener(autoPauser);
+
+            tableScrollPane.getVerticalScrollBar().removeMouseListener(autoPauser);
+        } catch (Exception e) {
+            // The first bit goes bang on macs - need an alternative approach
+            tableScrollPane.getVerticalScrollBar().removeMouseListener(autoPauser);
+        }
+    }
+
+    public static void scrollToCenter(JTable table, int rowIndex, int vColIndex) {
+        if (!(table.getParent() instanceof JViewport)) {
+            return;
+        }
+        JViewport viewport = (JViewport) table.getParent();
+        Rectangle rect = table.getCellRect(rowIndex, vColIndex, true);
+        Rectangle viewRect = viewport.getViewRect();
+        rect.setLocation(rect.x - viewRect.x, rect.y - viewRect.y);
+
+        int centerX = (viewRect.width - rect.width) / 2;
+        int centerY = (viewRect.height - rect.height) / 2;
+        if (rect.x < centerX) {
+            centerX = -centerX;
+        }
+        if (rect.y < centerY) {
+            centerY = -centerY;
+        }
+        rect.translate(centerX, centerY);
+        viewport.scrollRectToVisible(rect);
+    }
+
     public void close() {
     }
 
@@ -1136,6 +983,10 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
             dummyLogEventProducerx.stop();
             dummyLogEventProducerx = null;
         }
+    }
+
+    protected void executeQuickFilter() {
+        tableModel.refreshFilters(null);
     }
 
     public synchronized void exportBinaryFile() {
@@ -1290,9 +1141,9 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         return getFirstQuickFilter().getModel().getLevelFilter().get().getSelectedLevel().get().intValue();
     }
 
-    //    public DetailedLogEventTableModel getTableModel() {
-    //        return tableModel;
-    //    }
+    public QuickFilterRowPanel getFirstQuickFilter() {
+        return quickFilterRowPanels.get(0);
+    }
 
     public TimestampVariableRollingFileLogger getOutputLogger() {
         return outputLogger;
@@ -1301,10 +1152,6 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
     public TimeController getTimeFilterController() {
         return timeController;
     }
-
-    //    public void gotoBookmark(Integer bookmark) {
-    //        table.gotoBookmark(bookmark.intValue());
-    //    }
 
     public TimeView getTimeView() {
         return timeView;
@@ -1324,6 +1171,22 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
 
     public boolean isHistoricalView() {
         return historicalView;
+    }
+
+    //    public DetailedLogEventTableModel getTableModel() {
+    //        return tableModel;
+    //    }
+
+    protected void navigateToTime(long time) {
+        int row = tableModel.findFirstTime(time);
+        logger.fine("Navigating to time '{}' - found row index '{}'", Logger.toDateString(time), row);
+        if (row != -1) {
+            table.changeSelection(row, -1, false, false);
+            Rectangle cellRect = table.getCellRect(row, 0, true);
+            logger.fine("CellRect is '{}'", cellRect);
+
+            scrollToCenter(table, row, 0);
+        }
     }
 
     public void onNewLogEvent(final LogEvent event) {
@@ -1355,6 +1218,10 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         VisualStopwatchController.getInstance().add(sw);
     }
 
+    //    public void gotoBookmark(Integer bookmark) {
+    //        table.gotoBookmark(bookmark.intValue());
+    //    }
+
     public void openBinaryFolder() {
         String settingsKey = getBinaryFileSettingsKey();
         String binaryFolder = dynamicSettings.getString(settingsKey, new File("").getAbsolutePath());
@@ -1367,6 +1234,14 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
                 logger.warn(e, "Failed to use Desktop to explore path '{}'", file.getAbsolutePath());
             }
         }
+    }
+
+    public String saveSearch() {
+        String searchName = JOptionPane.showInputDialog("Saved search name", "");
+        if (searchName != null) {
+            environmentController.saveSearch(searchName);
+        }
+        return searchName;
     }
 
     public void sendHistoricalDataRequest(String autoRequestHistory) {
@@ -1471,6 +1346,35 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         autoScroll = selected;
     }
 
+    public void setDetailPaneOrientation(final boolean horizontal) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                if (horizontal) {
+                    eventDetailsSplitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
+                } else {
+                    eventDetailsSplitPane.setOrientation(JSplitPane.HORIZONTAL_SPLIT);
+                }
+
+                setSplitPaneLocation(environmentModel.getEventDetailsSeparatorLocation().get());
+            }
+        });
+
+    }
+
+    private void setDividerLocationRelative(final double finalValue) {
+        // Thanks to swing, setting based on a double value will only work once the component has been laid out, so we have to hack it
+        ThreadUtils.untilTrue(5, TimeUnit.SECONDS, new Callable<Boolean>() {
+            @Override
+            public Boolean call() throws Exception {
+                logger.info("Setting divider location to '{}'", finalValue);
+                eventDetailsSplitPane.setDividerLocation(finalValue);
+                int dividerLocation = eventDetailsSplitPane.getDividerLocation();
+                return dividerLocation > 0;
+            }
+        });
+    }
+
     public void setDynamicSettings(Metadata dynamicSettings) {
         this.dynamicSettings = dynamicSettings;
         initialiseFromSettings(dynamicSettings);
@@ -1495,9 +1399,127 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         getFirstQuickFilter().getModel().getLevelFilter().get().getSelectedLevel().set(level);
     }
 
-
     public void setSelectedRowFormat(RowFormatModel selectedRowFormat) {
         rowHighlighter.setSelectedRowFormat(selectedRowFormat);
+    }
+
+    private void setSplitPaneLocation(String newValue) {
+        // This property supports a few different styles - integer number of pixels, double value factor, string percentage
+        String trimmed = newValue.trim();
+        if (trimmed.endsWith("%")) {
+            String valueString = trimmed.substring(0, trimmed.length() - 1).trim();
+
+            double value = Double.parseDouble(valueString);
+
+            // Turn it into a factor
+            value = value / 100d;
+
+            final double finalValue = value;
+            setDividerLocationRelative(finalValue);
+        } else {
+
+            try {
+                int integerValue = Integer.parseInt(trimmed);
+                if (integerValue != -1) {
+                    logger.info("Setting divider location to '{}'", integerValue);
+                    eventDetailsSplitPane.setDividerLocation(integerValue);
+                } else {
+                    eventDetailsSplitPane.setDividerLocation(0.5d);
+                }
+            } catch (NumberFormatException e) {
+                double value = Double.parseDouble(trimmed);
+                setDividerLocationRelative(value);
+            }
+        }
+    }
+
+    private void setupMenuBar(JMenuBar menuBar) {
+
+        MenuElement[] subElements = menuBar.getSubElements();
+        for (MenuElement menuElement : subElements) {
+            Component component = menuElement.getComponent();
+            if (component instanceof JMenu) {
+                JMenu jMenu = (JMenu) component;
+                if (jMenu.getText().equals("Search")) {
+                    // Already have a menu attacked
+                    return;
+                }
+            }
+        }
+
+        JMenu searchMenu = new JMenu("Search");
+        menuBar.add(searchMenu);
+
+        JMenuItem toggleScrolling = new JMenuItem("Toggle scrolling");
+        toggleScrolling.addActionListener(new ReflectionDispatchActionListener("toggleScrolling", this));
+        toggleScrolling.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
+        searchMenu.add(toggleScrolling);
+
+        JMenuItem clearEvents = new JMenuItem("Clear events");
+        clearEvents.addActionListener(new ReflectionDispatchActionListener("clearEvents", this));
+        clearEvents.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_MASK));
+        searchMenu.add(clearEvents);
+        searchMenu.addSeparator();
+
+        JMenuItem findForwards = new JMenuItem("Find fowards");
+        JMenuItem findForwardsAgain = new JMenuItem("Find forwards again");
+        JMenuItem findBackwards = new JMenuItem("Find backwards");
+        JMenuItem findBackwardsAgain = new JMenuItem("Find backwards again");
+
+        findForwards.addActionListener(new ReflectionDispatchActionListener("findForwards", this));
+        findForwardsAgain.addActionListener(new ReflectionDispatchActionListener("findForwardsAgain", this));
+        findBackwards.addActionListener(new ReflectionDispatchActionListener("findBackwards", this));
+        findBackwardsAgain.addActionListener(new ReflectionDispatchActionListener("findBackwardsAgain", this));
+
+        findForwards.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_MASK));
+        findForwardsAgain.setAccelerator(KeyStroke.getKeyStroke('f'));
+
+        findBackwards.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.CTRL_MASK));
+        findBackwardsAgain.setAccelerator(KeyStroke.getKeyStroke('b'));
+
+        searchMenu.add(findForwards);
+        searchMenu.add(findForwardsAgain);
+        searchMenu.add(findBackwards);
+        searchMenu.add(findBackwardsAgain);
+        searchMenu.addSeparator();
+
+        int bookmarks = 9;
+        for (int i = 1; i < bookmarks; i++) {
+            JMenuItem bookmark = new JMenuItem("Add bookmark " + i);
+            bookmark.addActionListener(new ReflectionDispatchActionListener("addBookmark", new Object[]{i}, this));
+            bookmark.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_0 + i, InputEvent.CTRL_MASK));
+            searchMenu.add(bookmark);
+        }
+
+        searchMenu.addSeparator();
+
+        for (int i = 1; i < bookmarks; i++) {
+            JMenuItem bookmark = new JMenuItem("Go to bookmark " + i);
+            bookmark.addActionListener(new ReflectionDispatchActionListener("gotoBookmark", new Object[]{i}, this));
+            bookmark.setAccelerator(KeyStroke.getKeyStroke((char) ('0' + i)));
+            searchMenu.add(bookmark);
+        }
+
+        JMenu levelMenu = new JMenu("Levels");
+        menuBar.add(levelMenu);
+
+        addLevelFilterMenuOption(levelMenu, Level.SEVERE, KeyEvent.VK_F8);
+        addLevelFilterMenuOption(levelMenu, Level.WARNING, KeyEvent.VK_F7);
+        addLevelFilterMenuOption(levelMenu, Level.INFO, KeyEvent.VK_F6);
+        addLevelFilterMenuOption(levelMenu, Level.CONFIG, KeyEvent.VK_F5);
+        addLevelFilterMenuOption(levelMenu, Level.FINE, KeyEvent.VK_F4);
+        addLevelFilterMenuOption(levelMenu, Level.FINER, KeyEvent.VK_F3);
+        addLevelFilterMenuOption(levelMenu, Level.FINEST, KeyEvent.VK_F2);
+        addLevelFilterMenuOption(levelMenu, Level.ALL, KeyEvent.VK_F1);
+
+    }
+
+    public synchronized void stopBinaryExport() {
+        if (binaryExporter != null) {
+            getEnvironmentModel().removeLogEventListener(binaryExporter);
+            binaryExporter.close();
+            binaryExporter = null;
+        }
     }
 
     //    protected void showTimeTravelDialogue() {
@@ -1514,12 +1536,28 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
     //
     //    }
 
-    public synchronized void stopBinaryExport() {
-        if (binaryExporter != null) {
-            getEnvironmentModel().removeLogEventListener(binaryExporter);
-            binaryExporter.close();
-            binaryExporter = null;
+    protected synchronized void updateQuickFilterTimer() {
+        logger.trace("Updating the quick filter timer...");
+
+        // Kill off the existing task if it exists
+        if (executeQuickFilter != null) {
+            executeQuickFilter.cancel();
+            executeQuickFilter = null;
         }
+
+        // Create a new instance
+        executeQuickFilter = new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    executeQuickFilter();
+                } catch (Exception e) {
+                    logger.warning(e, "Quick filter execution failed");
+                }
+            }
+        };
+
+        quickFilterTimer.schedule(executeQuickFilter, quickFilterTimeout);
     }
 
     protected void writeOutputLog(LogEvent event) {

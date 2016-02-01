@@ -19,4 +19,4 @@ dependencies {
     provided("ch.qos.logback:logback-classic:1.0.7")
 }
 
-test.ignoreFailures = true
+test.ignoreFailures = false

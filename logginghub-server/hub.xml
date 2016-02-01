@@ -30,6 +30,7 @@
             <template>
                 <metadata key="newfield" value="123"/>
                 <metadata key="newfield2" value="abc"/>
+                <metadata key="timefield" value="1453975220788"/>
             </template>
 
         </message>

@@ -52,28 +52,53 @@ class TimeFieldFilterTest extends Specification {
         TimeFieldFilter.Field.OriginTime     | TimeFieldFilter.Type.LessThanOrEquals    | 10    | logEvent().originTime(10).toLogEvent() | true
         TimeFieldFilter.Field.OriginTime     | TimeFieldFilter.Type.LessThanOrEquals    | 10    | logEvent().originTime(11).toLogEvent() | false
 
-        TimeFieldFilter.Field.SequenceNumber | TimeFieldFilter.Type.GreaterThan         | 10    | logEvent().sequenceNumber(1).toLogEvent()  | false
-        TimeFieldFilter.Field.SequenceNumber | TimeFieldFilter.Type.GreaterThan         | 10    | logEvent().sequenceNumber(10).toLogEvent() | false
-        TimeFieldFilter.Field.SequenceNumber | TimeFieldFilter.Type.GreaterThan         | 10    | logEvent().sequenceNumber(11).toLogEvent() | true
+        TimeFieldFilter.Field.SequenceNumber | TimeFieldFilter.Type.GreaterThan         | 10    | logEvent().sequence(1).toLogEvent()  | false
+        TimeFieldFilter.Field.SequenceNumber | TimeFieldFilter.Type.GreaterThan         | 10    | logEvent().sequence(10).toLogEvent() | false
+        TimeFieldFilter.Field.SequenceNumber | TimeFieldFilter.Type.GreaterThan         | 10    | logEvent().sequence(11).toLogEvent() | true
 
-        TimeFieldFilter.Field.SequenceNumber | TimeFieldFilter.Type.GreaterThanOrEquals | 10    | logEvent().sequenceNumber(1).toLogEvent()  | false
-        TimeFieldFilter.Field.SequenceNumber | TimeFieldFilter.Type.GreaterThanOrEquals | 10    | logEvent().sequenceNumber(10).toLogEvent() | true
-        TimeFieldFilter.Field.SequenceNumber | TimeFieldFilter.Type.GreaterThanOrEquals | 10    | logEvent().sequenceNumber(11).toLogEvent() | true
+        TimeFieldFilter.Field.SequenceNumber | TimeFieldFilter.Type.GreaterThanOrEquals | 10    | logEvent().sequence(1).toLogEvent()  | false
+        TimeFieldFilter.Field.SequenceNumber | TimeFieldFilter.Type.GreaterThanOrEquals | 10    | logEvent().sequence(10).toLogEvent() | true
+        TimeFieldFilter.Field.SequenceNumber | TimeFieldFilter.Type.GreaterThanOrEquals | 10    | logEvent().sequence(11).toLogEvent() | true
 
-        TimeFieldFilter.Field.SequenceNumber | TimeFieldFilter.Type.LessThan            | 10    | logEvent().sequenceNumber(1).toLogEvent()  | true
-        TimeFieldFilter.Field.SequenceNumber | TimeFieldFilter.Type.LessThan            | 10    | logEvent().sequenceNumber(10).toLogEvent() | false
-        TimeFieldFilter.Field.SequenceNumber | TimeFieldFilter.Type.LessThan            | 10    | logEvent().sequenceNumber(11).toLogEvent() | false
+        TimeFieldFilter.Field.SequenceNumber | TimeFieldFilter.Type.LessThan            | 10    | logEvent().sequence(1).toLogEvent()  | true
+        TimeFieldFilter.Field.SequenceNumber | TimeFieldFilter.Type.LessThan            | 10    | logEvent().sequence(10).toLogEvent() | false
+        TimeFieldFilter.Field.SequenceNumber | TimeFieldFilter.Type.LessThan            | 10    | logEvent().sequence(11).toLogEvent() | false
 
-        TimeFieldFilter.Field.SequenceNumber | TimeFieldFilter.Type.LessThanOrEquals    | 10    | logEvent().sequenceNumber(1).toLogEvent()  | true
-        TimeFieldFilter.Field.SequenceNumber | TimeFieldFilter.Type.LessThanOrEquals    | 10    | logEvent().sequenceNumber(10).toLogEvent() | true
-        TimeFieldFilter.Field.SequenceNumber | TimeFieldFilter.Type.LessThanOrEquals    | 10    | logEvent().sequenceNumber(11).toLogEvent() | false
+        TimeFieldFilter.Field.SequenceNumber | TimeFieldFilter.Type.LessThanOrEquals    | 10    | logEvent().sequence(1).toLogEvent()  | true
+        TimeFieldFilter.Field.SequenceNumber | TimeFieldFilter.Type.LessThanOrEquals    | 10    | logEvent().sequence(10).toLogEvent() | true
+        TimeFieldFilter.Field.SequenceNumber | TimeFieldFilter.Type.LessThanOrEquals    | 10    | logEvent().sequence(11).toLogEvent() | false
 
     }
 
-    def "test metdata fields" () {
+    def "test metadata fields" (String field, TimeFieldFilter.Type type, long value, LogEvent input, boolean expected) {
 
+        when:
+        TimeFieldFilter filter = new TimeFieldFilter(field, type, value);
 
+        then:
+        filter.passes(input) == expected;
 
+        where:
+
+        field | type                                     | value | input                                       | expected
+
+        "a"   | TimeFieldFilter.Type.GreaterThan         | 10    | logEvent().metadata("a", "1").toLogEvent()  | false
+        "a"   | TimeFieldFilter.Type.GreaterThan         | 10    | logEvent().metadata("a", "10").toLogEvent() | false
+        "a"   | TimeFieldFilter.Type.GreaterThan         | 10    | logEvent().metadata("a", "11").toLogEvent() | true
+
+        "a"   | TimeFieldFilter.Type.GreaterThanOrEquals | 10    | logEvent().metadata("a", "1").toLogEvent()  | false
+        "a"   | TimeFieldFilter.Type.GreaterThanOrEquals | 10    | logEvent().metadata("a", "10").toLogEvent() | true
+        "a"   | TimeFieldFilter.Type.GreaterThanOrEquals | 10    | logEvent().metadata("a", "11").toLogEvent() | true
+
+        "a"   | TimeFieldFilter.Type.LessThan            | 10    | logEvent().metadata("a", "1").toLogEvent()  | true
+        "a"   | TimeFieldFilter.Type.LessThan            | 10    | logEvent().metadata("a", "10").toLogEvent() | false
+        "a"   | TimeFieldFilter.Type.LessThan            | 10    | logEvent().metadata("a", "11").toLogEvent() | false
+
+        "a"   | TimeFieldFilter.Type.LessThanOrEquals    | 10    | logEvent().metadata("a", "1").toLogEvent()  | true
+        "a"   | TimeFieldFilter.Type.LessThanOrEquals    | 10    | logEvent().metadata("a", "10").toLogEvent() | true
+        "a"   | TimeFieldFilter.Type.LessThanOrEquals    | 10    | logEvent().metadata("a", "11").toLogEvent() | false
+
+        "b"   | TimeFieldFilter.Type.LessThanOrEquals    | 10    | logEvent().metadata("a", "1").toLogEvent()  | false
 
     }
 

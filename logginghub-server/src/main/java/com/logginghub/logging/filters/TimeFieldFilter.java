@@ -78,7 +78,12 @@ public class TimeFieldFilter implements Filter<LogEvent> {
                 Map<String, String> metadata = logEvent.getMetadata();
                 if (metadata != null) {
                     String metadataValue = metadata.get(metdataField);
-                    comparisonValue = Long.parseLong(metadataValue);
+                    if(metadataValue == null) {
+                        // This is tricky - the event didn't have the metadata field - so do we display it or not? Lets try no.
+                        return false;
+                    }else {
+                        comparisonValue = Long.parseLong(metadataValue);
+                    }
                     break;
                 } else {
                     // This is tricky - the event didn't have the metadata field - so do we display it or not? Lets try no.

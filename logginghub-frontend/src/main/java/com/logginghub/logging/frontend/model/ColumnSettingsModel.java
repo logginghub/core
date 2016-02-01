@@ -31,17 +31,23 @@ public class ColumnSettingsModel {
         private final String alignment;
         private final String metadataMapping;
         private final String name;
+        private String renderer;
 
-        public ColumnSettingModel(String name, int width, int order, String alignment, String metadataMapping) {
+        public ColumnSettingModel(String name, int width, int order, String alignment, String metadataMapping, String renderer) {
             this.name = name;
             this.width = width;
             this.order = order;
             this.alignment = alignment;
             this.metadataMapping = metadataMapping;
+            this.renderer = renderer;
         }
 
         public int getOrder() {
             return order;
+        }
+
+        public String getRenderer() {
+            return renderer;
         }
 
         public int getWidth() {
@@ -58,6 +64,10 @@ public class ColumnSettingsModel {
 
         public String getName() {
             return name;
+        }
+
+        public void setRenderer(String renderer) {
+            this.renderer = renderer;
         }
     }
 }

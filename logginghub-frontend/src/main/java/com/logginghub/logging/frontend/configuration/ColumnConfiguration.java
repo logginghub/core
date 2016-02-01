@@ -1,5 +1,7 @@
 package com.logginghub.logging.frontend.configuration;
 
+import com.logginghub.logging.frontend.views.logeventdetail.DetailedLogEventTableModel.ColumnTarget;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
@@ -14,6 +16,7 @@ public class ColumnConfiguration {
     @XmlAttribute private int order;
     @XmlAttribute private String alignment;
     @XmlAttribute private String metadata;
+    @XmlAttribute private String renderer = ColumnTarget.Renderer.Normal.name();
 
     public String getAlignment() {
         return alignment;
@@ -25,6 +28,10 @@ public class ColumnConfiguration {
 
     public int getOrder() {
         return order;
+    }
+
+    public String getRenderer() {
+        return renderer;
     }
 
     public int getWidth() {
@@ -49,6 +56,10 @@ public class ColumnConfiguration {
 
     public void setOrder(int order) {
         this.order = order;
+    }
+
+    public void setRenderer(String renderer) {
+        this.renderer = renderer;
     }
 
     public void setWidth(int width) {

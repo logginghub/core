@@ -532,6 +532,15 @@ public class Binder2 {
         scrollBar.addAdjustmentListener(adjustmentListener);
     }
 
+    public <T> void addListenerAndNotifyCurrent(final ObservableList<T> observableList, final ObservableListListener<T> observabeListListener) {
+        unbinders.add(new Runnable() {
+            public void run() {
+                observableList.removeListener(observabeListListener);
+            }
+        });
+        observableList.addListenerAndNotifyCurrent(observabeListListener);
+    }
+
     public void addListenerAndNotifyCurrent(final ObservableLong observableLong, final ObservablePropertyListener<Long> observablePropertyListener) {
         unbinders.add(new Runnable() {
             public void run() {
