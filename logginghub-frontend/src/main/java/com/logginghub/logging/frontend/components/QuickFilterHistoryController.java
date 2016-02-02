@@ -1,15 +1,26 @@
 package com.logginghub.logging.frontend.components;
 
+import com.logginghub.logging.frontend.model.EnvironmentModel;
 import com.logginghub.utils.observable.ObservableProperty;
 
 public class QuickFilterHistoryController {
 
     private QuickFilterHistoryModel model;
-    
+    private final EnvironmentModel environmentModel;
+
     private ObservableProperty<QuickFilterHistoryEntryModel> selectedEntry = new ObservableProperty<QuickFilterHistoryEntryModel>(null);
 
-    public QuickFilterHistoryController(QuickFilterHistoryModel model) {
+    public QuickFilterHistoryController(QuickFilterHistoryModel model, EnvironmentModel environmentModel) {
         this.model = model;
+        this.environmentModel = environmentModel;
+    }
+
+    public void clearAllFilters() {
+
+    }
+
+    public EnvironmentModel getEnvironmentModel() {
+        return environmentModel;
     }
 
     public void addItem(QuickFilterHistoryEntryModel entry) {

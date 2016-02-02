@@ -1483,13 +1483,16 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
         });
 
         editMenu.add(horizontalDetailView);
-        editMenu.addSeparator();
 
         setupFileMenu(fileMenu);
 
         menuBar.add(fileMenu);
         menuBar.add(editMenu);
-        menuBar.add(viewMenu);
+
+        if(proxy.getLoggingFrontendConfiguration().isShowViewMenu()) {
+            menuBar.add(viewMenu);
+        }
+
         menuBar.add(filtersMenu);
 
         menuBar.add(sourcesMenu);

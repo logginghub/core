@@ -22,6 +22,7 @@ import java.util.List;
     @XmlElement(name = "selectedRowFormat") private RowFormatConfiguration selectedRowFormat = new RowFormatConfiguration();
     @XmlAttribute private boolean showOldCharting = false;
     @XmlAttribute private boolean showExperimental = true;
+    @XmlAttribute private boolean showViewMenu = true;
     @XmlAttribute private boolean showChartingEditor = true;
     @XmlAttribute private boolean showHeapSlider = false;
     @XmlAttribute private boolean showHubClearEvents = false;
@@ -158,4 +159,11 @@ import java.util.List;
         this.showHeapSlider = showHeapSlider;
     }
 
+    public boolean isShowViewMenu() {
+        return showViewMenu;
+    }
+
+
+
 }
+

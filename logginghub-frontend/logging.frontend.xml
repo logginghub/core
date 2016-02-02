@@ -1,6 +1,8 @@
 <loggingFrontendConfiguration title="Local Configuration"
-                              showHistoryViewer="true"
-                              showChartingEditor="true"
+                              showHistoryViewer="false"
+                              showChartingEditor="false"
+                              showExperimental="false"
+                              showViewMenu="false"
                               showHeapSlider="false"
                               showHubClearEvents="true">
 
@@ -11,7 +13,12 @@
                  disableColumnFile="true"
                  eventDetailsSeparatorLocation=" 80 % "
                  eventDetailsSeparatorHorizontalOrientiation="false"
-                 showHTMLEventDetails="true">
+                 showHTMLEventDetails="true"
+                 showRegexOptionOnQuickFilters="false"
+                 showClearEvents="false"
+                 showTimeControl="false"
+                 showAddFilter="false"
+                 showEventDetailSummary="false">
 
         <hub name="local" host="localhost:9000"/>
 
@@ -25,7 +32,7 @@
         <columnSetting name="Market" width="100" order="1"/>
         <columnSetting name="Quantity" width="100" order="2"/>
         <columnSetting name="Instrument" width="240" order="3"/>
-        <columnSetting name="Customer" width="280" order="4" metadata="Customer"/>
+        <columnSetting name="Customer" width="280" order="4" metadata="customer"/>
         <columnSetting name="Status" width="110" order="5"/>
         <columnSetting name="Product" width="110" order="6" alignment="center"/>
         <columnSetting name="Time" width="150" order="7"/>
@@ -46,6 +53,7 @@
         <customFilter label="App" field="SourceApplication" type="Contains" width="100" defaultValue=""/>
         <customFilter label="Host" field="SourceHost" type="Contains" width="100" defaultValue=""/>
         <customFilter label="Custom" field="newfield2" type="StartsWith" choices="a,b,c,abc"/>
+        <customFilter label="Customer" field="customer" type="Contains" width="100" defaultValue=""/>
 
         <customDateFilter label="Earliest Time" field="HubTime" type="GreaterThan" width="200"/>
         <customDateFilter label="Latest Time" field="HubTime" type="LessThan" width="200"/>

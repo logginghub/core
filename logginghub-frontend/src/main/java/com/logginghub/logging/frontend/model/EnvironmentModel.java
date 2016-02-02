@@ -67,18 +67,26 @@ public class EnvironmentModel extends Observable implements LogEventSource, LogE
     private ObservableProperty<Boolean> autoLocking = createBooleanProperty("autoLocking", true);
     private ObservableProperty<Boolean> showHistoryTab = createBooleanProperty("showHistoryTab", true);
     private ObservableProperty<String> eventDetailsSeparatorLocation = createStringProperty("eventDetailsSeparatorLocation", "-1");
-    private ObservableProperty<Boolean> eventDetailsSeparatorHorizontalOrientiation = createBooleanProperty("eventDetailsSeparatorHorizontalOrientiation",
-                                                                                                          true);
-
+    private ObservableProperty<Boolean> eventDetailsSeparatorHorizontalOrientiation = createBooleanProperty(
+            "eventDetailsSeparatorHorizontalOrientiation",
+            false);
     private ObservableProperty<String> configurationFolder = createStringProperty("configurationFolder", ".");
     private ObservableProperty<String> savedSearchesFilename = createStringProperty("savedSearchesFilename", "savedsearches.json");
 
     private ObservableProperty<Boolean> repoEnabled = createBooleanProperty("repoEnabled", true);
+    private ObservableProperty<Boolean> showRegexOptionOnQuickFilters = createBooleanProperty("showRegexOptionsOnQuickFilters", true);
+
     private ObservableProperty<String> channel = createStringProperty("channel", "");
     private ObservableList<QuickFilterModel> quickFilterModels = createListProperty("quickFilterModels", QuickFilterModel.class);
     private ObservableInteger filterUpdateCount = new ObservableInteger(0);
     private ObservableInteger highestLevelSinceLastSelected = createIntProperty("highestLevelSinceLastSelected", -1);
     private ObservableProperty<FilterBookmarkModel> activeBookmark = createProperty("activeBookmark", FilterBookmarkModel.class, null);
+
+    private ObservableProperty<Boolean> showClearEvents = createBooleanProperty("showClearEvents", true);
+    private ObservableProperty<Boolean> showTimeControl = createBooleanProperty("showTimeControl", true);
+    private ObservableProperty<Boolean> showAddFilter = createBooleanProperty("showAddFilter", true);
+    private ObservableProperty<Boolean> showEventDetailSummary= createBooleanProperty("showEventDetailSummary", true);
+
 
     public EnvironmentModel() {
 
@@ -128,10 +136,6 @@ public class EnvironmentModel extends Observable implements LogEventSource, LogE
         getRepoEnabled().set(false);
     }
 
-    public ObservableProperty<FilterBookmarkModel> getActiveBookmark() {
-        return activeBookmark;
-    }
-
     public ObservableProperty<Boolean> getAutoLocking() {
         return autoLocking;
     }
@@ -152,9 +156,17 @@ public class EnvironmentModel extends Observable implements LogEventSource, LogE
         multiplexer.addLogEventListener(logEventListener);
     }
 
+    public ObservableProperty<Boolean> getShowEventDetailSummary() {
+        return showEventDetailSummary;
+    }
+
     @Override
     public void removeLogEventListener(LogEventListener logEventListener) {
         multiplexer.removeLogEventListener(logEventListener);
+    }
+
+    public ObservableProperty<FilterBookmarkModel> getActiveBookmark() {
+        return activeBookmark;
     }
 
     public ObservableProperty<String> getChannel() {
@@ -167,6 +179,10 @@ public class EnvironmentModel extends Observable implements LogEventSource, LogE
 
     public void setColumnSettingsModel(ColumnSettingsModel columnSettingsModel) {
         this.columnSettingsModel = columnSettingsModel;
+    }
+
+    public ObservableProperty<String> getConfigurationFolder() {
+        return configurationFolder;
     }
 
     public Stream<ConnectionStateChangedEvent> getConnectionStateStream() {
@@ -189,12 +205,12 @@ public class EnvironmentModel extends Observable implements LogEventSource, LogE
         return logEventContainerController;
     }
 
-    public ObservableProperty<String> getEventDetailsSeparatorLocation() {
-        return eventDetailsSeparatorLocation;
-    }
-
     public ObservableProperty<Boolean> getEventDetailsSeparatorHorizontalOrientiation() {
         return eventDetailsSeparatorHorizontalOrientiation;
+    }
+
+    public ObservableProperty<String> getEventDetailsSeparatorLocation() {
+        return eventDetailsSeparatorLocation;
     }
 
     public double getEventMemoryMB() {
@@ -261,20 +277,28 @@ public class EnvironmentModel extends Observable implements LogEventSource, LogE
         return quickFilterHistoryModel;
     }
 
-    public ObservableProperty<String> getConfigurationFolder() {
-        return configurationFolder;
-    }
-
-    public ObservableProperty<String> getSavedSearchesFilename() {
-        return savedSearchesFilename;
-    }
-
     public com.logginghub.utils.observable.ObservableList<QuickFilterModel> getQuickFilterModels() {
         return quickFilterModels;
     }
 
+    public ObservableProperty<Boolean> getShowAddFilter() {
+        return showAddFilter;
+    }
+
+    public ObservableProperty<Boolean> getShowClearEvents() {
+        return showClearEvents;
+    }
+
+    public ObservableProperty<Boolean> getShowTimeControl() {
+        return showTimeControl;
+    }
+
     public ObservableProperty<String> getRepoConnectionPoints() {
         return repoConnectionPoints;
+    }
+
+    public ObservableProperty<String> getSavedSearchesFilename() {
+        return savedSearchesFilename;
     }
 
     public ObservableProperty<Boolean> getShowHTMLEventDetails() {
@@ -285,6 +309,9 @@ public class EnvironmentModel extends Observable implements LogEventSource, LogE
         return showHistoryTab;
     }
 
+    public ObservableProperty<Boolean> getShowRegexOptionOnQuickFilters() {
+        return showRegexOptionOnQuickFilters;
+    }
 
     public String isAutoRequestHistory() {
         return autoRequestHistory;

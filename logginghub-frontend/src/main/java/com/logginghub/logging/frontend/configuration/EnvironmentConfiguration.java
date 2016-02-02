@@ -27,6 +27,7 @@ import java.util.List;
     @XmlAttribute private boolean autoLocking;
     @XmlAttribute private boolean writeOutputLog = false;
 
+    @XmlAttribute private boolean showRegexOptionOnQuickFilters = true;
     @XmlAttribute private boolean showHistoryTab = false;
 
     @XmlAttribute private boolean repoEnabled = false;
@@ -52,6 +53,10 @@ import java.util.List;
     @XmlAttribute private boolean eventDetailsSeparatorHorizontalOrientiation = true;
 
     @XmlAttribute private boolean showHTMLEventDetails = false;
+    @XmlAttribute private boolean showClearEvents = true;
+    @XmlAttribute private boolean showTimeControl = true;
+    @XmlAttribute private boolean showAddFilter = true;
+    @XmlAttribute private boolean showEventDetailSummary;
 
     public EnvironmentConfiguration() {
         setupOutputLogConfiguration();
@@ -61,8 +66,28 @@ import java.util.List;
         return customFilter;
     }
 
+    public boolean isShowAddFilter() {
+        return showAddFilter;
+    }
+
+    public boolean isShowClearEvents() {
+        return showClearEvents;
+    }
+
+    public boolean isShowEventDetailSummary() {
+        return showEventDetailSummary;
+    }
+
+    public boolean isShowRegexOptionOnQuickFilters() {
+        return showRegexOptionOnQuickFilters;
+    }
+
     public boolean isEventDetailsSeparatorHorizontalOrientiation() {
         return eventDetailsSeparatorHorizontalOrientiation;
+    }
+
+    public boolean isShowTimeControl() {
+        return showTimeControl;
     }
 
     public void setEventDetailsSeparatorHorizontalOrientiation(boolean eventDetailsSeparatorHorizontalOrientiation) {
@@ -156,8 +181,24 @@ import java.util.List;
         this.levelMapping = levelMappings;
     }
 
+    public void setShowAddFilter(boolean showAddFilter) {
+        this.showAddFilter = showAddFilter;
+    }
+
+    public void setShowClearEvents(boolean showClearEvents) {
+        this.showClearEvents = showClearEvents;
+    }
+
+    public void setShowEventDetailSummary(boolean showEventDetailSummary) {
+        this.showEventDetailSummary = showEventDetailSummary;
+    }
+
     public void setShowHTMLEventDetails(boolean showHTMLEventDetails) {
         this.showHTMLEventDetails = showHTMLEventDetails;
+    }
+
+    public void setShowTimeControl(boolean showTimeControl) {
+        this.showTimeControl = showTimeControl;
     }
 
     private void setupOutputLogConfiguration() {

@@ -13,6 +13,8 @@ import com.logginghub.logging.frontend.model.LogEventContainer;
 import com.logginghub.logging.frontend.model.LogEventContainerController;
 import com.logginghub.logging.listeners.LogEventListener;
 import com.logginghub.utils.Is;
+import com.logginghub.utils.ObjectUtils;
+import com.logginghub.utils.Out;
 import com.logginghub.utils.Pair;
 import com.logginghub.utils.Stopwatch;
 import com.logginghub.utils.filter.Filter;
@@ -83,7 +85,7 @@ public class DetailedLogEventTableModel extends DefaultTableModel implements Log
             public void run() {
                 synchronized (eventLock) {
                     Stopwatch refiltering = Stopwatch.start("Refiltering");
-//                    Out.out("Filters : {}", ObjectUtils.recursiveDump(filters));
+                    Out.out("Filters : {}", ObjectUtils.recursiveDump(filters));
                     eventController.refilter(filters);
                     logger.info(refiltering);
                     eventController.getLiveEventsThatPassFilter().indexOf(currentSelection);
@@ -100,6 +102,8 @@ public class DetailedLogEventTableModel extends DefaultTableModel implements Log
     public void fireTableStructureChanged() {
         super.fireTableStructureChanged();
     }
+
+
 
     public void addMetadataColumn(int index, String metadataKey, String name, ColumnTarget.Renderer renderer) {
 
@@ -650,7 +654,7 @@ public class DetailedLogEventTableModel extends DefaultTableModel implements Log
     }
 
     @Override
-    public void setValueAt(Object arg0, int arg1, int arg2) {
+    public void setValueAt(Object item, int row, int column) {
 
     }
 

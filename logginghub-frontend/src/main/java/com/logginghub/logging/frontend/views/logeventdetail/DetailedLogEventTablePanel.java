@@ -68,10 +68,12 @@ import com.logginghub.utils.observable.ObservablePropertyListener;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
+import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -86,6 +88,10 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.EventObject;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -109,6 +115,10 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
     private static int nextDummyApplicationIndex;
 
     private final Object incommingEventBatchLock = new Object();
+    private int eastPanelIcons;
+    private JLabel addQuickFilterButton;
+    private JLabel clearButton;
+    private JPanel eastPanel;
     private MouseWheelListener mouseWheelPauser;
     private boolean autoScroll = true;
     private JLabel autoScrollButton;
@@ -253,7 +263,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         timeTravelButton.setIcon(Icons.get(IconIdentifier.Clock));
 
         autoScrollButton = new JLabel();
-        final JLabel clearButton = new JLabel();
+        clearButton = new JLabel();
         clearButton.setName("clear");
 
         pauseIcon = Icons.get(IconIdentifier.Pause);
@@ -278,7 +288,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         });
         autoScrollButton.setToolTipText("Pause or resume the event stream");
 
-        final JLabel addQuickFilterButton = new JLabel();
+        addQuickFilterButton = new JLabel();
         addQuickFilterButton.setIcon(Icons.get(IconIdentifier.AddCircleSmall));
         addQuickFilterButton.addMouseListener(new MouseAdapter() {
             @Override
@@ -290,13 +300,13 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         addQuickFilterButton.setName("addQuickFilter");
 
         GridLayout gridLayout = new GridLayout();
-        JPanel eastPanel = new JPanel(gridLayout);
-        int icons = 4;
+        eastPanel = new JPanel(gridLayout);
         eastPanel.add(timeTravelButton);
         eastPanel.add(addQuickFilterButton);
         eastPanel.add(autoScrollButton);
         eastPanel.add(clearButton);
-        eastPanel.setPreferredSize(new Dimension(32 * icons, 35));
+        eastPanelIcons = 4;
+        updateEastPanelSize();
 
         filtersAndButtonsPanel.setLayout(new BorderLayout());
         filtersAndButtonsPanel.add(eastPanel, BorderLayout.EAST);
@@ -307,6 +317,68 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         quickFilterRowPanel.setAndOrVisible(false);
         quickFilterContainerPanel.add(quickFilterRowPanel, "wrap");
         quickFilterRowPanels.add(quickFilterRowPanel);
+
+        table.setDefaultEditor(Date.class, new TableCellEditor() {
+
+            private Date value;
+            private JTextField textField = new JTextField();
+            private SimpleDateFormat f = new SimpleDateFormat("dd/MM/yyyy");
+
+            @Override
+            public Object getCellEditorValue() {
+                return value;
+            }
+
+            @Override
+            public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+                this.value = (Date) value;
+                if (this.value != null) {
+                    textField.setText(f.format(this.value));
+                } else {
+                    textField.setText("");
+                }
+                return textField;
+
+            }            @Override
+            public boolean isCellEditable(EventObject anEvent) {
+                return true;
+            }
+
+            @Override
+            public boolean shouldSelectCell(EventObject anEvent) {
+                return true;
+            }
+
+            @Override
+            public boolean stopCellEditing() {
+                String inputData = textField.getText();
+                try {
+                    Date newDate = f.parse(inputData);
+                    // Make this our new value; this gets picked up and applied back into the model
+                    this.value = newDate;
+                } catch (ParseException e) {
+                    // Don't do anything, revert back to the current value
+                }
+                return true;
+            }
+
+            @Override
+            public void cancelCellEditing() {
+                // Don't do anything
+            }
+
+            @Override
+            public void addCellEditorListener(CellEditorListener l) {
+
+            }
+
+            @Override
+            public void removeCellEditorListener(CellEditorListener l) {
+
+            }
+
+
+        });
 
         filtersAndButtonsPanel.add(quickFilterContainerPanel, BorderLayout.CENTER);
 
@@ -427,40 +499,17 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
                 });
             }
         });
+
     }
 
     public DetailedLogEventTablePanel() {
         setLayout(new BorderLayout());
     }
 
-    public void deleteSearch() {
-
-        ObservableList<FilterBookmarkModel> filterBookmarks = environmentModel.getFilterBookmarks();
-        String[] selectionValues = new String[filterBookmarks.size()];
-        int index = 0;
-        for (FilterBookmarkModel filterBookmark : filterBookmarks) {
-            selectionValues[index++] = filterBookmark.getName().get();
-        }
-
-        Object result = JOptionPane.showInputDialog(null, "Please choose a search to delete", "Delete Search",
-                                                        JOptionPane.QUESTION_MESSAGE, null,
-                                                        selectionValues, null);
-
-        String searchName = result.toString();
-
-        if (searchName != null) {
-            environmentController.deleteSearch(searchName);
-        }
-    }
-
     protected void pause() {
         tableModel.pause();
         playing = false;
         autoScrollButton.setIcon(playIcon);
-    }
-
-    public void selectSearch(String name) {
-        environmentController.selectSearch(name);
     }
 
     protected void toggleTimeViewer() {
@@ -513,7 +562,8 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         environmentModel.getQuickFilterModels().add(quickFilterModel);
         QuickFilterRowPanel quickFilterRowPanel = createQuickFilterRow();
 
-        QuickFilterHistoryController quickFilterHistoryController = new QuickFilterHistoryController(environmentModel.getQuickFilterHistoryModel());
+        QuickFilterHistoryController quickFilterHistoryController = new QuickFilterHistoryController(environmentModel.getQuickFilterHistoryModel(),
+                                                                                                     environmentModel);
         quickFilterRowPanel.bind(quickFilterHistoryController, quickFilterModel, quickFilterController.getIsAndFilter());
 
         final JPanel wrapperPanel = createWrapperPanel(quickFilterRowPanel);
@@ -529,6 +579,10 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
                 notifyLevelChanges();
             }
         });
+    }
+
+    private void updateEastPanelSize() {
+        eastPanel.setPreferredSize(new Dimension(32 * eastPanelIcons, 35));
     }
 
     private QuickFilterRowPanel createQuickFilterRow() {
@@ -761,7 +815,8 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         tableModel.addFilter(quickFilterController.getFilter(), null);
         tableModel.addFilter(timeController.getFilter(), null);
 
-        QuickFilterHistoryController quickFilterHistoryController = new QuickFilterHistoryController(environmentModel.getQuickFilterHistoryModel());
+        QuickFilterHistoryController quickFilterHistoryController = new QuickFilterHistoryController(environmentModel.getQuickFilterHistoryModel(),
+                                                                                                     environmentModel);
         getFirstQuickFilter().bind(quickFilterHistoryController, quickFilterModel, quickFilterController.getIsAndFilter());
 
         environmentModel.getFilterUpdateCount().addListener(new ObservablePropertyListener<Integer>() {
@@ -831,6 +886,40 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         if (environmentModel.isDisableAutoScrollPauser()) {
             disableScrollerAutoPause();
         }
+
+        environmentModel.getShowClearEvents().addListenerAndNotifyCurrent(new ObservablePropertyListener<Boolean>() {
+            @Override
+            public void onPropertyChanged(Boolean oldValue, Boolean newValue) {
+                if (!newValue) {
+                    eastPanel.remove(clearButton);
+                    eastPanelIcons--;
+                    updateEastPanelSize();
+                }
+            }
+        });
+
+        environmentModel.getShowTimeControl().addListenerAndNotifyCurrent(new ObservablePropertyListener<Boolean>() {
+            @Override
+            public void onPropertyChanged(Boolean oldValue, Boolean newValue) {
+                if (!newValue) {
+                    eastPanel.remove(timeTravelButton);
+                    eastPanelIcons--;
+                    updateEastPanelSize();
+                }
+            }
+        });
+
+        environmentModel.getShowAddFilter().addListenerAndNotifyCurrent(new ObservablePropertyListener<Boolean>() {
+            @Override
+            public void onPropertyChanged(Boolean oldValue, Boolean newValue) {
+                if (!newValue) {
+                    eastPanel.remove(addQuickFilterButton);
+                    eastPanelIcons--;
+                    updateEastPanelSize();
+                }
+            }
+        });
+
     }
 
     @Override
@@ -982,6 +1071,30 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         if (dummyLogEventProducerx != null) {
             dummyLogEventProducerx.stop();
             dummyLogEventProducerx = null;
+        }
+    }
+
+    public void deleteSearch() {
+
+        ObservableList<FilterBookmarkModel> filterBookmarks = environmentModel.getFilterBookmarks();
+        String[] selectionValues = new String[filterBookmarks.size()];
+        int index = 0;
+        for (FilterBookmarkModel filterBookmark : filterBookmarks) {
+            selectionValues[index++] = filterBookmark.getName().get();
+        }
+
+        Object result = JOptionPane.showInputDialog(null,
+                                                    "Please choose a search to delete",
+                                                    "Delete Search",
+                                                    JOptionPane.QUESTION_MESSAGE,
+                                                    null,
+                                                    selectionValues,
+                                                    null);
+
+        String searchName = result.toString();
+
+        if (searchName != null) {
+            environmentController.deleteSearch(searchName);
         }
     }
 
@@ -1173,10 +1286,6 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         return historicalView;
     }
 
-    //    public DetailedLogEventTableModel getTableModel() {
-    //        return tableModel;
-    //    }
-
     protected void navigateToTime(long time) {
         int row = tableModel.findFirstTime(time);
         logger.fine("Navigating to time '{}' - found row index '{}'", Logger.toDateString(time), row);
@@ -1188,6 +1297,10 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
             scrollToCenter(table, row, 0);
         }
     }
+
+    //    public DetailedLogEventTableModel getTableModel() {
+    //        return tableModel;
+    //    }
 
     public void onNewLogEvent(final LogEvent event) {
         logger.fine("New event received in logeventdetail panel '{}'", event);
@@ -1218,10 +1331,6 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         VisualStopwatchController.getInstance().add(sw);
     }
 
-    //    public void gotoBookmark(Integer bookmark) {
-    //        table.gotoBookmark(bookmark.intValue());
-    //    }
-
     public void openBinaryFolder() {
         String settingsKey = getBinaryFileSettingsKey();
         String binaryFolder = dynamicSettings.getString(settingsKey, new File("").getAbsolutePath());
@@ -1236,12 +1345,20 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         }
     }
 
+    //    public void gotoBookmark(Integer bookmark) {
+    //        table.gotoBookmark(bookmark.intValue());
+    //    }
+
     public String saveSearch() {
         String searchName = JOptionPane.showInputDialog("Saved search name", "");
         if (searchName != null) {
             environmentController.saveSearch(searchName);
         }
         return searchName;
+    }
+
+    public void selectSearch(String name) {
+        environmentController.selectSearch(name);
     }
 
     public void sendHistoricalDataRequest(String autoRequestHistory) {
@@ -1572,5 +1689,53 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
                 throw new RuntimeException(e);
             }
         }
+
     }
+
+    // for Matt
+//        table.setDefaultEditor(Date.class, new DateEditor());
+//    private static final class DateEditor extends AbstractCellEditor implements TableCellEditor {
+//
+//        private Date value;
+//        private JTextField textField = new JTextField();
+//        private SimpleDateFormat f = new SimpleDateFormat("dd/MM/yyyy");
+//
+//        @Override
+//        public Object getCellEditorValue() {
+//            return value;
+//        }
+//
+//        @Override
+//        public boolean stopCellEditing() {
+//            String inputData = textField.getText().trim();
+//
+//            if(inputData.isEmpty()) {
+//                this.value = null;
+//            }else {
+//                try {
+//                    Date newDate = f.parse(inputData);
+//                    // Make this our new value; this gets picked up and applied back into the model
+//                    this.value = newDate;
+//                } catch (ParseException e) {
+//                    // Don't do anything, revert back to the current value
+//                }
+//            }
+//            super.stopCellEditing();
+//            return true;
+//        }
+//
+//        @Override
+//        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+//            this.value = (Date) value;
+//            if (this.value != null) {
+//                textField.setText(f.format(this.value));
+//            } else {
+//                textField.setText("");
+//            }
+//            return textField;
+//
+//        }
+//
+//    }
+
 }

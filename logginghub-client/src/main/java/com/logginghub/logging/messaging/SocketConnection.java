@@ -48,7 +48,6 @@ public class SocketConnection implements LoggingMessageSource,
         discard
     }
 
-    ;
     public final static int writeBufferDefaultSize = 20000;
     public final static int CONNECTION_TYPE_NORMAL = 0;
     public final static int CONNECTION_TYPE_HUB_BRIDGE = 1;

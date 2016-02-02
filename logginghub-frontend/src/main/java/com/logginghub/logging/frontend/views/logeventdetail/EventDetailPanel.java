@@ -29,6 +29,7 @@ public class EventDetailPanel extends JPanel implements BindableToModel<Environm
     private final JLabel methodColumnLabel;
     private final JLabel threadColumnLabel;
     private final JLabel loggerColumnLabel;
+    private final JPanel topPanel;
     private JLabel timestampLabel = new JLabel();
     private JLabel sourceApplicationLabel = new JLabel();
     private JLabel classLabel = new JLabel();
@@ -58,7 +59,7 @@ public class EventDetailPanel extends JPanel implements BindableToModel<Environm
         migLayout = new MigLayout("insets 0, gap 0", "[grow,fill]", "[fill][grow,fill][growprio 10,grow,fill]");
         setLayout(migLayout);
 
-        JPanel topPanel = new JPanel(new MigLayout("insets 1, fill", "[][grow][][grow]", "[][][][]"));
+        topPanel = new JPanel(new MigLayout("insets 1, fill", "[][grow][][grow]", "[][][][]"));
 
         // TODO : class, method and logger need to be columns really - there is a leaky abstraction on the columns vs the actual event fields.
         timeColumnLabel = new JLabel("Time");
@@ -209,10 +210,19 @@ public class EventDetailPanel extends JPanel implements BindableToModel<Environm
         threadColumnLabel.setText(eventTableColumnModel.getColumnName(DetailedLogEventTableModel.COLUMN_THREAD));
         loggerColumnLabel.setText("Logger");
 
+        environmentModel.getShowEventDetailSummary().addListenerAndNotifyCurrent(new ObservablePropertyListener<Boolean>() {
+            @Override
+            public void onPropertyChanged(Boolean oldValue, Boolean newValue) {
+                if(!newValue) {
+                    remove(topPanel);
+                }
+            }
+        });
+
         environmentModel.getShowHTMLEventDetails().addListenerAndNotifyCurrent(new ObservablePropertyListener<Boolean>() {
             @Override
             public void onPropertyChanged(Boolean oldValue, Boolean newValue) {
-                if(newValue){
+                if (newValue) {
                     messageScroller.getViewport().remove(messageArea);
                     messageScroller.getViewport().add(jEditorPane);
                 } else {

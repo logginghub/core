@@ -95,6 +95,9 @@ public class GeneratorModule implements Module<GeneratorConfiguration> {
                         generator.setTimeValue(timeValue + generator.getTimeIncrementValue());
                     }
 
+                    // jshaw - hack
+                    event.getMetadata().put("customer", StringUtils.randomString(5));
+
                     event.setMessage(message);
                     logEventStream.onNewItem(event);
                 }

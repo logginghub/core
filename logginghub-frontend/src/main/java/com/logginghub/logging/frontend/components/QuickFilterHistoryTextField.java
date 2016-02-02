@@ -1,5 +1,6 @@
 package com.logginghub.logging.frontend.components;
 
+import com.logginghub.logging.frontend.model.EnvironmentModel;
 import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.observable.ObservableList;
 import com.logginghub.utils.observable.ObservableListListener;
@@ -310,7 +311,7 @@ public class QuickFilterHistoryTextField extends JTextField {
         model.getEntries().add(new QuickFilterHistoryEntryModel("Command 2"));
         model.getEntries().add(new QuickFilterHistoryEntryModel("Command 3"));
 
-        field.bind(new QuickFilterHistoryController(model));
+        field.bind(new QuickFilterHistoryController(model, new EnvironmentModel()));
 
         TestFrame.show(field, 300, 100);
     }

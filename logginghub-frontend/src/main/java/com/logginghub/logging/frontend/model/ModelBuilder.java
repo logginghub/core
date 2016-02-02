@@ -46,9 +46,15 @@ public class ModelBuilder {
         environmentModel.getOpenOnStartup().set(environmentConfiguration.isOpenOnStartup());
         environmentModel.getAutoLocking().set(environmentConfiguration.isAutoLocking());
         environmentModel.getRepoEnabled().set(environmentConfiguration.isRepoEnabled());
+        environmentModel.getShowRegexOptionOnQuickFilters().set(environmentConfiguration.isShowRegexOptionOnQuickFilters());
         environmentModel.getRepoConnectionPoints().set(environmentConfiguration.getRepoConnectionPoints());
         environmentModel.getShowHistoryTab().set(environmentConfiguration.isShowHistoryTab());
         environmentModel.getShowHTMLEventDetails().set(environmentConfiguration.isShowHTMLEventDetails());
+
+        environmentModel.getShowClearEvents().set(environmentConfiguration.isShowClearEvents());
+        environmentModel.getShowTimeControl().set(environmentConfiguration.isShowTimeControl());
+        environmentModel.getShowAddFilter().set(environmentConfiguration.isShowAddFilter());
+        environmentModel.getShowEventDetailSummary().set(environmentConfiguration.isShowEventDetailSummary());
 
         environmentModel.getEventDetailsSeparatorHorizontalOrientiation().set(environmentConfiguration.isEventDetailsSeparatorHorizontalOrientiation());
         environmentModel.getEventDetailsSeparatorLocation().set(environmentConfiguration.getEventDetailsSeparatorLocation());

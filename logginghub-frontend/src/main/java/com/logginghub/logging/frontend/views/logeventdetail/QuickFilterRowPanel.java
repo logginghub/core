@@ -4,6 +4,8 @@ import com.logginghub.logging.filters.TimeFieldFilter;
 import com.logginghub.logging.frontend.components.LevelsCheckboxListView;
 import com.logginghub.logging.frontend.components.QuickFilterHistoryController;
 import com.logginghub.logging.frontend.components.QuickFilterHistoryTextField;
+import com.logginghub.logging.frontend.images.Icons;
+import com.logginghub.logging.frontend.images.Icons.IconIdentifier;
 import com.logginghub.logging.frontend.model.CustomDateFilterModel;
 import com.logginghub.logging.frontend.model.CustomQuickFilterModel;
 import com.logginghub.logging.frontend.model.LevelNamesModel;
@@ -24,6 +26,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -34,6 +38,7 @@ public class QuickFilterRowPanel extends JPanel {
     private static final long serialVersionUID = 1L;
 
     private static final Logger logger = Logger.getLoggerFor(QuickFilterRowPanel.class);
+    private final JLabel clearFilters;
 
     private MigLayout customFiltersLayout = new MigLayout("gap 2, ins 2", "[grow, fill]", "[grow, fill]");
     private JPanel customFiltersPanel = new JPanel(customFiltersLayout);
@@ -49,6 +54,7 @@ public class QuickFilterRowPanel extends JPanel {
     private String layoutConstraints = "gap 2, ins 2";
 
     private QuickFilterModel model;
+    private QuickFilterHistoryController controller;
 
     public QuickFilterRowPanel(LevelNamesModel levelNamesModel) {
         setLayout(new MigLayout(layoutConstraints, "[][][][grow,fill][grow, fill][]", "[grow,fill]"));
@@ -68,21 +74,45 @@ public class QuickFilterRowPanel extends JPanel {
         andOrToggle.setMaximumSize(toggleSize);
         andOrToggle.setPreferredSize(toggleSize);
 
+        clearFilters = new JLabel(Icons.get(IconIdentifier.Delete));
+        clearFilters.setToolTipText("Clear the filter values");
+        clearFilters.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                clearAllFilters();
+            }
+        });
+
         add(enabledCheckbox);
         add(andOrToggle);
         add(quickLevelFilterCombo);
         add(quickFilterTextField);
         add(customFiltersPanel);
+
         add(regexRadioButton, "alignx center");
+        add(clearFilters);
 
     }
 
-    public void bind(QuickFilterHistoryController quickFilterHistoryController,
-                     final QuickFilterModel model,
-                     final ObservableProperty<Boolean> isAndFilter) {
-        this.model = model;
+    private void clearAllFilters() {
+        logger.info("Clearing filters");
 
-        quickFilterTextField.bind(quickFilterHistoryController);
+        // TODO : this should be done in a controller
+        model.getFilterText().set("");
+
+        for (CustomDateFilterModel customDateFilter : model.getCustomDateFilters()) {
+            customDateFilter.getValue().set(TimeFieldFilter.ACCEPT_ALL);
+        }
+
+        for (CustomQuickFilterModel customQuickFilterModel : model.getCustomFilters()) {
+            customQuickFilterModel.getValue().set("");
+        }
+    }
+
+    public void bind(QuickFilterHistoryController controller, final QuickFilterModel model, final ObservableProperty<Boolean> isAndFilter) {
+        this.model = model;
+        this.controller = controller;
+        quickFilterTextField.bind(controller);
 
         isAndFilter.addListenerAndNotifyCurrent(new ObservablePropertyListener<Boolean>() {
             @Override
@@ -139,6 +169,14 @@ public class QuickFilterRowPanel extends JPanel {
             @Override
             public void onCleared() {
 
+            }
+        });
+
+        // Bind to the show regex option
+        controller.getEnvironmentModel().getShowRegexOptionOnQuickFilters().addListenerAndNotifyCurrent(new ObservablePropertyListener<Boolean>() {
+            @Override
+            public void onPropertyChanged(Boolean oldValue, Boolean newValue) {
+                remove(regexRadioButton);
             }
         });
 
@@ -214,12 +252,12 @@ public class QuickFilterRowPanel extends JPanel {
                             model.setValue(null);
                         } else {
                             logger.info("Setting calendar value to {} due to change in the model", newValue);
-//                            Calendar calendar = new GregorianCalendar();
-//                            calendar.setTimeInMillis(newValue);
-//                            int year = calendar.get(Calendar.YEAR);
-//                            int month = calendar.get(Calendar.MONTH);
-//                            int day = calendar.get(Calendar.DAY_OF_MONTH);
-//                            model.setDate(year, month, day);
+                            //                            Calendar calendar = new GregorianCalendar();
+                            //                            calendar.setTimeInMillis(newValue);
+                            //                            int year = calendar.get(Calendar.YEAR);
+                            //                            int month = calendar.get(Calendar.MONTH);
+                            //                            int day = calendar.get(Calendar.DAY_OF_MONTH);
+                            //                            model.setDate(year, month, day);
                             model.setValue(new Date(newValue));
                         }
                     }
@@ -253,15 +291,45 @@ public class QuickFilterRowPanel extends JPanel {
                     }
                 });
 
-                Dimension dimension = new Dimension(customDateFilterModel.getWidth().get(), 16);
-                filter.setPreferredSize(dimension);
-                filter.setMinimumSize(dimension);
+                setDateFilterSizes(filter, customDateFilterModel.getWidth().get(), 16);
+
 
                 customFiltersPanel.add(label);
                 customFiltersPanel.add(filter);
                 customFiltersPanel.doLayout();
             }
+
         });
+
+    }
+
+    private void setDateFilterSizes(JDatePickerImpl filter, int width, int height) {
+
+        int buttonWidth = 20;
+
+        // The default height is too small really, so add some fudge
+        int adjustedHeight = height + 4;
+
+        // jshaw - this is a bit of a hack based on knowing the order of the sub-components in the date control source code
+        Dimension entireDimension = new Dimension(width, adjustedHeight);
+        Dimension buttonDimension = new Dimension(buttonWidth, adjustedHeight);
+        Dimension textDimension = new Dimension(width - buttonWidth - 1, adjustedHeight);
+
+
+        filter.setPreferredSize(entireDimension);
+        filter.setMinimumSize(entireDimension);
+        filter.setSize(entireDimension);
+        filter.setMaximumSize(entireDimension);
+
+        filter.getComponent(0).setPreferredSize(textDimension);
+        filter.getComponent(0).setMinimumSize(textDimension);
+        filter.getComponent(0).setSize(textDimension);
+        filter.getComponent(0).setMaximumSize(textDimension);
+
+        filter.getComponent(1).setPreferredSize(buttonDimension);
+        filter.getComponent(1).setMinimumSize(buttonDimension);
+        filter.getComponent(1).setSize(buttonDimension);
+        filter.getComponent(1).setMaximumSize(buttonDimension);
 
     }
 
