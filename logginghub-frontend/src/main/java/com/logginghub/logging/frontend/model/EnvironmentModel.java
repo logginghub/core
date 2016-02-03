@@ -86,6 +86,8 @@ public class EnvironmentModel extends Observable implements LogEventSource, LogE
     private ObservableProperty<Boolean> showTimeControl = createBooleanProperty("showTimeControl", true);
     private ObservableProperty<Boolean> showAddFilter = createBooleanProperty("showAddFilter", true);
     private ObservableProperty<Boolean> showEventDetailSummary= createBooleanProperty("showEventDetailSummary", true);
+    private ObservableProperty<Boolean> showTimeSelectionView = createBooleanProperty("showTimeSelectionView", true);
+    private ObservableProperty<Boolean> showFullStatusDetails = createBooleanProperty("showFullStatusDetails", true);
 
 
     public EnvironmentModel() {
@@ -136,6 +138,10 @@ public class EnvironmentModel extends Observable implements LogEventSource, LogE
         getRepoEnabled().set(false);
     }
 
+    public ObservableProperty<Boolean> getShowTimeSelectionView() {
+        return showTimeSelectionView;
+    }
+
     public ObservableProperty<Boolean> getAutoLocking() {
         return autoLocking;
     }
@@ -183,6 +189,10 @@ public class EnvironmentModel extends Observable implements LogEventSource, LogE
 
     public ObservableProperty<String> getConfigurationFolder() {
         return configurationFolder;
+    }
+
+    public ObservableProperty<Boolean> getShowFullStatusDetails() {
+        return showFullStatusDetails;
     }
 
     public Stream<ConnectionStateChangedEvent> getConnectionStateStream() {

@@ -65,6 +65,12 @@ public class LogEventBuilder {
         return this;
     }
 
+    public LogEventBuilder message(String message) {
+        event.setMessage(message);
+        return this;
+    }
+
+
     public LogEventBuilder metadata(String key, String value) {
         event.getMetadata().put(key, value);
         return this;

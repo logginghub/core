@@ -50,6 +50,8 @@ public class ModelBuilder {
         environmentModel.getRepoConnectionPoints().set(environmentConfiguration.getRepoConnectionPoints());
         environmentModel.getShowHistoryTab().set(environmentConfiguration.isShowHistoryTab());
         environmentModel.getShowHTMLEventDetails().set(environmentConfiguration.isShowHTMLEventDetails());
+        environmentModel.getShowTimeSelectionView().set(environmentConfiguration.isShowTimeSelectionView());
+        environmentModel.getShowFullStatusDetails().set(environmentConfiguration.isShowFullStatusDetails());
 
         environmentModel.getShowClearEvents().set(environmentConfiguration.isShowClearEvents());
         environmentModel.getShowTimeControl().set(environmentConfiguration.isShowTimeControl());

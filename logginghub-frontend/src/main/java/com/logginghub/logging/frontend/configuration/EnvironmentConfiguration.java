@@ -56,7 +56,9 @@ import java.util.List;
     @XmlAttribute private boolean showClearEvents = true;
     @XmlAttribute private boolean showTimeControl = true;
     @XmlAttribute private boolean showAddFilter = true;
-    @XmlAttribute private boolean showEventDetailSummary;
+    @XmlAttribute private boolean showEventDetailSummary = true;
+    @XmlAttribute private boolean showTimeSelectionView = true;
+    @XmlAttribute private boolean showFullStatusDetails = true;
 
     public EnvironmentConfiguration() {
         setupOutputLogConfiguration();
@@ -64,6 +66,14 @@ import java.util.List;
 
     public List<CustomFilterConfiguration> getCustomFilters() {
         return customFilter;
+    }
+
+    public boolean isShowFullStatusDetails() {
+        return showFullStatusDetails;
+    }
+
+    public void setShowFullStatusDetails(boolean showFullStatusDetails) {
+        this.showFullStatusDetails = showFullStatusDetails;
     }
 
     public boolean isShowAddFilter() {
@@ -88,6 +98,10 @@ import java.util.List;
 
     public boolean isShowTimeControl() {
         return showTimeControl;
+    }
+
+    public boolean isShowTimeSelectionView() {
+        return showTimeSelectionView;
     }
 
     public void setEventDetailsSeparatorHorizontalOrientiation(boolean eventDetailsSeparatorHorizontalOrientiation) {
@@ -199,6 +213,10 @@ import java.util.List;
 
     public void setShowTimeControl(boolean showTimeControl) {
         this.showTimeControl = showTimeControl;
+    }
+
+    public void setShowTimeSelectionView(boolean showTimeSelectionView) {
+        this.showTimeSelectionView = showTimeSelectionView;
     }
 
     private void setupOutputLogConfiguration() {

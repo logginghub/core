@@ -626,12 +626,20 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
                     eventQueueCount,
                     eventQueueProcessed));
         } else {
-            statusText.setText(String.format("%d events | %d filtered | %.0f events/sec | event buffer %.1f %%  | memory usage %.1f %%",
-                                             eventController.getLiveEventsThatPassFilter().size(),
-                                             eventController.getLiveEventsThatFailedFilter().size(),
-                                             movingAverage.calculateMovingAverage(),
-                                             eventController.getUsedPercentage(),
-                                             memorySnapshot.getAvailableMemoryPercentage()));
+
+            if(environmentModel.getShowFullStatusDetails().get()) {
+
+                statusText.setText(String.format("%d events | %d filtered | %.0f events/sec | event buffer %.1f %%  | memory usage %.1f %%",
+                                                 eventController.getLiveEventsThatPassFilter().size(),
+                                                 eventController.getLiveEventsThatFailedFilter().size(),
+                                                 movingAverage.calculateMovingAverage(),
+                                                 eventController.getUsedPercentage(),
+                                                 memorySnapshot.getAvailableMemoryPercentage()));
+            }else{
+                statusText.setText(String.format("%d events | %d filtered",
+                                                 eventController.getLiveEventsThatPassFilter().size(),
+                                                 eventController.getLiveEventsThatFailedFilter().size()));
+            }
         }
     }
 
@@ -871,14 +879,12 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         environmentModel.getEventDetailsSeparatorLocation().addListenerAndNotifyCurrent(new ObservablePropertyListener<String>() {
             @Override
             public void onPropertyChanged(String oldValue, final String newValue) {
-
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
                         setSplitPaneLocation(newValue);
                     }
                 });
-
             }
         });
 
@@ -916,6 +922,18 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
                     eastPanel.remove(addQuickFilterButton);
                     eastPanelIcons--;
                     updateEastPanelSize();
+                }
+            }
+        });
+
+
+        environmentModel.getShowTimeSelectionView().addListenerAndNotifyCurrent(new ObservablePropertyListener<Boolean>() {
+            @Override
+            public void onPropertyChanged(Boolean oldValue, Boolean newValue) {
+                if(newValue) {
+                    add(timeSplitter, BorderLayout.CENTER);
+                }else{
+                    add(eventDetailsSplitPane, BorderLayout.CENTER);
                 }
             }
         });
@@ -1603,7 +1621,14 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         int bookmarks = 9;
         for (int i = 1; i < bookmarks; i++) {
             JMenuItem bookmark = new JMenuItem("Add bookmark " + i);
-            bookmark.addActionListener(new ReflectionDispatchActionListener("addBookmark", new Object[]{i}, this));
+            // new ReflectionDispatchActionListener("addBookmark", new Object[]{i}, this)
+            final int finalI = i;
+            bookmark.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    addBookmark(finalI);
+                }
+            });
             bookmark.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_0 + i, InputEvent.CTRL_MASK));
             searchMenu.add(bookmark);
         }
@@ -1612,7 +1637,13 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
 
         for (int i = 1; i < bookmarks; i++) {
             JMenuItem bookmark = new JMenuItem("Go to bookmark " + i);
-            bookmark.addActionListener(new ReflectionDispatchActionListener("gotoBookmark", new Object[]{i}, this));
+            final int finalI = i;
+            bookmark.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    gotoBookmark(finalI);
+                }
+            });
             bookmark.setAccelerator(KeyStroke.getKeyStroke((char) ('0' + i)));
             searchMenu.add(bookmark);
         }
@@ -1629,6 +1660,14 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
         addLevelFilterMenuOption(levelMenu, Level.FINEST, KeyEvent.VK_F2);
         addLevelFilterMenuOption(levelMenu, Level.ALL, KeyEvent.VK_F1);
 
+    }
+
+    public void gotoBookmark(Integer bookmark) {
+        table.gotoBookmark(bookmark.intValue());
+    }
+
+    public void addBookmark(Integer bookmark) {
+        table.addBookmark(bookmark.intValue());
     }
 
     public synchronized void stopBinaryExport() {

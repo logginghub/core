@@ -1,12 +1,10 @@
 package com.logginghub.logging.frontend.model;
 
 import com.logginghub.logging.filters.CompositeAndFilter;
-import com.logginghub.logging.filters.FieldFilter;
-import com.logginghub.logging.filters.FieldFilter.Field;
-import com.logginghub.logging.filters.FieldFilter.Type;
 import com.logginghub.logging.filters.FilterFactory;
 import com.logginghub.logging.filters.LevelCheckFilter;
 import com.logginghub.logging.filters.LogEventLevelFilter;
+import com.logginghub.logging.filters.MultiValueOrFieldFilter;
 import com.logginghub.logging.filters.MultipleEventContainsFilter;
 import com.logginghub.logging.filters.SwitchingAndOrFilter;
 import com.logginghub.logging.filters.TimeFieldFilter;
@@ -183,21 +181,21 @@ public class QuickFilterController {
         customFilters.addListenerAndNotifyCurrent(new ObservableListListener<CustomQuickFilterModel>() {
             @Override
             public void onAdded(CustomQuickFilterModel customQuickFilterModel) {
-                FieldFilter fieldFilter;
-                Field field;
+                MultiValueOrFieldFilter fieldFilter;
+                MultiValueOrFieldFilter.Field field;
 
-                Type type = Type.valueOf(StringUtils.capitalise(customQuickFilterModel.getType().get()));
+                MultiValueOrFieldFilter.Type type = MultiValueOrFieldFilter.Type.valueOf(StringUtils.capitalise(customQuickFilterModel.getType().get()));
                 String value = customQuickFilterModel.getValue().get();
                 String fieldName = customQuickFilterModel.getField().get();
 
                 try {
-                    field = Field.valueOf(StringUtils.capitalise(fieldName));
-                    fieldFilter = new FieldFilter(field, type, value, false);
+                    field = MultiValueOrFieldFilter.Field.valueOf(StringUtils.capitalise(fieldName));
+                    fieldFilter = new MultiValueOrFieldFilter(field, type, value, false);
                 } catch (IllegalArgumentException e) {
-                    fieldFilter = new FieldFilter(fieldName, type, value, false);
+                    fieldFilter = new MultiValueOrFieldFilter(fieldName, type, value, false);
                 }
 
-                final FieldFilter finalFilter = fieldFilter;
+                final MultiValueOrFieldFilter finalFilter = fieldFilter;
 
                 wrapper.compositeFilter.addFilter(fieldFilter);
 

@@ -18,9 +18,14 @@
                  showClearEvents="false"
                  showTimeControl="false"
                  showAddFilter="false"
-                 showEventDetailSummary="false">
+                 showEventDetailSummary="false"
+                 showTimeSelectionView="false"
+                 showFullStatusDetails="false">
 
         <hub name="local" host="localhost:9000"/>
+
+        <highlighter phrase="ghi" colourHex="AliceBlue"/>
+        <highlighter phrase="jkl" colourHex="Pink"/>
 
         <columnMapping from="Source" to="Market"/>
         <columnMapping from="Host" to="Quantity"/>
