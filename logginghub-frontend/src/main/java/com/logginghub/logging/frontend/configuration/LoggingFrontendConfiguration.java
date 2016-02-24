@@ -28,9 +28,15 @@ import java.util.List;
     @XmlAttribute private boolean showHubClearEvents = false;
 
     @XmlElement List<RemoteChartConfiguration> remoteCharting = new ArrayList<RemoteChartConfiguration>();
+    @XmlAttribute private int localRPCPort = DONT_USE_LOCAL_RPC;
+    public final static int DONT_USE_LOCAL_RPC = -1;
 
     public LoggingFrontendConfiguration() {
 
+    }
+
+    public int getLocalRPCPort() {
+        return localRPCPort;
     }
 
     public List<RemoteChartConfiguration> getRemoteCharting() {
@@ -43,6 +49,10 @@ import java.util.List;
 
     public boolean isShowHubClearEvents() {
         return showHubClearEvents;
+    }
+
+    public void setLocalRPCPort(int localRPCPort) {
+        this.localRPCPort = localRPCPort;
     }
 
     public void setSelectedRowFormat(RowFormatConfiguration selectedRowFormat) {

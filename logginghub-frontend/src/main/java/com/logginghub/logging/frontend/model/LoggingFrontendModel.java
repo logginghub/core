@@ -1,7 +1,9 @@
 package com.logginghub.logging.frontend.model;
 
 import com.logginghub.logging.frontend.charting.model.NewChartingModel;
+import com.logginghub.logging.frontend.configuration.LoggingFrontendConfiguration;
 import com.logginghub.utils.observable.Observable;
+import com.logginghub.utils.observable.ObservableInteger;
 import com.logginghub.utils.observable.ObservableList;
 import com.logginghub.utils.observable.ObservableProperty;
 
@@ -13,6 +15,7 @@ public class LoggingFrontendModel extends Observable {
     private ObservableProperty<String> title = createStringProperty("title", "no title");
     private ObservableProperty<Boolean> showDashboard = createBooleanProperty("showDashboard", false);
 
+    private ObservableInteger localRPCPort = createIntProperty("localRPCPort", LoggingFrontendConfiguration.DONT_USE_LOCAL_RPC);
     private ObservableProperty<Boolean> popoutCharting = createBooleanProperty("popoutCharting", false);
     private ObservableProperty<Boolean> showHubClearEvents = createBooleanProperty("showHubClearEvents", false);
 
@@ -20,6 +23,10 @@ public class LoggingFrontendModel extends Observable {
 
     public LoggingFrontendModel() {
 
+    }
+
+    public ObservableInteger getLocalRPCPort() {
+        return localRPCPort;
     }
 
     public ObservableProperty<Boolean> getPopoutCharting() {

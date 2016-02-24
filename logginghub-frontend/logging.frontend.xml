@@ -4,7 +4,8 @@
                               showExperimental="false"
                               showViewMenu="false"
                               showHeapSlider="false"
-                              showHubClearEvents="true">
+                              showHubClearEvents="true"
+                              localRPCPort="42042">
 
     <environment name="local"
                  eventMemoryMB="500"

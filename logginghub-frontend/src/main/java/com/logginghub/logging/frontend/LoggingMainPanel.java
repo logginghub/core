@@ -8,6 +8,7 @@ import com.logginghub.logging.frontend.charting.NewChartingView;
 import com.logginghub.logging.frontend.charting.model.NewChartingModel;
 import com.logginghub.logging.frontend.charting.swing.ChartingTreeEditorView;
 import com.logginghub.logging.frontend.configuration.EnvironmentConfiguration;
+import com.logginghub.logging.frontend.configuration.LoggingFrontendConfiguration;
 import com.logginghub.logging.frontend.configuration.RemoteChartConfiguration;
 import com.logginghub.logging.frontend.connectionmanager.ConnectionManagerListener;
 import com.logginghub.logging.frontend.connectionmanager.ConnectionManagerPanel;
@@ -63,6 +64,7 @@ import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.observable.Binder2;
 import com.logginghub.utils.observable.ObservableList;
 import com.logginghub.utils.observable.ObservableListListener;
+import com.logginghub.utils.observable.ObservablePropertyListener;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
@@ -139,6 +141,7 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
     private JMenu editMenu;
     private JMenu viewMenu;
     private JMenu filtersMenu;
+    private LocalRPCController localRPCController;
 
     public LoggingMainPanel() {
         setLayout(new BorderLayout());
@@ -229,7 +232,7 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
         }
     }
 
-    public void bind(LoggingFrontendModel model, Metadata settings, SwingFrontEnd swingFrontEnd) {
+    public void bind(final LoggingFrontendModel model, Metadata settings, SwingFrontEnd swingFrontEnd) {
         this.model = model;
         setParentFrame(swingFrontEnd);
         setMenuBar(swingFrontEnd.getJMenuBar());
@@ -340,6 +343,16 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
         }
 
         setupFiltersMenu();
+
+        model.getLocalRPCPort().addListenerAndNotifyCurrent(new ObservablePropertyListener<Integer>() {
+            @Override
+            public void onPropertyChanged(Integer oldValue, Integer newValue) {
+                if(newValue != LoggingFrontendConfiguration.DONT_USE_LOCAL_RPC) {
+                    localRPCController = new LocalRPCController(LoggingMainPanel.this, model);
+                    localRPCController.start();
+                }
+            }
+        });
 
         logger.info("Main panel setup complete.");
     }
@@ -2006,6 +2019,10 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
     public void stop() {
         if (chartingController != null) {
             chartingController.stop();
+        }
+
+        if(localRPCController != null) {
+            localRPCController.stop();
         }
     }
 

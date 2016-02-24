@@ -10,6 +10,11 @@ public class LoggingFrontendConfigurationBuilder {
         return new LoggingFrontendConfigurationBuilder();
     }
 
+    public LoggingFrontendConfigurationBuilder localRPCPort(int port) {
+        configuration.setLocalRPCPort(port);
+        return this;
+    }
+
     public LoggingFrontendConfiguration toConfiguration() {
         return configuration;
     }
@@ -46,6 +51,43 @@ public class LoggingFrontendConfigurationBuilder {
 
         public EnvironmentConfigurationBuilder(EnvironmentConfiguration environmentConfiguration) {
             this.environmentConfiguration = environmentConfiguration;
+        }
+
+        public EnvironmentConfigurationBuilder customFilter(String label, String field, String type, int width, String defaultValue) {
+            CustomFilterConfiguration customFilterConfiguration = new CustomFilterConfiguration();
+            customFilterConfiguration.setDefaultValue(defaultValue);
+            customFilterConfiguration.setField(field);
+            customFilterConfiguration.setLabel(label);
+            customFilterConfiguration.setType(type);
+            customFilterConfiguration.setWidth(width);
+
+            environmentConfiguration.getCustomFilters().add(customFilterConfiguration);
+            return this;
+        }
+
+        public EnvironmentConfigurationBuilder customDateFilter(String label, String field, String type, int width, long defaultValue) {
+            CustomDateFilterConfiguration customFilterConfiguration = new CustomDateFilterConfiguration();
+            customFilterConfiguration.setDefaultValue(defaultValue);
+            customFilterConfiguration.setField(field);
+            customFilterConfiguration.setLabel(label);
+            customFilterConfiguration.setType(type);
+            customFilterConfiguration.setWidth(width);
+
+            environmentConfiguration.getCustomDateFilters().add(customFilterConfiguration);
+            return this;
+        }
+
+        public EnvironmentConfigurationBuilder customFilter(String label, String field, String type, int width, String defaultValue, String choices) {
+            CustomFilterConfiguration customFilterConfiguration = new CustomFilterConfiguration();
+            customFilterConfiguration.setDefaultValue(defaultValue);
+            customFilterConfiguration.setField(field);
+            customFilterConfiguration.setLabel(label);
+            customFilterConfiguration.setType(type);
+            customFilterConfiguration.setWidth(width);
+            customFilterConfiguration.setChoices(choices);
+
+            environmentConfiguration.getCustomFilters().add(customFilterConfiguration);
+            return this;
         }
 
         public EnvironmentConfigurationBuilder hub(String host, int port) {
@@ -85,6 +127,16 @@ public class LoggingFrontendConfigurationBuilder {
             return this;
         }
 
+        public EnvironmentConfigurationBuilder columnSettings(String name, int order, int width, String metadata, String renderer)  {
+            ColumnConfiguration columnConfiguration = new ColumnConfiguration();
+            columnConfiguration.setName(name);
+            columnConfiguration.setOrder(order);
+            columnConfiguration.setWidth(width);
+            columnConfiguration.setMetadata(metadata);
+            columnConfiguration.setRenderer(renderer);
+            environmentConfiguration.getColumnSetting().add(columnConfiguration);
+            return this;
+        }
 
         public EnvironmentConfiguration toEnvironment() {
             return environmentConfiguration;

@@ -27,6 +27,7 @@ public class ModelBuilder {
         model.getPopoutCharting().set(configuration.isPopoutCharting());
         model.getSelectedRowFormat().set(RowFormatModel.fromConfiguration(configuration.getSelectedRowFormat()));
         model.getShowHubClearEvents().set(configuration.isShowHubClearEvents());
+        model.getLocalRPCPort().set(configuration.getLocalRPCPort());
 
         List<EnvironmentConfiguration> environments = configuration.getEnvironments();
         for (EnvironmentConfiguration environmentConfiguration : environments) {

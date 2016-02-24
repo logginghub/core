@@ -49,8 +49,13 @@ import org.fest.swing.fixture.JTextComponentFixture;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -288,6 +293,15 @@ public class SwingFrontEndDSL {
             LogEvent logEvent = events[i];
             assertLogEventInTable(i, logEvent);
         }
+    }
+
+    public void waitForTableRows(final int rows){
+        ThreadUtils.untilTrue(1, TimeUnit.SECONDS, new Callable<Boolean>() {
+            @Override
+            public Boolean call() throws Exception {
+                return getTable().rowCount() == rows;
+            }
+        });
     }
 
     public void assertLogEventTableSize(int i) {
@@ -598,6 +612,26 @@ public class SwingFrontEndDSL {
         waitForBatch();
     }
 
+    public void setFilterExternal(String jsonFilterSettings) {
+
+        try {
+            Socket socket = new Socket("localhost", configuration.getLocalRPCPort());
+
+            byte[] data = jsonFilterSettings.getBytes();
+            OutputStream outputStream = socket.getOutputStream();
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream));
+            writer.write(jsonFilterSettings);
+            writer.newLine();
+            writer.close();
+            socket.close();;
+
+        } catch (IOException e) {
+           throw new FormattedRuntimeException("Failed to send json filter settings '{}' via RPC socket", jsonFilterSettings);
+        }
+
+    }
+
+
     public void waitForBatch() {
         waitForBatch("default");
     }
@@ -744,6 +778,18 @@ public class SwingFrontEndDSL {
         target.robot.settings().delayBetweenEvents(1);
         target.enterText(filter);
     }
+
+    public void setCustomFilter(String key, String a) {
+
+        String environmentName = LOG_VIEW;
+
+        selectTab(environmentName);
+
+        target = frameFixture.panel(getDetailPanelName(environmentName)).textBox("customFilter-" + key);
+
+        target.enterText(a);
+    }
+
 
     public void setQuickFilter(String environment, String filter) {
         if (configuration.getEnvironments().size() > 1) {

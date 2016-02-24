@@ -208,6 +208,8 @@ public class QuickFilterRowPanel extends JPanel {
                     binder.bind(customQuickFilterModel.getValue(), comboBox);
                 }
 
+                target.setName("customFilter-" + customQuickFilterModel.getField().get());
+
                 Dimension dimension = new Dimension(customQuickFilterModel.getWidth().get(), 16);
                 target.setPreferredSize(dimension);
                 target.setMinimumSize(dimension);

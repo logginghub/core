@@ -51,6 +51,10 @@ public class CustomFilterConfiguration {
         this.field = field;
     }
 
+    public void setChoices(String choices) {
+        this.choices = choices;
+    }
+
     public void setLabel(String label) {
         this.label = label;
     }
