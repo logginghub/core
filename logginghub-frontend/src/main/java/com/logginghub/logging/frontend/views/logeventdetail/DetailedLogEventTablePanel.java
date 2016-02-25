@@ -52,6 +52,7 @@ import com.logginghub.utils.MemorySnapshot;
 import com.logginghub.utils.Metadata;
 import com.logginghub.utils.MovingAverage;
 import com.logginghub.utils.Stopwatch;
+import com.logginghub.utils.StringUtils;
 import com.logginghub.utils.ThreadUtils;
 import com.logginghub.utils.Throttler;
 import com.logginghub.utils.TimeProvider;
@@ -115,6 +116,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
     private static int nextDummyApplicationIndex;
 
     private final Object incommingEventBatchLock = new Object();
+    private JPanel statusBar;
     private int eastPanelIcons;
     private JLabel addQuickFilterButton;
     private JLabel clearButton;
@@ -415,7 +417,8 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
 
         add(filtersAndButtonsPanel, BorderLayout.NORTH);
 
-        JPanel statusBar = new JPanel();
+
+        statusBar = new JPanel();
         statusBar.setBorder(BorderFactory.createBevelBorder(1));
         statusText = new JLabel("Status bar");
         statusText.setName(ComponentKeys.StatusText.name());
@@ -937,6 +940,62 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
                 }
             }
         });
+
+        environmentModel.getPanelBackgroundColour().addListenerAndNotifyCurrent(new ObservablePropertyListener<String>() {
+            @Override
+            public void onPropertyChanged(String oldValue, String newValue) {
+                if(StringUtils.isNotNullOrEmpty(newValue)) {
+                    DetailedLogEventTablePanel.this.setOpaque(true);
+                    DetailedLogEventTablePanel.this.setBackground(ColourUtils.parseColor(newValue));
+                }else{
+                    DetailedLogEventTablePanel.this.setOpaque(false);
+                    DetailedLogEventTablePanel.this.setBackground(Color.white);
+                }
+            }
+        });
+
+        environmentModel.getDetailViewBackgroundColour().addListenerAndNotifyCurrent(new ObservablePropertyListener<String>() {
+            @Override
+            public void onPropertyChanged(String oldValue, String newValue) {
+                if(StringUtils.isNotNullOrEmpty(newValue)) {
+                    eventDetailPanel.setOpaque(true);
+                    eventDetailPanel.setBackground(ColourUtils.parseColor(newValue));
+                }else{
+                    eventDetailPanel.setOpaque(false);
+                    eventDetailPanel.setBackground(Color.white);
+                }
+            }
+        });
+
+        environmentModel.getTableBackgroundColour().addListenerAndNotifyCurrent(new ObservablePropertyListener<String>() {
+            @Override
+            public void onPropertyChanged(String oldValue, String newValue) {
+                if(StringUtils.isNotNullOrEmpty(newValue)) {
+                    table.setOpaque(true);
+                    table.setBackground(ColourUtils.parseColor(newValue));
+
+                    tableScrollPane.getViewport().setOpaque(true);
+                    tableScrollPane.getViewport().setBackground(ColourUtils.parseColor(newValue));
+                }else{
+                    table.setOpaque(false);
+                    table.setBackground(Color.white);
+                }
+            }
+        });
+
+        environmentModel.getSummaryBarBackgroundColour().addListenerAndNotifyCurrent(new ObservablePropertyListener<String>() {
+            @Override
+            public void onPropertyChanged(String oldValue, String newValue) {
+                if(StringUtils.isNotNullOrEmpty(newValue)) {
+                    statusBar.setOpaque(true);
+                    statusBar.setBackground(ColourUtils.parseColor(newValue));
+                }else{
+                    statusBar.setOpaque(false);
+                    statusBar.setBackground(Color.white);
+                }
+            }
+        });
+
 
     }
 

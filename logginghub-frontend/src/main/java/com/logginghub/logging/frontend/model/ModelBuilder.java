@@ -54,6 +54,11 @@ public class ModelBuilder {
         environmentModel.getShowTimeSelectionView().set(environmentConfiguration.isShowTimeSelectionView());
         environmentModel.getShowFullStatusDetails().set(environmentConfiguration.isShowFullStatusDetails());
 
+        environmentModel.getPanelBackgroundColour().set(environmentConfiguration.getPanelBackgroundColour());
+        environmentModel.getTableBackgroundColour().set(environmentConfiguration.getTableBackgroundColour());
+        environmentModel.getDetailViewBackgroundColour().set(environmentConfiguration.getDetailViewBackgroundColour());
+        environmentModel.getSummaryBarBackgroundColour().set(environmentConfiguration.getSummaryBarBackgroundColour());
+
         environmentModel.getShowClearEvents().set(environmentConfiguration.isShowClearEvents());
         environmentModel.getShowTimeControl().set(environmentConfiguration.isShowTimeControl());
         environmentModel.getShowAddFilter().set(environmentConfiguration.isShowAddFilter());

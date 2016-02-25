@@ -60,8 +60,37 @@ import java.util.List;
     @XmlAttribute private boolean showTimeSelectionView = true;
     @XmlAttribute private boolean showFullStatusDetails = true;
 
+    @XmlAttribute private String panelBackgroundColour=null;
+    @XmlAttribute private String tableBackgroundColour=null;
+    @XmlAttribute private String detailViewBackgroundColour=null;
+    @XmlAttribute private String summaryBarBackgroundColour=null;
+
     public EnvironmentConfiguration() {
         setupOutputLogConfiguration();
+    }
+
+    public String getPanelBackgroundColour() {
+        return panelBackgroundColour;
+    }
+
+    public String getTableBackgroundColour() {
+        return tableBackgroundColour;
+    }
+
+    public String getDetailViewBackgroundColour() {
+        return detailViewBackgroundColour;
+    }
+
+    public void setPanelBackgroundColour(String panelBackgroundColour) {
+        this.panelBackgroundColour = panelBackgroundColour;
+    }
+
+    public void setTableBackgroundColour(String tableBackgroundColour) {
+        this.tableBackgroundColour = tableBackgroundColour;
+    }
+
+    public void setDetailViewBackgroundColour(String detailViewBackgroundColour) {
+        this.detailViewBackgroundColour = detailViewBackgroundColour;
     }
 
     public List<CustomFilterConfiguration> getCustomFilters() {
@@ -74,6 +103,14 @@ import java.util.List;
 
     public void setShowFullStatusDetails(boolean showFullStatusDetails) {
         this.showFullStatusDetails = showFullStatusDetails;
+    }
+
+    public String getSummaryBarBackgroundColour() {
+        return summaryBarBackgroundColour;
+    }
+
+    public void setSummaryBarBackgroundColour(String summaryBarBackgroundColour) {
+        this.summaryBarBackgroundColour = summaryBarBackgroundColour;
     }
 
     public boolean isShowAddFilter() {

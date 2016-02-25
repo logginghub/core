@@ -13,6 +13,7 @@ import java.util.List;
 @XmlAccessorType(XmlAccessType.FIELD) @XmlRootElement public class LoggingFrontendConfiguration {
 
     @XmlElement(name = "environment") private List<EnvironmentConfiguration> environments = new ArrayList<EnvironmentConfiguration>();
+    @XmlAttribute private String productName = "Logging Front End - ";
     @XmlAttribute private String title = "no title";
     @XmlAttribute private String chartingConfigurationFile = "charting.xml";
     @XmlAttribute private String kryoHubHost;
@@ -27,12 +28,22 @@ import java.util.List;
     @XmlAttribute private boolean showHeapSlider = false;
     @XmlAttribute private boolean showHubClearEvents = false;
 
+    @XmlAttribute private String backgroundColour = null;
+
     @XmlElement List<RemoteChartConfiguration> remoteCharting = new ArrayList<RemoteChartConfiguration>();
     @XmlAttribute private int localRPCPort = DONT_USE_LOCAL_RPC;
     public final static int DONT_USE_LOCAL_RPC = -1;
 
     public LoggingFrontendConfiguration() {
 
+    }
+
+    public String getBackgroundColour() {
+        return backgroundColour;
+    }
+
+    public void setBackgroundColour(String backgroundColour) {
+        this.backgroundColour = backgroundColour;
     }
 
     public int getLocalRPCPort() {
@@ -65,6 +76,14 @@ import java.util.List;
 
     public boolean isPopoutCharting() {
         return popoutCharting;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+
+    public String getProductName() {
+        return productName;
     }
 
     public void setShowHubClearEvents(boolean showHubClearEvents) {

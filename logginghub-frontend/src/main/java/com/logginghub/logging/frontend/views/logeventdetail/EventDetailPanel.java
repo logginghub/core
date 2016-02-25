@@ -167,6 +167,22 @@ public class EventDetailPanel extends JPanel implements BindableToModel<Environm
         sourceApplicationLabel.setName(ComponentKeys.EventDetailSourceApplication.name());
     }
 
+    @Override
+    public void setBackground(Color bg) {
+        super.setBackground(bg);
+
+        if(messageArea != null) {
+            messageArea.setOpaque(true);
+            messageArea.setBackground(bg);
+        }
+
+        if(jEditorPane != null) {
+            jEditorPane.setOpaque(true);
+            jEditorPane.setBackground(bg);
+        }
+
+    }
+
     private void addCopyListener(final JLabel label) {
         label.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {

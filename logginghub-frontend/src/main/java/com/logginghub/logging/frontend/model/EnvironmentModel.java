@@ -89,6 +89,10 @@ public class EnvironmentModel extends Observable implements LogEventSource, LogE
     private ObservableProperty<Boolean> showTimeSelectionView = createBooleanProperty("showTimeSelectionView", true);
     private ObservableProperty<Boolean> showFullStatusDetails = createBooleanProperty("showFullStatusDetails", true);
 
+    private ObservableProperty<String> panelBackgroundColour = createStringProperty("panelBackgroundColour", null);
+    private ObservableProperty<String> tableBackgroundColour = createStringProperty("tableBackgroundColour", null);
+    private ObservableProperty<String> detailViewBackgroundColour = createStringProperty("detailViewBackgroundColour", null);
+    private ObservableProperty<String> summaryBarBackgroundColour = createStringProperty("summaryBarBackgroundColour", null);
 
     public EnvironmentModel() {
 
@@ -136,6 +140,22 @@ public class EnvironmentModel extends Observable implements LogEventSource, LogE
         getAutoLocking().set(false);
 
         getRepoEnabled().set(false);
+    }
+
+    public ObservableProperty<String> getSummaryBarBackgroundColour() {
+        return summaryBarBackgroundColour;
+    }
+
+    public ObservableProperty<String> getDetailViewBackgroundColour() {
+        return detailViewBackgroundColour;
+    }
+
+    public ObservableProperty<String> getPanelBackgroundColour() {
+        return panelBackgroundColour;
+    }
+
+    public ObservableProperty<String> getTableBackgroundColour() {
+        return tableBackgroundColour;
     }
 
     public ObservableProperty<Boolean> getShowTimeSelectionView() {

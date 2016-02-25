@@ -15,6 +15,7 @@ import com.logginghub.logging.frontend.modules.SwingPauseDetectorModule;
 import com.logginghub.logging.frontend.modules.VMPauseDetectorModule;
 import com.logginghub.logging.frontend.services.LayoutService;
 import com.logginghub.swingutils.ButtonTabComponent;
+import com.logginghub.utils.ColourUtils;
 import com.logginghub.utils.DelayedAutosavingFileBasedMetadata;
 import com.logginghub.utils.FileUtils;
 import com.logginghub.utils.MainUtils;
@@ -64,7 +65,7 @@ public class SwingFrontEnd extends SmartJFrame implements Closeable {
         logger.info("Creating new swing front end with configuration '{}'...", proxy);
         this.propertiesName = proxy.getPropertiesName();
 
-        setTitle("Logging Front End - " + proxy.getLoggingFrontendConfiguration().getTitle());
+        setTitle(proxy.getLoggingFrontendConfiguration().getProductName() + proxy.getLoggingFrontendConfiguration().getTitle());
         setIcon();
 
         ModelBuilder builder = new ModelBuilder();
@@ -79,6 +80,14 @@ public class SwingFrontEnd extends SmartJFrame implements Closeable {
         mainPanel = new LoggingMainPanel();
         mainPanel.setConfigurationProxy(proxy);
         mainPanel.bind(model, proxy.getDynamicSettings(), this);
+
+        String backgroundColour = proxy.getLoggingFrontendConfiguration().getBackgroundColour();
+        if(StringUtils.isNotNullOrEmpty(backgroundColour)) {
+            Color color = ColourUtils.parseColor(backgroundColour);
+            getContentPane().setBackground(color);
+            mainPanel.setOpaque(true);
+            mainPanel.setBackground(color);
+        }
 
         getContentPane().add(mainPanel);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -128,7 +137,7 @@ public class SwingFrontEnd extends SmartJFrame implements Closeable {
         model = builder.buildModel(proxy.getLoggingFrontendConfiguration());
         startModelUpdateTimer(model);
 
-        setTitle("Logging Front End - " + proxy.getLoggingFrontendConfiguration().getTitle());
+        setTitle(proxy.getLoggingFrontendConfiguration().getProductName() + proxy.getLoggingFrontendConfiguration().getTitle());
 
         mainPanel.setConfigurationProxy(proxy);
         mainPanel.bind(model, proxy.getDynamicSettings(), this);
