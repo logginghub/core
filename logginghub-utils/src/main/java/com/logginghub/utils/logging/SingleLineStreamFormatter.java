@@ -15,7 +15,7 @@ import java.util.List;
 
 public class SingleLineStreamFormatter implements LogEventFormatter {
     private final static String format = "{0,date} {0,time,HH:mm:ss.SSS}";
-    String formatString = "%s | %7s | %20.20s | %-30.30s | %10.10s | %s";
+    String formatString = "%s | %7s | %20.20s | %-30.30s | %10.10s | ";
     Date dat = new Date();
     private MessageFormat formatter;
     private boolean stripClass;
@@ -42,7 +42,7 @@ public class SingleLineStreamFormatter implements LogEventFormatter {
     }
 
     public void setWidths(int level, int thread, int sourceMethod, int threadContext) {
-        formatString = String.format("%%s | %%%ds | %%%d.%ds | %%-%d.%ds | %%%d.%ds | %%s",
+        formatString = String.format("%%s | %%%ds | %%%d.%ds | %%-%d.%ds | %%%d.%ds | ",
                                      level,
                                      thread,
                                      thread,
@@ -98,7 +98,6 @@ public class SingleLineStreamFormatter implements LogEventFormatter {
             method = record.getSourceMethodName();
         }
 
-        // Bare-faced assumption that logging is being written synchronously
         String name = record.getThreadName();
 
         String context = record.getThreadContext();
@@ -111,8 +110,21 @@ public class SingleLineStreamFormatter implements LogEventFormatter {
                                 Logger.getLevelName(record.getLevel(), false).toUpperCase(),
                                 name,
                                 source + "." + method,
-                                context,
-                                message));
+                                context));
+
+
+        List<String> lines = StringUtils.splitIntoLineList(message);
+        if(lines.size() == 1) {
+            sb.append(message);
+        }else{
+            int length = sb.length() - 2 /* for the space and pipe symbol */;
+            String padding = StringUtils.repeat(" ", length);
+
+            sb.append(lines.get(0)).append(lineSeparator);
+            for(int i = 1; i < lines.size(); i++) {
+                sb.append(padding).append("| ").append(lines.get(i)).append(lineSeparator);
+            }
+        }
 
         sb.append(lineSeparator);
 
