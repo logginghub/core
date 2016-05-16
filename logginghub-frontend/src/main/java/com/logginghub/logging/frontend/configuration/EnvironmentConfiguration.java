@@ -39,7 +39,7 @@ import java.util.List;
     @XmlElement List<ColumnConfiguration> columnSetting = new ArrayList<ColumnConfiguration>();
     @XmlElement List<CustomFilterConfiguration> customFilter = new ArrayList<CustomFilterConfiguration>();
     @XmlElement List<CustomDateFilterConfiguration> customDateFilter = new ArrayList<CustomDateFilterConfiguration>();
-
+    @XmlElement List<ActionConfiguration> action = new ArrayList<ActionConfiguration>();
     @XmlElement List<NameMappingConfiguration> columnMapping = new ArrayList<NameMappingConfiguration>();
     @XmlElement private List<NameMappingConfiguration> levelMapping = new ArrayList<NameMappingConfiguration>();
 
@@ -197,6 +197,10 @@ import java.util.List;
 
     public void setChannel(String channel) {
         this.channel = channel;
+    }
+
+    public List<ActionConfiguration> getActions() {
+        return action;
     }
 
     public String getChannel() {

@@ -1,6 +1,8 @@
 package com.logginghub.logging.frontend.model;
 
 import com.logginghub.logging.frontend.components.QuickFilterHistoryEntryModel;
+import com.logginghub.logging.frontend.configuration.ActionConfiguration;
+import com.logginghub.logging.frontend.configuration.ArgumentConfiguration;
 import com.logginghub.logging.frontend.configuration.ColumnConfiguration;
 import com.logginghub.logging.frontend.configuration.CustomDateFilterConfiguration;
 import com.logginghub.logging.frontend.configuration.CustomFilterConfiguration;
@@ -9,6 +11,7 @@ import com.logginghub.logging.frontend.configuration.HighlighterConfiguration;
 import com.logginghub.logging.frontend.configuration.HubConfiguration;
 import com.logginghub.logging.frontend.configuration.LoggingFrontendConfiguration;
 import com.logginghub.logging.frontend.configuration.NameMappingConfiguration;
+import com.logginghub.logging.frontend.model.ActionModel.ArgumentModel;
 import com.logginghub.logging.frontend.model.ColumnSettingsModel.ColumnSettingModel;
 import com.logginghub.utils.NetUtils;
 import com.logginghub.utils.StringUtils;
@@ -123,8 +126,30 @@ public class ModelBuilder {
         loadLevelNameMappings(environmentConfiguration, environmentModel);
         loadColumnSettings(environmentConfiguration, environmentModel);
         loadCustomFilters(environmentConfiguration, environmentModel);
+        loadActions(environmentConfiguration, environmentModel);
 
         return environmentModel;
+    }
+
+    private void loadActions(EnvironmentConfiguration environmentConfiguration, EnvironmentModel environmentModel) {
+        List<ActionConfiguration> actions = environmentConfiguration.getActions();
+        for (ActionConfiguration action : actions) {
+
+            ActionModel actionModel = new ActionModel();
+            actionModel.setCommand(action.getCommand());
+            actionModel.setName(action.getName());
+            actionModel.setPath(action.getPath());
+
+            List<ArgumentConfiguration> arguments = action.getArguments();
+            for (ArgumentConfiguration argument : arguments) {
+                ArgumentModel argumentModel = actionModel. new ArgumentModel();
+                argumentModel.setValue(argument.getValue());
+                actionModel.getArguments().add(argumentModel);
+            }
+
+            environmentModel.getActions().add(actionModel);
+
+        }
     }
 
     private void loadCustomFilters(EnvironmentConfiguration environmentConfiguration, EnvironmentModel environmentModel) {
@@ -216,6 +241,7 @@ public class ModelBuilder {
                                                         columnConfiguration.getOrder(),
                                                         columnConfiguration.getAlignment(),
                                                         columnConfiguration.getMetadata(),
+                                                        columnConfiguration.getAction(),
                                                         columnConfiguration.getRenderer()
                                                         ));
 

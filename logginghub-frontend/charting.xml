@@ -1,6 +1,6 @@
 <chartingModel>
 <patternModels>
-<patternmodel patternId="0" pattern="PerformTask for \[Task={task}\] \[ServiceSessionId={session}\] \[Engine=[engine]\] completed in {nanos}ns ({time}ms)" name="task" debug="false" cleanUp="false"/>
+<patternmodel patternID="-1" pattern="PerformTask for \[Task={task}\] \[ServiceSessionId={session}\] \[Engine=[engine]\] completed in {nanos}ns ({time}ms)" name="task" debug="false" cleanUp="false"/>
 </patternModels>
 <streamModels>
 
@@ -13,11 +13,16 @@
 <chartingModels>
 <linechartmodel title="Chart title" layout="" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" smoothed="false">
 <matchers>
-<chartseriesmodel patternId="0" labelIndex="4" groupBy="" type="Mean" interval="1000" eventParts="" generateEmptyTicks="false">
+<chartseriesmodel patternID="-1" labelIndex="4" groupBy="" type="Mean" interval="1000" eventParts="" generateEmptyTicks="false">
 <filters>
 
 </filters>
 </chartseriesmodel>
+</matchers>
+</linechartmodel>
+<linechartmodel title="Chart title" layout="" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" smoothed="false">
+<matchers>
+
 </matchers>
 </linechartmodel>
 </chartingModels>

@@ -6,6 +6,7 @@ import com.logginghub.logging.frontend.PathHelper;
 import com.logginghub.logging.frontend.Utils;
 import com.logginghub.logging.frontend.model.ColumnSettingsModel;
 import com.logginghub.logging.frontend.model.ColumnSettingsModel.ColumnSettingModel;
+import com.logginghub.logging.frontend.views.logeventdetail.ActionColumnHandler.ButtonClickedListener;
 import com.logginghub.logging.frontend.views.logeventdetail.DetailedLogEventTableModel.ColumnTarget;
 import com.logginghub.utils.CompareUtils;
 import com.logginghub.utils.DelayedAction;
@@ -190,12 +191,42 @@ public class DetailedLogEventTable extends JTable {
 
         removeColumns(entries, columnModel);
         addMetadataColumns(entries);
+        addActionColumns(entries);
         applyColumnWidths(columnSettingsModel);
 
-        // We need to order the columns by their position to do this properly
-        //        List<ColumnSettingModel> settings = sortColumnSettings(entries);
+        List<ColumnSettingModel> columnSettingModels = sortColumnSettings(entries);
+        for (final ColumnSettingModel value : columnSettingModels) {
 
-        //        applyColumnWidths(columnModel, settings);
+            ColumnTarget.Renderer renderer = ColumnTarget.Renderer.valueOf(value.getRenderer());
+            if(renderer == ColumnTarget.Renderer.Action) {
+
+                TableColumn column = getColumn(value.getName());
+                ActionColumnHandler actionColumnHandler = new ActionColumnHandler();
+
+                column.setCellRenderer(actionColumnHandler.new ButtonRenderer());
+                column.setCellEditor(actionColumnHandler. new ButtonEditor(new ButtonClickedListener() {
+                    @Override
+                    public void onClicked(int row, int column) {
+                        logger.info("Cell action button clicked {} x {}",  row, column);
+                        LogEvent logEvent = tableModel.getLogEventAtRow(row);
+                        processActionClick(value, logEvent);
+                    }
+                }));
+
+                int index = column.getModelIndex();
+                tableModel.setColumnEditable(index, true);
+
+            }
+        }
+
+    }
+
+    private void processActionClick(ColumnSettingModel value, LogEvent logEvent) {
+        logger.info("Process action click for event : {}", logEvent);
+
+        if(tableModel.getEnvironmentController() != null) {
+            tableModel.getEnvironmentController().runAction(value.getAction(), logEvent);
+        }
 
     }
 
@@ -331,6 +362,26 @@ public class DetailedLogEventTable extends JTable {
         }
     }
 
+    private void addActionColumns(Set<Entry<String, ColumnSettingModel>> entries) {
+        List<ColumnSettingModel> columnSettingModels = sortColumnSettings(entries);
+
+        for (ColumnSettingModel value : columnSettingModels) {
+            if (StringUtils.isNotNullOrEmpty(value.getAction())) {
+                int index = value.getOrder();
+
+                // jshaw - try and be a bit more accomodating to dodgy values
+                if (index >= tableModel.getColumnCount()) {
+                    index = tableModel.getColumnCount();
+                }else if(index < 0) {
+                    index = 0;
+                }
+                tableModel.addMetadataColumn(index, value.getMetadataMapping(), value.getName(), ColumnTarget.Renderer.valueOf(value.getRenderer()));
+                logger.info("New column name '{}' mapped to '{}' added at index '{}'", value.getName(), value.getMetadataMapping(), index);
+            }
+        }
+
+    }
+
     private void addMetadataColumns(Set<Entry<String, ColumnSettingModel>> entries) {
         List<ColumnSettingModel> columnSettingModels = sortColumnSettings(entries);
 
@@ -346,7 +397,6 @@ public class DetailedLogEventTable extends JTable {
                 }
                 tableModel.addMetadataColumn(index, value.getMetadataMapping(), value.getName(), ColumnTarget.Renderer.valueOf(value.getRenderer()));
                 logger.info("New column name '{}' mapped to '{}' added at index '{}'", value.getName(), value.getMetadataMapping(), index);
-                TableColumnModel columnModel = getColumnModel();
             }
         }
 

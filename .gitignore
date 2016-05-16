@@ -36,3 +36,4 @@ logginghub-visualiser/build logginghub-visualiser/build.gradle logginghub-visual
 logginghub-visualiser/
 logginghub-server/src/main/resources/logginghubweb/angular/app/visualiser/
 logginghub-server/src/main/resources/logginghubweb/angular/app/
+classes/

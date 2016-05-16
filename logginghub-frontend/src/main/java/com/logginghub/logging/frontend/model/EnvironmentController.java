@@ -1,15 +1,24 @@
 package com.logginghub.logging.frontend.model;
 
+import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.filters.TimeFieldFilter;
+import com.logginghub.logging.frontend.model.ActionModel.ArgumentModel;
+import com.logginghub.logging.utils.LogEventTemplateReplacer;
 import com.logginghub.utils.FileUtils;
+import com.logginghub.utils.InputStreamReaderThread;
+import com.logginghub.utils.InputStreamReaderThreadListener;
 import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.observable.ObservableList;
+import com.logginghub.utils.observable.ObservableListAdaptor;
 import com.logginghub.utils.observable.json.JsonDecoder;
 import com.logginghub.utils.observable.json.JsonEncoder;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by james on 28/01/2016.
@@ -18,17 +27,62 @@ public class EnvironmentController {
 
     private static final Logger logger = Logger.getLoggerFor(EnvironmentController.class);
     private final EnvironmentModel model;
+    private Map<String, ActionModel> actionsByName = new HashMap<String, ActionModel>();
 
     public EnvironmentController(EnvironmentModel model) {
         this.model = model;
+
+
+        model.getActions().addListenerAndNotifyCurrent(new ObservableListAdaptor<ActionModel>() {
+            @Override
+            public void onAdded(ActionModel actionModel) {
+                actionsByName.put(actionModel.getName(), actionModel);
+            }
+
+            @Override
+            public void onRemoved(ActionModel actionModel, int index) {
+                actionsByName.remove(actionModel.getName());
+            }
+
+            @Override
+            public void onCleared() {
+                actionsByName.clear();
+            }
+        });
+
     }
 
     public void deleteSearch(String searchName) {
         FilterBookmarkModel bookmarkByName = getBookmarkByName(searchName);
-        if(bookmarkByName != null) {
+        if (bookmarkByName != null) {
             model.getFilterBookmarks().remove(bookmarkByName);
             persistSearches();
         }
+    }
+
+    private FilterBookmarkModel getBookmarkByName(String name) {
+        FilterBookmarkModel foundModel = null;
+        ObservableList<FilterBookmarkModel> filterBookmarks = model.getFilterBookmarks();
+        for (FilterBookmarkModel filterBookmark : filterBookmarks) {
+            if (filterBookmark.getName().get().equalsIgnoreCase(name)) {
+                foundModel = filterBookmark;
+                break;
+            }
+        }
+
+        return foundModel;
+    }
+
+    public void persistSearches() {
+
+        ObservableList<FilterBookmarkModel> filterBookmarks = model.getFilterBookmarks();
+
+        String json = JsonEncoder.encode(filterBookmarks);
+
+        File file = new File(model.getConfigurationFolder().get(), model.getSavedSearchesFilename().get());
+        logger.debug("Saving saved searches json '{}'", json);
+        FileUtils.write(json, file);
+
     }
 
     public void loadSearches() {
@@ -82,6 +136,103 @@ public class EnvironmentController {
         }
     }
 
+    public void runAction(ActionModel action, LogEvent logEvent) {
+
+        final boolean debug = false;
+
+        List<String> arguments = new ArrayList<String>();
+
+        arguments.add(action.getCommand());
+
+        List<ArgumentModel> argumentModels = action.getArguments();
+        for (ArgumentModel argumentModel : argumentModels) {
+            String argument = evaluateArgumentModel(argumentModel.getValue(), logEvent);
+            arguments.add(argument);
+        }
+
+        String[] args = arguments.toArray(new String[arguments.size()]);
+
+        try {
+            if(debug) {
+                logger.info("Executing : {}", arguments.toString());
+            }
+
+            Process process = new ProcessBuilder().command(args).start();
+
+            InputStreamReaderThread out = new InputStreamReaderThread(process.getInputStream());
+            InputStreamReaderThread err = new InputStreamReaderThread(process.getErrorStream());
+
+            final StringBuilder outBuilder= new StringBuilder();
+            final StringBuilder errBuilder= new StringBuilder();
+
+            out.addListener(new InputStreamReaderThreadListener() {
+                @Override
+                public void onCharacter(char c) {
+                    if(debug) {
+                        System.out.print(c);
+                    }
+                    outBuilder.append(c);
+                }
+
+                @Override
+                public void onLine(String s) {
+
+                }
+            });
+
+            err.addListener(new InputStreamReaderThreadListener() {
+                @Override
+                public void onCharacter(char c) {
+                    if(debug) {
+                        System.err.print(c);
+                    }
+
+                    errBuilder.append(c);
+                }
+
+                @Override
+                public void onLine(String s) {
+
+                }
+            });
+
+
+            out.start();
+            err.start();
+
+            int exitCode = process.waitFor();
+
+            out.join();
+            err.join();
+
+            logger.info("Code : {}", exitCode);
+            logger.info("Out  : {}", outBuilder.toString());
+            logger.info("Err  : {}", errBuilder.toString());
+
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    private String evaluateArgumentModel(String template, LogEvent logEvent) {
+        return LogEventTemplateReplacer.replace(template, logEvent);
+    }
+
+    public void runAction(String action, LogEvent logEvent) {
+
+        ActionModel actionModel = actionsByName.get(action);
+        if (actionModel != null) {
+            runAction(actionModel, logEvent);
+        }else{
+            logger.warn("No action found for name '{}', please check your configuration", action);
+        }
+
+    }
+
     public void saveSearch(String searchName) {
 
         FilterBookmarkModel bookmarkModel = new FilterBookmarkModel();
@@ -117,18 +268,6 @@ public class EnvironmentController {
         persistSearches();
     }
 
-    public void persistSearches() {
-
-        ObservableList<FilterBookmarkModel> filterBookmarks = model.getFilterBookmarks();
-
-        String json = JsonEncoder.encode(filterBookmarks);
-
-        File file = new File(model.getConfigurationFolder().get(), model.getSavedSearchesFilename().get());
-        logger.debug("Saving saved searches json '{}'", json);
-        FileUtils.write(json, file);
-
-    }
-
     public void selectSearch(String name) {
 
         FilterBookmarkModel bookmarkByName = getBookmarkByName(name);
@@ -137,19 +276,6 @@ public class EnvironmentController {
         } else {
             logger.warn("Failed to find bookmark search with name '{}'", name);
         }
-    }
-
-    private FilterBookmarkModel getBookmarkByName(String name) {
-        FilterBookmarkModel foundModel = null;
-        ObservableList<FilterBookmarkModel> filterBookmarks = model.getFilterBookmarks();
-        for (FilterBookmarkModel filterBookmark : filterBookmarks) {
-            if (filterBookmark.getName().get().equalsIgnoreCase(name)) {
-                foundModel = filterBookmark;
-                break;
-            }
-        }
-
-        return foundModel;
     }
 
     private void selectSearch(FilterBookmarkModel bookmark) {

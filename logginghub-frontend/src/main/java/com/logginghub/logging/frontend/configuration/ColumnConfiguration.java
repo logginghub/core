@@ -16,7 +16,16 @@ public class ColumnConfiguration {
     @XmlAttribute private int order;
     @XmlAttribute private String alignment;
     @XmlAttribute private String metadata;
+    @XmlAttribute private String action;
     @XmlAttribute private String renderer = ColumnTarget.Renderer.Normal.name();
+
+    public String getAction() {
+        return action;
+    }
+
+    public void setAction(String action) {
+        this.action = action;
+    }
 
     public String getAlignment() {
         return alignment;

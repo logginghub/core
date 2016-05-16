@@ -793,6 +793,7 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
     public void bind(EnvironmentModel environmentModel) {
         this.environmentModel = environmentModel;
         this.environmentController = new EnvironmentController(environmentModel);
+        tableModel.setEnvironmentController(environmentController);
 
         environmentController.loadSearches();
 

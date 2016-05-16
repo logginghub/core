@@ -78,6 +78,7 @@ public class EnvironmentModel extends Observable implements LogEventSource, LogE
 
     private ObservableProperty<String> channel = createStringProperty("channel", "");
     private ObservableList<QuickFilterModel> quickFilterModels = createListProperty("quickFilterModels", QuickFilterModel.class);
+    private ObservableList<ActionModel> actions = createListProperty("actions", ActionModel.class);
     private ObservableInteger filterUpdateCount = new ObservableInteger(0);
     private ObservableInteger highestLevelSinceLastSelected = createIntProperty("highestLevelSinceLastSelected", -1);
     private ObservableProperty<FilterBookmarkModel> activeBookmark = createProperty("activeBookmark", FilterBookmarkModel.class, null);
@@ -189,6 +190,10 @@ public class EnvironmentModel extends Observable implements LogEventSource, LogE
     @Override
     public void removeLogEventListener(LogEventListener logEventListener) {
         multiplexer.removeLogEventListener(logEventListener);
+    }
+
+    public ObservableList<ActionModel> getActions() {
+        return actions;
     }
 
     public ObservableProperty<FilterBookmarkModel> getActiveBookmark() {

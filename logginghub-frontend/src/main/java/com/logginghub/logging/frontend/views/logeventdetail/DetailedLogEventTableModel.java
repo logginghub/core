@@ -7,6 +7,7 @@ import com.logginghub.logging.filters.MessageContainsFilter;
 import com.logginghub.logging.frontend.Utils;
 import com.logginghub.logging.frontend.images.Icons;
 import com.logginghub.logging.frontend.images.Icons.IconIdentifier;
+import com.logginghub.logging.frontend.model.EnvironmentController;
 import com.logginghub.logging.frontend.model.EventTableColumnModel;
 import com.logginghub.logging.frontend.model.LevelNamesModel;
 import com.logginghub.logging.frontend.model.LogEventContainer;
@@ -46,6 +47,7 @@ public class DetailedLogEventTableModel extends DefaultTableModel implements Log
     private Object eventLock = new Object();
     private CompositeAndFilter filters = new CompositeAndFilter();
     private LogEventContainerController eventController;
+    private boolean[] isColumnEditable = new boolean[100];
 
     private boolean isPlaying = true;
 
@@ -53,6 +55,7 @@ public class DetailedLogEventTableModel extends DefaultTableModel implements Log
     //    private Map<Integer, String> metadataColumnNames = new HashMap<Integer, String>();
 
     private ColumnTarget[] visibleColumns = new ColumnTarget[NUMBER_OF_COLUMNS];
+    private EnvironmentController environmentController;
 
     public DetailedLogEventTableModel(EventTableColumnModel eventTableColumnModel,
                                       LevelNamesModel levelNamesModel,
@@ -77,6 +80,10 @@ public class DetailedLogEventTableModel extends DefaultTableModel implements Log
     public void addFilter(Filter<LogEvent> filter, LogEvent currentSelection) {
         filters.addFilter(filter);
         refilter(currentSelection);
+    }
+
+    public EnvironmentController getEnvironmentController() {
+        return environmentController;
     }
 
     private void refilter(final LogEvent currentSelection) {
@@ -406,8 +413,16 @@ public class DetailedLogEventTableModel extends DefaultTableModel implements Log
     }
 
     @Override
-    public boolean isCellEditable(int arg0, int arg1) {
-        return false;
+    public boolean isCellEditable(int row, int columns) {
+        return isColumnEditable(columns);
+    }
+
+    private boolean isColumnEditable(int column) {
+        return isColumnEditable[column];
+    }
+
+    public void setColumnEditable(int column, boolean isEditable) {
+        isColumnEditable[column] = isEditable;
     }
 
     //    @Override
@@ -653,6 +668,10 @@ public class DetailedLogEventTableModel extends DefaultTableModel implements Log
         return formatted;
     }
 
+    public void setEnvironmentController(EnvironmentController environmentController) {
+        this.environmentController = environmentController;
+    }
+
     @Override
     public void setValueAt(Object item, int row, int column) {
 
@@ -672,7 +691,7 @@ public class DetailedLogEventTableModel extends DefaultTableModel implements Log
         }
 
         public enum Renderer {
-            Normal, Date
+            Normal, Date, Action
         }
     }
 

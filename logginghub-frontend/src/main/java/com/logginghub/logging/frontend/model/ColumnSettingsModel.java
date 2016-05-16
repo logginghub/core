@@ -31,15 +31,21 @@ public class ColumnSettingsModel {
         private final String alignment;
         private final String metadataMapping;
         private final String name;
+        private final String action;
         private String renderer;
 
-        public ColumnSettingModel(String name, int width, int order, String alignment, String metadataMapping, String renderer) {
+        public ColumnSettingModel(String name, int width, int order, String alignment, String metadataMapping, String action, String renderer) {
             this.name = name;
             this.width = width;
             this.order = order;
             this.alignment = alignment;
             this.metadataMapping = metadataMapping;
+            this.action = action;
             this.renderer = renderer;
+        }
+
+        public String getAction() {
+            return action;
         }
 
         public int getOrder() {
