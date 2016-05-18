@@ -138,10 +138,12 @@ public class CaseInsensitiveAsciiEventContainsFilter implements Filter<LogEvent>
 
                 if (event.getMetadata() != null) {
                     for (String value : event.getMetadata().values()) {
-                        char[] characterData = (char[]) accessField.get(value);
-                        passes = StringUtils.indexOfIgnoreCase(characterData, characters) != -1;
-                        if (passes) {
-                            return passes;
+                        if(value != null) {
+                            char[] characterData = (char[]) accessField.get(value);
+                            passes = StringUtils.indexOfIgnoreCase(characterData, characters) != -1;
+                            if (passes) {
+                                return passes;
+                            }
                         }
                     }
                 }

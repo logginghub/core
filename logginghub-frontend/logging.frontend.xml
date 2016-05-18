@@ -54,6 +54,17 @@
         <columnSetting name="Metadata time" width="150" order="8" metadata="timefield" renderer="Date"/>
         <columnSetting name="Action" width="150" order="9" action="action1" renderer="Action"/>
 
+        <!--<columnSetting name="meta1" width="100" order="10" metadata="meta1"/>-->
+        <!--<columnSetting name="meta2" width="100" order="11" metadata="meta2"/>-->
+        <!--<columnSetting name="meta3" width="100" order="12" metadata="meta3"/>-->
+        <!--<columnSetting name="meta4" width="100" order="13" metadata="meta4"/>-->
+        <!--<columnSetting name="meta5" width="100" order="14" metadata="meta5"/>-->
+        <!--<columnSetting name="meta6" width="100" order="15" metadata="meta6"/>-->
+        <!--<columnSetting name="meta7" width="100" order="16" metadata="meta7"/>-->
+        <!--<columnSetting name="meta8" width="100" order="17" metadata="meta8"/>-->
+        <!--<columnSetting name="meta9" width="100" order="18" metadata="meta9"/>-->
+        <!--<columnSetting name="meta10" width="100" order="19" metadata="meta10"/>-->
+
         <action name="action1" path="." command="echo">
             <argument value="Hello '${message}' hello"/>
         </action>
@@ -73,6 +84,17 @@
         <customFilter label="Host" field="SourceHost" type="Contains" width="100" defaultValue=""/>
         <customFilter label="Custom" field="newfield2" type="StartsWith" choices="a,b,c,abc"/>
         <customFilter label="Customer" field="customer" type="Contains" width="100" defaultValue=""/>
+
+        <!--<customFilter label="Meta1" field="meta1" type="Contains" width="100" defaultValue=""/>-->
+        <!--<customFilter label="Meta2" field="meta2" type="Contains" width="100" defaultValue=""/>-->
+        <!--<customFilter label="Meta3" field="meta3" type="Contains" width="100" defaultValue=""/>-->
+        <!--<customFilter label="Meta4" field="meta4" type="Contains" width="100" defaultValue=""/>-->
+        <!--<customFilter label="Meta5" field="meta5" type="Contains" width="100" defaultValue=""/>-->
+        <!--<customFilter label="Meta6" field="meta6" type="Contains" width="100" defaultValue=""/>-->
+        <!--<customFilter label="Meta7" field="meta7" type="Contains" width="100" defaultValue=""/>-->
+        <!--<customFilter label="Meta8" field="meta8" type="Contains" width="100" defaultValue=""/>-->
+        <!--<customFilter label="Meta9" field="meta9" type="Contains" width="100" defaultValue=""/>-->
+        <!--<customFilter label="Meta10" field="meta10" type="Contains" width="100" defaultValue=""/>-->
 
         <customDateFilter label="Earliest Time" field="HubTime" type="GreaterThan" width="200"/>
         <customDateFilter label="Latest Time" field="HubTime" type="LessThan" width="200"/>
