@@ -142,9 +142,9 @@ public class SocketClient extends AbstractLoggingMessageSource implements Loggin
     /**
      * Convenience methods to create a new socket client, and automatically connect and attach the provided listener.
      *
-     * @param inetSocketAddress
+     * @param connectionPoint
      * @param autoSubscribe
-     * @param eventBucket
+     * @param listener
      * @return
      * @throws ConnectorException
      */
@@ -160,7 +160,7 @@ public class SocketClient extends AbstractLoggingMessageSource implements Loggin
     private void setupPingHandler() {
         if (respondToPings) {
             subscribe(Channels.pingRequests, new Destination<ChannelMessage>() {
-                @Override public void send(ChannelMessage message) {
+                public void send(ChannelMessage message) {
                     ChannelMessage channelRequestMessage = (ChannelMessage) message;
                     SerialisableObject payload = channelRequestMessage.getPayload();
                     if (payload instanceof PingRequest) {
@@ -317,7 +317,7 @@ public class SocketClient extends AbstractLoggingMessageSource implements Loggin
      */
     public SubscriptionResponseMessage sendBlocking(SubscriptionRequestMessage subscriptionRequestMessage) throws LoggingMessageSenderException, TimeoutException, InterruptedException {
         BlockingMessageFilter filter = new BlockingMessageFilter() {
-            @Override public boolean passes(LoggingMessage loggingMessage) {
+            public boolean passes(LoggingMessage loggingMessage) {
                 return loggingMessage instanceof SubscriptionResponseMessage;
             }
         };
@@ -331,7 +331,7 @@ public class SocketClient extends AbstractLoggingMessageSource implements Loggin
         message.setCorrelationID(correlationID);
 
         BlockingMessageFilter filter = new BlockingMessageFilter() {
-            @Override public boolean passes(LoggingMessage message) {
+            public boolean passes(LoggingMessage message) {
                 return (message instanceof RequestResponseMessage && correlationID == ((RequestResponseMessage) message).getCorrelationID());
             }
         };
@@ -662,7 +662,7 @@ public class SocketClient extends AbstractLoggingMessageSource implements Loggin
                 // messages
                 LoggingMessageListener listener = new LoggingMessageListener() {
 
-                    @Override public void onNewLoggingMessage(LoggingMessage message) {
+                    public void onNewLoggingMessage(LoggingMessage message) {
 
                         if (message instanceof HistoricalPatternisedDataResponse) {
                             HistoricalPatternisedDataResponse response = (HistoricalPatternisedDataResponse) message;
@@ -730,7 +730,7 @@ public class SocketClient extends AbstractLoggingMessageSource implements Loggin
 
             }
 
-            @Override public void streamHistoricalAggregatedEvents(long fromTime, long toTime, final StreamingDestination<AggregatedLogEvent> destination) {
+            public void streamHistoricalAggregatedEvents(long fromTime, long toTime, final StreamingDestination<AggregatedLogEvent> destination) {
                 // Construct the history data request message to send to the hub
                 final HistoricalAggregatedDataRequest request = new HistoricalAggregatedDataRequest();
                 request.setCorrelationID(getNextCorrelationID());
@@ -755,7 +755,7 @@ public class SocketClient extends AbstractLoggingMessageSource implements Loggin
                 // messages
                 LoggingMessageListener listener = new LoggingMessageListener() {
 
-                    @Override public void onNewLoggingMessage(LoggingMessage message) {
+                    public void onNewLoggingMessage(LoggingMessage message) {
 
                         if (message instanceof HistoricalAggregatedDataResponse) {
                             HistoricalAggregatedDataResponse response = (HistoricalAggregatedDataResponse) message;
@@ -828,23 +828,23 @@ public class SocketClient extends AbstractLoggingMessageSource implements Loggin
     public PatternManagementAPI getPatternManagementAPI() {
         return new PatternManagementAPI() {
 
-            @Override public Result<Pattern> createPattern(Pattern template) {
+             public Result<Pattern> createPattern(Pattern template) {
                 final Result<Pattern> result = new Result<Pattern>();
 
                 createPattern(template, new ResultListener<Pattern>() {
-                    @Override public void onUnsuccessful(String reason) {
+                     public void onUnsuccessful(String reason) {
                         result.unsuccessful(reason);
                     }
 
-                    @Override public void onTimedout() {
+                     public void onTimedout() {
                         result.timedOut();
                     }
 
-                    @Override public void onSuccessful(Pattern pattern) {
+                    public void onSuccessful(Pattern pattern) {
                         result.success(pattern);
                     }
 
-                    @Override public void onFailed(Throwable t) {
+                    public void onFailed(Throwable t) {
                         result.failed(t.getMessage());
                     }
                 });
@@ -852,7 +852,7 @@ public class SocketClient extends AbstractLoggingMessageSource implements Loggin
                 return result;
             }
 
-            @Override public void getPatterns(ResultListener<List<Pattern>> listener) {
+            public void getPatterns(ResultListener<List<Pattern>> listener) {
 
                 PatternListRequest request = new PatternListRequest();
                 ChannelMessage message = new ChannelMessage(Channels.patternListRequests, request);
@@ -862,7 +862,7 @@ public class SocketClient extends AbstractLoggingMessageSource implements Loggin
                 final Exchanger<PatternListResponse> exchanger = new Exchanger<PatternListResponse>();
 
                 LoggingMessageListener messageListener = new LoggingMessageListener() {
-                    @Override public void onNewLoggingMessage(LoggingMessage message) {
+                     public void onNewLoggingMessage(LoggingMessage message) {
 
                         if (message instanceof ResponseMessage) {
                             ResponseMessage channelResponseMessage = (ResponseMessage) message;
@@ -912,24 +912,24 @@ public class SocketClient extends AbstractLoggingMessageSource implements Loggin
                 connector.removeLoggingMessageListener(messageListener);
             }
 
-            @Override public Result<List<Pattern>> getPatterns() {
+            public Result<List<Pattern>> getPatterns() {
 
                 final Result<List<Pattern>> result = new Result<List<Pattern>>();
 
                 getPatterns(new ResultListener<List<Pattern>>() {
-                    @Override public void onUnsuccessful(String reason) {
+                    public void onUnsuccessful(String reason) {
                         result.unsuccessful(reason);
                     }
 
-                    @Override public void onTimedout() {
+                    public void onTimedout() {
                         result.timedOut();
                     }
 
-                    @Override public void onSuccessful(List<Pattern> patternList) {
+                    public void onSuccessful(List<Pattern> patternList) {
                         result.success(patternList);
                     }
 
-                    @Override public void onFailed(Throwable t) {
+                     public void onFailed(Throwable t) {
                         result.failed(t.getMessage());
                     }
                 });
@@ -938,7 +938,7 @@ public class SocketClient extends AbstractLoggingMessageSource implements Loggin
 
             }
 
-            @Override public void createPattern(Pattern template, ResultListener<Pattern> listener) {
+             public void createPattern(Pattern template, ResultListener<Pattern> listener) {
                 MapMessage map = new MapMessage();
                 map.put("action", "createPattern");
                 map.put("name", template.getName());
@@ -951,7 +951,7 @@ public class SocketClient extends AbstractLoggingMessageSource implements Loggin
                 final Exchanger<ResponseMessage> exchanger = new Exchanger<ResponseMessage>();
 
                 LoggingMessageListener messageListener = new LoggingMessageListener() {
-                    @Override public void onNewLoggingMessage(LoggingMessage message) {
+                     public void onNewLoggingMessage(LoggingMessage message) {
 
                         if (message instanceof ResponseMessage) {
                             ResponseMessage channelResponseMessage = (ResponseMessage) message;
@@ -1011,7 +1011,7 @@ public class SocketClient extends AbstractLoggingMessageSource implements Loggin
                 connector.removeLoggingMessageListener(messageListener);
             }
 
-            @Override public void getAggregations(ResultListener<List<Aggregation>> listener) {
+             public void getAggregations(ResultListener<List<Aggregation>> listener) {
                 AggregationListRequest request = new AggregationListRequest();
                 ChannelMessage message = new ChannelMessage(Channels.aggregationListRequests, request);
                 final int requestID = getNextCorrelationID();
@@ -1020,7 +1020,7 @@ public class SocketClient extends AbstractLoggingMessageSource implements Loggin
                 final Exchanger<AggregationListResponse> exchanger = new Exchanger<AggregationListResponse>();
 
                 LoggingMessageListener messageListener = new LoggingMessageListener() {
-                    @Override public void onNewLoggingMessage(LoggingMessage message) {
+                    public void onNewLoggingMessage(LoggingMessage message) {
 
                         if (message instanceof ResponseMessage) {
                             ResponseMessage channelResponseMessage = (ResponseMessage) message;
@@ -1070,23 +1070,23 @@ public class SocketClient extends AbstractLoggingMessageSource implements Loggin
                 connector.removeLoggingMessageListener(messageListener);
             }
 
-            @Override public Result<List<Aggregation>> getAggregations() {
+            public Result<List<Aggregation>> getAggregations() {
                 final Result<List<Aggregation>> result = new Result<List<Aggregation>>();
 
                 getAggregations(new ResultListener<List<Aggregation>>() {
-                    @Override public void onUnsuccessful(String reason) {
+                    public void onUnsuccessful(String reason) {
                         result.unsuccessful(reason);
                     }
 
-                    @Override public void onTimedout() {
+                    public void onTimedout() {
                         result.timedOut();
                     }
 
-                    @Override public void onSuccessful(List<Aggregation> patternList) {
+                    public void onSuccessful(List<Aggregation> patternList) {
                         result.success(patternList);
                     }
 
-                    @Override public void onFailed(Throwable t) {
+                    public void onFailed(Throwable t) {
                         result.failed(t.getMessage());
                     }
                 });
@@ -1095,23 +1095,23 @@ public class SocketClient extends AbstractLoggingMessageSource implements Loggin
 
             }
 
-            @Override public Result<Aggregation> createAggregation(Aggregation template) {
+            public Result<Aggregation> createAggregation(Aggregation template) {
                 final Result<Aggregation> result = new Result<Aggregation>();
 
                 createAggregation(template, new ResultListener<Aggregation>() {
-                    @Override public void onUnsuccessful(String reason) {
+                    public void onUnsuccessful(String reason) {
                         result.unsuccessful(reason);
                     }
 
-                    @Override public void onTimedout() {
+                    public void onTimedout() {
                         result.timedOut();
                     }
 
-                    @Override public void onSuccessful(Aggregation pattern) {
+                    public void onSuccessful(Aggregation pattern) {
                         result.success(pattern);
                     }
 
-                    @Override public void onFailed(Throwable t) {
+                    public void onFailed(Throwable t) {
                         result.failed(t.getMessage());
                     }
                 });
@@ -1120,7 +1120,7 @@ public class SocketClient extends AbstractLoggingMessageSource implements Loggin
 
             }
 
-            @Override public void createAggregation(Aggregation template, ResultListener<Aggregation> listener) {
+            public void createAggregation(Aggregation template, ResultListener<Aggregation> listener) {
                 MapMessage map = new MapMessage();
                 map.put("action", "createAggregation");
                 map.put("patternID", template.getPatternID());
@@ -1136,7 +1136,7 @@ public class SocketClient extends AbstractLoggingMessageSource implements Loggin
                 final Exchanger<ResponseMessage> exchanger = new Exchanger<ResponseMessage>();
 
                 LoggingMessageListener messageListener = new LoggingMessageListener() {
-                    @Override public void onNewLoggingMessage(LoggingMessage message) {
+                    public void onNewLoggingMessage(LoggingMessage message) {
 
                         if (message instanceof ResponseMessage) {
                             ResponseMessage channelResponseMessage = (ResponseMessage) message;
@@ -1203,7 +1203,7 @@ public class SocketClient extends AbstractLoggingMessageSource implements Loggin
     public LevelSettingAPI getLevelSettingAPI() {
         return new LevelSettingAPI() {
 
-            @Override public void setLevels(InstanceFilter filter, LevelSettingsGroup settings, final MultipleResultListener<LevelSettingsConfirmation> listener) {
+            public void setLevels(InstanceFilter filter, LevelSettingsGroup settings, final MultipleResultListener<LevelSettingsConfirmation> listener) {
 
                 LevelSettingsRequest request = new LevelSettingsRequest();
                 request.setFilter(filter);
@@ -1215,7 +1215,7 @@ public class SocketClient extends AbstractLoggingMessageSource implements Loggin
                 channelMessage.setReplyToChannel(Channels.getPrivateConnectionChannel(connector.getConnectionID()));
 
                 final Filter<LoggingMessage> responseFilter = new Filter<LoggingMessage>() {
-                    @Override public boolean passes(LoggingMessage t) {
+                    public boolean passes(LoggingMessage t) {
                         boolean passes = false;
                         if (t instanceof ChannelMessage) {
                             ChannelMessage response = (ChannelMessage) t;
@@ -1229,7 +1229,7 @@ public class SocketClient extends AbstractLoggingMessageSource implements Loggin
 
                 // TODO : figure out a way to remove these transient listeners over time?
                 addLoggingMessageListener(new LoggingMessageListener() {
-                    @Override public void onNewLoggingMessage(LoggingMessage message) {
+                    public void onNewLoggingMessage(LoggingMessage message) {
                         if (responseFilter.passes(message)) {
                             ChannelMessage channelMessage = (ChannelMessage) message;
                             Result<LevelSettingsConfirmation> payload = (Result<LevelSettingsConfirmation>) channelMessage.getPayload();
@@ -1251,7 +1251,7 @@ public class SocketClient extends AbstractLoggingMessageSource implements Loggin
     public InstanceManagementAPI getInstanceManagementAPI() {
         return new InstanceManagementAPI() {
 
-            @Override public void sendPing() {
+            public void sendPing() {
                 ChannelMessage request = new ChannelMessage(Channels.pingRequests, new PingRequest());
                 request.setCorrelationID(getNextCorrelationID());
                 request.setReplyToChannel(Channels.getPrivateConnectionChannel(connector.getConnectionID()));
@@ -1262,9 +1262,9 @@ public class SocketClient extends AbstractLoggingMessageSource implements Loggin
                 }
             }
 
-            @Override public void addPingListener(final Destination<PingResponse> destination) {
+            public void addPingListener(final Destination<PingResponse> destination) {
                 LoggingMessageListener listener = new LoggingMessageListener() {
-                    @Override public void onNewLoggingMessage(LoggingMessage message) {
+                    public void onNewLoggingMessage(LoggingMessage message) {
                         if (message instanceof ChannelMessage) {
                             ChannelMessage channelRequestMessage = (ChannelMessage) message;
                             SerialisableObject payload = channelRequestMessage.getPayload();

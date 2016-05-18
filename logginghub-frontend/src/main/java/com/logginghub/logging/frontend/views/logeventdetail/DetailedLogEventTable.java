@@ -203,7 +203,7 @@ public class DetailedLogEventTable extends JTable {
                 TableColumn column = getColumn(value.getName());
                 ActionColumnHandler actionColumnHandler = new ActionColumnHandler();
 
-                column.setCellRenderer(actionColumnHandler.new ButtonRenderer());
+                column.setCellRenderer(actionColumnHandler.new ButtonRenderer(value.getName()));
                 column.setCellEditor(actionColumnHandler. new ButtonEditor(new ButtonClickedListener() {
                     @Override
                     public void onClicked(int row, int column) {

@@ -13,7 +13,10 @@ public class ActionColumnHandler {
 
     public class ButtonRenderer extends JButton implements TableCellRenderer {
 
-        public ButtonRenderer() {
+        private final String label;
+
+        public ButtonRenderer(String label) {
+            this.label = label;
             setOpaque(true);
         }
 
@@ -26,7 +29,7 @@ public class ActionColumnHandler {
                 setForeground(table.getForeground());
                 setBackground(UIManager.getColor("Button.background"));
             }
-            setText((value == null) ? "" : value.toString());
+            setText(label);
             return this;
         }
     }
