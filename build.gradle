@@ -4,7 +4,7 @@ plugins {
 
 subprojects {
 
-    version = '1.5.10'
+    version = '1.5.11'
     group = 'com.logginghub'
 
     apply plugin: 'java'
