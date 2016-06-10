@@ -4,7 +4,7 @@ public abstract class MicroBenchmark
 {
     public void test()
     {
-        int iterations = getInterations();
+        int iterations = getIterations();
         int sampleSize = getSampleSize();
         long[] results = new long[iterations];
 
@@ -41,7 +41,7 @@ public abstract class MicroBenchmark
         return 1000;
     }
 
-    protected int getInterations()
+    protected int getIterations()
     {
         return 1000;
     }

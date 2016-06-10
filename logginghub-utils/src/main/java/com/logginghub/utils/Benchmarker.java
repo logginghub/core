@@ -114,7 +114,7 @@ public class Benchmarker {
         // elapsedMS = 1;
         // }
         NumberFormat nf = NumberFormat.getInstance();
-        System.out.println(StringUtils.format("Approach {} did {} iterations in {} ms = {} i/s. Mean time per interation {} ns, rate {} /is",
+        System.out.println(StringUtils.format("Approach {} did {} iterations in {} ms = {} i/s. Mean time per iteration {} ns, rate {} /is",
                                               approach.getClass().getSimpleName(),
                                               nf.format(count),
                                               elapsedMS,
@@ -195,7 +195,7 @@ public class Benchmarker {
 
         for (Result result : results) {
             NumberFormat nf = NumberFormat.getInstance();
-            System.out.println(StringUtils.format("Approach {} did {} iterations in {} ms = {} i/s. Mean time per interation {} ns, rate {} /is",
+            System.out.println(StringUtils.format("Approach {} did {} iterations in {} ms = {} i/s. Mean time per iteration {} ns, rate {} /is",
                                                   result.name,
                                                   nf.format(result.count),
                                                   result.elapsedMS,
