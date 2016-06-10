@@ -59,6 +59,7 @@ public class StreamBuilder implements ValueStripper2ResultListener2 {
 
             result = entry.getVariables()[labelIndex];
             isResultNumeric = isNumeric[labelIndex];
+            String labelName = getLabelName(patternID, labelIndex);
 
             StringBuilder streamBuilder = new StringBuilder();
 
@@ -101,7 +102,7 @@ public class StreamBuilder implements ValueStripper2ResultListener2 {
                 path = groupByValue;
             }
             else {
-                path = StringUtils.format("{}/{}/{}", getPatternName(patternID), getLabeLName(patternID, labelIndex), streamBuilder.toString());
+                path = StringUtils.format("{}/{}/{}", getPatternName(patternID), labelName, streamBuilder.toString());
             }
 
             boolean publish = true;
@@ -143,13 +144,13 @@ public class StreamBuilder implements ValueStripper2ResultListener2 {
 
             if (publish) {
                 logger.fine("Output path is '{}'", path);
-                output.send(new StreamResultItem(entry.getTime(), path, result, isResultNumeric));
+                output.send(new StreamResultItem(entry.getTime(), labelName, path, groupBy, result, isResultNumeric));
             }
         }
 
     }
 
-    private String getLabeLName(int patternID, int labelIndex) {
+    private String getLabelName(int patternID, int labelIndex) {
         return patternService.getLabelName(patternID, labelIndex);
 
     }

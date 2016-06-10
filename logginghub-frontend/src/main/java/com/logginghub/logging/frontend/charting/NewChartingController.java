@@ -15,6 +15,7 @@ import com.logginghub.logging.frontend.charting.model.StreamBuilder;
 import com.logginghub.logging.frontend.charting.model.StreamConfiguration;
 import com.logginghub.logging.frontend.charting.model.StreamListener;
 import com.logginghub.logging.frontend.charting.model.StreamResultItem;
+import com.logginghub.logging.frontend.charting.model.TableChartModel;
 import com.logginghub.logging.frontend.charting.swing.Counterparts;
 import com.logginghub.logging.frontend.model.ConnectionStateChangedEvent;
 import com.logginghub.logging.frontend.model.EnvironmentModel;
@@ -157,6 +158,17 @@ public class NewChartingController {
             }
 
             @Override public void onRemoved(PieChartModel t, int index) {}
+
+            @Override public void onCleared() {}
+        });
+
+        pageModel.getTableChartModels().addListenerAndNotifyCurrent(new ObservableListListener<TableChartModel>() {
+            @Override public void onAdded(final TableChartModel tableChartModel) {
+                bindGenericChartModel(tableChartModel);
+                bindTableModel(tableChartModel);
+            }
+
+            @Override public void onRemoved(TableChartModel t, int index) {}
 
             @Override public void onCleared() {}
         });
@@ -501,6 +513,131 @@ public class NewChartingController {
         });
     }
 
+    private void bindTableModel(final TableChartModel tableModel) {
+
+        // TODO : where does this vary from the line chart model?
+        tableModel.getMatcherModels().addListenerAndNotifyCurrent(new ObservableListListener<ChartSeriesModel>() {
+
+            @Override public void onAdded(ChartSeriesModel chartSeriesModel) {
+                // Local scope variables
+                final NewAggregatorSplitter splitter = new NewAggregatorSplitter();
+                Stream<StreamResultItem> output = new Stream<StreamResultItem>() {
+                    @Override public void send(StreamResultItem t) {
+                        super.send(t);
+                    }
+                };
+                final StreamBuilder builder = new StreamBuilder(output, patternService);
+
+                logger.debug("ChartSeriesModel '{}' added to table '{}'", chartSeriesModel, tableModel);
+
+                setupGeneralStreamBuilder(chartSeriesModel, splitter, builder);
+
+                // Wire them together
+                builder.getOutput().addListener(splitter);
+
+                // Make the results available to the view
+                final Stream<ChunkedResult> stream = new Stream<ChunkedResult>();
+                splitter.getOutputStream().addListener(new StreamListener<ChunkedResult>() {
+                    @Override public void onNewItem(ChunkedResult t) {
+                        stream.send(t);
+                    }
+                });
+
+                splitterCounterparts.put(chartSeriesModel, splitter);
+                streamBuilderCounterparts.put(chartSeriesModel, builder);
+
+                resultStreams.put(chartSeriesModel, stream);
+
+                // Couple to a value stripper
+                chartSeriesModel.getPatternID().addListenerAndNotifyCurrent(new ObservablePropertyListener<Integer>() {
+                    @Override public void onPropertyChanged(Integer oldValue, Integer newValue) {
+
+                        logger.debug("Binding ChartSeriesModel to pattern '{}' (old one was '{}')", oldValue, newValue);
+
+                        // Remember to tell the builder so it
+                        // can build the series
+                        // name
+                        builder.setPatternID(newValue);
+
+                        // If we were attached to a stripper
+                        // before, decouple
+                        if (oldValue != null) {
+                            ValueStripper2 valueStripper = getValueStripper(oldValue);
+                            if (valueStripper != null) {
+                                valueStripper.removeResultListener(builder);
+                            }
+                        }
+
+                        // Bind to the new one
+                        ValueStripper2 valueStripper = getValueStripper(newValue);
+                        if (valueStripper != null) {
+                            valueStripper.addResultListener(builder);
+                        } else {
+                            logger.warn("Coun't find value stripper called '{}', failed to bind chart series", newValue);
+                        }
+                    }
+                });
+
+                // Couple to a particular result label
+                chartSeriesModel.getLabelIndex().addListenerAndNotifyCurrent(new ObservablePropertyListener<Integer>() {
+                    @Override public void onPropertyChanged(Integer oldValue, Integer newValue) {
+                        builder.setLabelIndex(newValue);
+                    }
+                });
+
+                // Couple to a analysis type
+                chartSeriesModel.getType().addListenerAndNotifyCurrent(new ObservablePropertyListener<String>() {
+                    @Override public void onPropertyChanged(String oldValue, String newValue) {
+                        if (newValue != null) {
+                            String capitals = StringUtils.capitalise(newValue);
+                            try {
+                                splitter.setPublishingModes(AggregationType.valueOf(capitals));
+                            } catch (IllegalArgumentException e) {
+                                logger.warn("Type '{}' isn't a recognised type ({})", capitals, Arrays.toString(AggregationType.values()));
+                            }
+                        }
+                    }
+                });
+
+                // Couple to the interval length
+                chartSeriesModel.getInterval().addListenerAndNotifyCurrent(new ObservablePropertyListener<Integer>() {
+                    @Override public void onPropertyChanged(Integer oldValue, Integer newValue) {
+                        splitter.setChunkInterval(newValue);
+                    }
+                });
+            }
+
+            @Override public void onRemoved(ChartSeriesModel t, int index) {
+
+                logger.debug("ChartSeriesModel '{}' removed from table '{}'", t, tableModel);
+
+                StreamBuilder builder = streamBuilderCounterparts.remove(t);
+                NewAggregatorSplitter splitter = splitterCounterparts.remove(t);
+
+                // Decouple the builder and splitter
+                builder.getOutput().removeListener(splitter);
+
+                // Take the result stream out of the lookup list
+                // -
+                // TODO : the chart may still be bound?
+                // TODO : if the chart reacts as well, if we
+                // remove this first it
+                // might not be able to decouple itself?
+                Stream<ChunkedResult> removedStreak = resultStreams.remove(t);
+
+                // Remove value stripper binding
+                ValueStripper2 valueStripper = getValueStripper(t.getPatternID().get());
+                if (valueStripper != null) {
+                    valueStripper.removeResultListener(builder);
+                }
+            }
+
+            @Override public void onCleared() {}
+
+        });
+    }
+
+
     // private void bindStreamBuilders(final NewChartingModel model) {
     // // Wire up stream builders to the stream builder definitions
     // model.getStreamModels().addListenerAndNotifyCurrent(new
@@ -676,6 +813,17 @@ public class NewChartingController {
         // TODO : unbind everything
 
         parentPage.getPieChartModels().remove(pieChartModel);
+
+    }
+
+    public void removeChart(TableChartModel tableChartModel) {
+
+        PageModel parentPage = tableChartModel.getParentPage();
+
+        ObservableList<ChartSeriesModel> matcherModels = tableChartModel.getMatcherModels();
+        // TODO : unbind everything
+
+        parentPage.getPieChartModels().remove(tableChartModel);
 
     }
 

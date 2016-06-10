@@ -1,11 +1,5 @@
 package com.logginghub.logging.frontend.charting;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
-
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.frontend.analysis.ChunkedResult;
 import com.logginghub.logging.frontend.analysis.ChunkedResultHandler;
@@ -14,6 +8,12 @@ import com.logginghub.logging.frontend.charting.model.StreamListener;
 import com.logginghub.logging.frontend.charting.model.StreamResultItem;
 import com.logginghub.logging.messages.AggregationType;
 import com.logginghub.utils.logging.Logger;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class NewAggregatorSplitter implements StreamListener<StreamResultItem> {
 
@@ -123,6 +123,8 @@ public class NewAggregatorSplitter implements StreamListener<StreamResultItem> {
                 timeChunker.setChunkInterval(chunkInterval);
                 timeChunker.setPublishingModes(publishingMode);
                 timeChunker.setSource(t.getPath());
+                timeChunker.setLabel(t.getLabel());
+                timeChunker.setGroupBy(t.getGroupBy());
                 chunkersPerSource.put(t.getPath(), timeChunker);
             }
         }

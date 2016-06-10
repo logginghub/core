@@ -1,20 +1,19 @@
 package com.logginghub.logging.frontend.analysis;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.EnumSet;
-import java.util.List;
-
 import com.logginghub.logging.frontend.charting.NewAggregator;
 import com.logginghub.logging.messages.AggregationType;
 import com.logginghub.utils.Statistics;
 import com.logginghub.utils.TimeUtils;
 import com.logginghub.utils.logging.Logger;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.EnumSet;
+import java.util.List;
+
 /**
- * @deprecated We should be using the {@link NewAggregator} in preference to this class now.
  * @author James
- *
+ * @deprecated We should be using the {@link NewAggregator} in preference to this class now.
  */
 public class TimeChunker {
 
@@ -37,6 +36,8 @@ public class TimeChunker {
 
     private List<ChunkedResultHandler> resultHandlers;
     private String source;
+    private String label;
+    private String groupBy;
 
     // public enum Mode {
     // Count,
@@ -65,24 +66,74 @@ public class TimeChunker {
     // this.mode = mode;
     // }
 
-    public void update(long time, double value, String source) {
+    /**
+     * Similar to reset but this one sets us back to our completely empty state
+     */
+    public void clear() {
+        reset();
+        startOfCurrentChunk = -1;
+        totalCount = 0;
+        totalSum = 0;
+    }
+
+    public void complete() {
+        for (ChunkedResultHandler chunkedResultHandler : resultHandlers) {
+            chunkedResultHandler.complete();
+        }
+    }
+
+    public String getLabel() {
+        return label;
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
+    }
+
+    public void setChunkInterval(long chunkInterval) {
+        this.chunkInterval = chunkInterval;
+    }
+
+    public void setGenerateMissingChunks(boolean generateMissingChunks) {
+        this.generateMissingChunks = generateMissingChunks;
+    }
+
+    public void setGroupBy(String groupBy) {
+        this.groupBy = groupBy;
+    }
+
+    public void setPublishingModes(AggregationType... modes) {
+        EnumSet<AggregationType> set = EnumSet.noneOf(AggregationType.class);
+        for (AggregationType mode : modes) {
+            set.add(mode);
+        }
+        setPublishingModes(set);
+    }
+
+    public void setPublishingModes(EnumSet<AggregationType> publishingModes) {
+        this.publishingModes = publishingModes;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
+    }
+
+    public void update(long time, double value, String source, String label, String groupBy) {
         logger.fine("Updating chunk source {} with value {} at time {}", source, value, Logger.toDateString(time));
         long chunkedTime = chunk(time);
 
         if (startOfCurrentChunk == -1) {
             startOfCurrentChunk = chunkedTime;
-        }
-        else {
+        } else {
             if (chunkedTime > startOfCurrentChunk) {
                 flush();
 
                 if (generateMissingChunks) {
-                    generateMissingChunks(time, source);
+                    generateMissingChunks(time, source, label, groupBy);
                 }
 
                 startOfCurrentChunk = chunk(time);
-            }
-            else if (time < startOfCurrentChunk) {
+            } else if (time < startOfCurrentChunk) {
                 throw new RuntimeException(String.format("Time [%s] is before current chunk start [%s], is your source sequence out of order?",
                                                          new Date(time).toLocaleString(),
                                                          new Date(startOfCurrentChunk).toLocaleString()));
@@ -95,36 +146,38 @@ public class TimeChunker {
         this.lastValue = value;
     }
 
-    private void fireResult(ChunkedResult result) {
-        for (ChunkedResultHandler chunkedResultHandler : resultHandlers) {
-            chunkedResultHandler.onNewChunkedResult(result);
-        }
-    }
-
-    private void generateMissingChunks(long time, String source) {
-        long startOfNextChunk = chunk(time);
-        long missingPeriods = ((startOfNextChunk - startOfCurrentChunk) / chunkInterval) - 1;
-        for (int i = 0; i < missingPeriods; i++) {
-            long chunkStart = startOfCurrentChunk + ((i + 1) * chunkInterval);
-            ChunkedResult gapResult = new ChunkedResult(chunkStart, chunkInterval, 0, source);
-            fireResult(gapResult);
-        }
-    }
-
     public long chunk(long time) {
         return chunk(time, chunkInterval);
     }
 
+    public void flush() {
+        for (AggregationType mode : publishingModes) {
+            ChunkedResult result = new ChunkedResult(startOfCurrentChunk,
+                                                     chunkInterval,
+                                                     getValue(mode),
+                                                     mode.toString(),
+                                                     label,
+                                                     groupBy,
+                                                     source + "/" + mode);
+            logger.fine("Flushing time chunk result {}", result);
+            fireResult(result);
+        }
+
+        reset();
+    }
+
+    private void generateMissingChunks(long time, String source, String label, String groupBy) {
+        long startOfNextChunk = chunk(time);
+        long missingPeriods = ((startOfNextChunk - startOfCurrentChunk) / chunkInterval) - 1;
+        for (int i = 0; i < missingPeriods; i++) {
+            long chunkStart = startOfCurrentChunk + ((i + 1) * chunkInterval);
+            ChunkedResult gapResult = new ChunkedResult(chunkStart, chunkInterval, 0, "gap", source, label, groupBy);
+            fireResult(gapResult);
+        }
+    }
+
     public static long chunk(long time, long chunkInterval) {
         return TimeUtils.chunk(time, chunkInterval);
-    }
-
-    public void setChunkInterval(long chunkInterval) {
-        this.chunkInterval = chunkInterval;
-    }
-
-    public void setGenerateMissingChunks(boolean generateMissingChunks) {
-        this.generateMissingChunks = generateMissingChunks;
     }
 
     public double getValue(AggregationType mode) {
@@ -154,50 +207,14 @@ public class TimeChunker {
         }
     }
 
+    private void fireResult(ChunkedResult result) {
+        for (ChunkedResultHandler chunkedResultHandler : resultHandlers) {
+            chunkedResultHandler.onNewChunkedResult(result);
+        }
+    }
+
     public void reset() {
         statistics = new Statistics();
-        lastValue = Double.NaN;     
-    }
-
-    public void complete() {
-        for (ChunkedResultHandler chunkedResultHandler : resultHandlers) {
-            chunkedResultHandler.complete();
-        }
-    }
-
-    public void setSource(String source) {
-        this.source = source;
-    }
-
-    public void flush() {
-        for (AggregationType mode : publishingModes) {
-            ChunkedResult result = new ChunkedResult(startOfCurrentChunk, chunkInterval, getValue(mode), source + "/" + mode);
-            logger.fine("Flushing time chunk result {}", result);
-            fireResult(result);
-        }
-
-        reset();
-    }
-
-    /**
-     * Similar to reset but this one sets us back to our completely empty state
-     */
-    public void clear() {
-        reset();
-        startOfCurrentChunk = -1;
-        totalCount = 0;
-        totalSum = 0;
-    }
-
-    public void setPublishingModes(EnumSet<AggregationType> publishingModes) {
-        this.publishingModes = publishingModes;
-    }
-
-    public void setPublishingModes(AggregationType... modes) {
-        EnumSet<AggregationType> set = EnumSet.noneOf(AggregationType.class);
-        for (AggregationType mode : modes) {
-            set.add(mode);
-        }
-        setPublishingModes(set);
+        lastValue = Double.NaN;
     }
 }

@@ -1,18 +1,14 @@
 package com.logginghub.logging.frontend.charting.swing;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-
-import net.miginfocom.swing.MigLayout;
-
 import com.logginghub.logging.frontend.charting.model.BatchedArraryListTableModel;
 import com.logginghub.logging.frontend.charting.model.Stream;
 import com.logginghub.logging.frontend.charting.model.StreamListener;
 import com.logginghub.logging.frontend.charting.model.StreamResultItem;
+import net.miginfocom.swing.MigLayout;
+
+import javax.swing.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class StreamViewPanel extends JPanel {
 
@@ -53,7 +49,7 @@ public class StreamViewPanel extends JPanel {
 
                 StreamResultItem existing = pathMap.get(t.getPath());
                 if (existing == null) {
-                    existing = new StreamResultItem(t.getTime(), t.getPath(), t.getResult(), t.isNumeric());
+                    existing = new StreamResultItem(t.getTime(), t.getLabel(), t.getPath(), t.getGroupBy(), t.getResult(), t.isNumeric());
                     pathMap.put(t.getPath(), existing);
                     tableModel.addToBatch(existing);
                 }

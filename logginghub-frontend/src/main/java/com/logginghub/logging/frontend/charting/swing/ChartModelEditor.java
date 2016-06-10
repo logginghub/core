@@ -1,20 +1,16 @@
 package com.logginghub.logging.frontend.charting.swing;
 
-import java.awt.Color;
-
-import javax.swing.JCheckBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-
-import net.miginfocom.swing.MigLayout;
-
 import com.logginghub.logging.frontend.charting.NewChartingController;
 import com.logginghub.logging.frontend.charting.model.LineChartModel;
 import com.logginghub.logging.frontend.charting.model.PieChartModel;
+import com.logginghub.logging.frontend.charting.model.TableChartModel;
 import com.logginghub.utils.Convertor;
 import com.logginghub.utils.observable.Binder2;
 import com.logginghub.utils.observable.ObservableInteger;
+import net.miginfocom.swing.MigLayout;
+
+import javax.swing.*;
+import java.awt.*;
 
 public class ChartModelEditor extends JPanel {
 
@@ -178,6 +174,54 @@ public class ChartModelEditor extends JPanel {
     }
 
     public void bind(NewChartingController controller, PieChartModel model) {
+        // this.controller = controller;
+        // this.lineChartModel = lineChartModel;
+
+        binder = new Binder2();
+        binder.bind(model.getTitle(), chartTitle);
+        binder.bind(model.getxAxisLabel(), xAxisLabel);
+        binder.bind(model.getyAxisLabel(), yAxisLabel);
+        binder.bind(model.getDataPoints(), dataPoints);
+        binder.bind(model.getyAxisLock(), yAxisLock);
+        binder.bind(model.getLayout(), layout);
+        binder.bind(model.getWarningThreshold(), warningThreshold);
+        binder.bind(model.getSevereThreshold(), severeThreshold);
+        binder.bind(model.getSideLegend(), sideLegend);
+        binder.bind(model.getShowLegend(), showLegend);
+        binder.bind(model.getForceYZero(), forceZero);
+        binder.bind(model.getResetAt(), resetAtTextField);
+
+        binder.bind(model.getShowOtherSeries(), showOther);
+        binder.bind(model.getTop(), top, new Convertor<String, ObservableInteger>() {
+            @Override public String convert(ObservableInteger y) {
+                int intValue = y.intValue();
+                String converted;
+                if (intValue == Integer.MAX_VALUE) {
+                    converted = "";
+                }
+                else {
+                    converted = Integer.toString(intValue);
+                }
+                return converted;
+            }
+        });
+
+        warningThreshold.setEnabled(false);
+        severeThreshold.setEnabled(false);
+        forceZero.setEnabled(false);
+        xAxisLabel.setEnabled(false);
+        yAxisLabel.setEnabled(false);
+        dataPoints.setEnabled(false);
+        yAxisLock.setEnabled(false);
+        warningThreshold.setEnabled(false);
+        severeThreshold.setEnabled(false);
+        smoothed.setEnabled(false);
+
+        top.setEnabled(true);
+        showOther.setEnabled(true);
+    }
+
+    public void bind(NewChartingController controller, TableChartModel model) {
         // this.controller = controller;
         // this.lineChartModel = lineChartModel;
 

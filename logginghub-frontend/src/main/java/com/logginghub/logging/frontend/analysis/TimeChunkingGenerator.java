@@ -1,16 +1,16 @@
 package com.logginghub.logging.frontend.analysis;
 
+import com.logginghub.logging.LogEvent;
+import com.logginghub.logging.messages.AggregationType;
+import com.logginghub.logging.utils.ValueStripper2.ValueStripper2ResultListener;
+import com.logginghub.utils.logging.Logger;
+
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
-
-import com.logginghub.logging.LogEvent;
-import com.logginghub.logging.messages.AggregationType;
-import com.logginghub.logging.utils.ValueStripper2.ValueStripper2ResultListener;
-import com.logginghub.utils.logging.Logger;
 
 public class TimeChunkingGenerator implements ValueStripper2ResultListener, ResultGenerator {
 
@@ -46,7 +46,7 @@ public class TimeChunkingGenerator implements ValueStripper2ResultListener, Resu
 
             long eventTime = getEventTime(entry);
             logger.trace("Updating time chunker with new event - event time (may have been overridden) was '{}' ({})", Logger.toDateString(eventTime), eventTime);
-            timeChunker.update(eventTime, Double.parseDouble(value), label);
+            timeChunker.update(eventTime, Double.parseDouble(value), label, label, label);
         }
         else {
             logger.trace("Result wasn't numeric, ignoring");

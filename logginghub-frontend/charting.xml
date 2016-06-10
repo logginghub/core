@@ -1,6 +1,7 @@
 <chartingModel>
 <patternModels>
 <patternmodel patternID="-1" pattern="PerformTask for \[Task={task}\] \[ServiceSessionId={session}\] \[Engine=[engine]\] completed in {nanos}ns ({time}ms)" name="task" debug="false" cleanUp="false"/>
+<patternmodel patternID="0" pattern="TradeEntryProcessor completed successfully in {time} ms :  txid was &apos;{txid}&apos;, account was &apos;[account]&apos;, instrument was &apos;[instrument]&apos;, quantity was &apos;{quantity}&apos;, status was &apos;[status]&apos;" name="process_trade" debug="false" cleanUp="false"/>
 </patternModels>
 <streamModels>
 
@@ -13,22 +14,33 @@
 <chartingModels>
 <linechartmodel title="Chart title" layout="" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" smoothed="false">
 <matchers>
-<chartseriesmodel patternID="-1" labelIndex="4" groupBy="" type="Mean" interval="1000" eventParts="" generateEmptyTicks="false">
+<chartseriesmodel patternID="0" labelIndex="0" groupBy="{instrument}" type="Mean" interval="1000" eventParts="" generateEmptyTicks="false">
 <filters>
 
 </filters>
 </chartseriesmodel>
 </matchers>
 </linechartmodel>
-<linechartmodel title="Chart title" layout="" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" smoothed="false">
-<matchers>
-
-</matchers>
-</linechartmodel>
 </chartingModels>
 <pieChartModels>
 
 </pieChartModels>
+<tableChartModels>
+<tablechartmodel title="Example Table" layout="" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" top="2147483647" showOtherSeries="false">
+<matchers>
+<chartseriesmodel patternID="0" labelIndex="0" groupBy="{instrument} {status}" type="Mean" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+
+</filters>
+</chartseriesmodel>
+<chartseriesmodel patternID="0" labelIndex="0" groupBy="{instrument} {status}" type="Count" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+
+</filters>
+</chartseriesmodel>
+</matchers>
+</tablechartmodel>
+</tableChartModels>
 </pagemodel>
 </pages>
 </chartingModel>

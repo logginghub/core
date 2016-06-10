@@ -7,21 +7,43 @@ public class ChunkedResult {
     private final long startOfCurrentChunk;
     private final long chunkDuration;
     private final double value;
+    private final String mode;
+    private final String label;
+    private final String groupBy;
     private String source;
 
-    public ChunkedResult(long startOfCurrentChunk, long chunkDuration, double value, String source) {
+    public ChunkedResult(long startOfCurrentChunk, long chunkDuration, double value, String mode, String label, String groupBy, String source) {
         this.startOfCurrentChunk = startOfCurrentChunk;
         this.chunkDuration = chunkDuration;
         this.value = value;
+        this.mode = mode;
+        this.label = label;
+        this.groupBy = groupBy;
         this.source = source;
+    }
+
+    public String getMode() {
+        return mode;
+    }
+
+    public long getChunkDuration() {
+        return chunkDuration;
+    }
+
+    public String getGroupBy() {
+        return groupBy;
+    }
+
+    public String getLabel() {
+        return label;
     }
 
     public String getSource() {
         return source;
     }
 
-    public long getChunkDuration() {
-        return chunkDuration;
+    public void setSource(String source) {
+        this.source = source;
     }
 
     public long getStartOfCurrentChunk() {
@@ -32,11 +54,22 @@ public class ChunkedResult {
         return value;
     }
 
-    public void setSource(String source) {
-        this.source = source;
-    }
-
-    @Override public String toString() {
-        return "ChunkedResult [startOfCurrentChunk=" + Logger.toDateString(startOfCurrentChunk) + ", chunkDuration=" + chunkDuration + ", value=" + value + ", source=" + source + "]";
+    @Override
+    public String toString() {
+        return "ChunkedResult [startOfCurrentChunk=" +
+               Logger.toDateString(startOfCurrentChunk) +
+               ", chunkDuration=" +
+               chunkDuration +
+               ", value=" +
+               value +
+               ", source=" +
+               source +
+               ", label=" +
+               label +
+               ", groupBy=" +
+               groupBy +
+               ", mode=" +
+               mode +
+               "]";
     }
 }

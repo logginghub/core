@@ -550,15 +550,16 @@ public class DetailedLogEventTableModel extends DefaultTableModel implements Log
         } else {
             logger.fine("Custom column id {}", column);
             String metadatakey = visibleColumn.metadata;
-            if (metadatakey != null && logEvent.getMetadata() != null) {
-                value = logEvent.getMetadata().get(metadatakey);
+            Map<String, String> metadata = logEvent.getMetadata();
+            if (metadatakey != null && metadata != null) {
+                value = metadata.get(metadatakey);
 
                 if (value == null) {
                     value = "";
-                }
-
-                if (visibleColumn.renderer == ColumnTarget.Renderer.Date) {
-                    value = Logger.toLocalDateString(Long.parseLong(value.toString())).toString();
+                }else {
+                    if (visibleColumn.renderer == ColumnTarget.Renderer.Date) {
+                        value = Logger.toLocalDateString(Long.parseLong(value.toString())).toString();
+                    }
                 }
 
             } else {

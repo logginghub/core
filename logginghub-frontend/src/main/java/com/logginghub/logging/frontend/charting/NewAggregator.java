@@ -1,7 +1,5 @@
 package com.logginghub.logging.frontend.charting;
 
-import java.util.EnumSet;
-
 import com.logginghub.logging.frontend.analysis.ChunkedResult;
 import com.logginghub.logging.frontend.charting.model.Stream;
 import com.logginghub.logging.frontend.charting.model.StreamListener;
@@ -10,6 +8,8 @@ import com.logginghub.logging.messages.AggregationType;
 import com.logginghub.utils.Statistics;
 import com.logginghub.utils.TimeUtils;
 import com.logginghub.utils.logging.Logger;
+
+import java.util.EnumSet;
 
 public class NewAggregator implements StreamListener<StreamResultItem> {
 
@@ -36,9 +36,27 @@ public class NewAggregator implements StreamListener<StreamResultItem> {
     private long lastData;
 
     private double lastValue = Double.NaN;
-    
+    private String label;
+    private String groupBy;
+
     public NewAggregator() {
         
+    }
+
+    public String getGroupBy() {
+        return groupBy;
+    }
+
+    public String getLabel() {
+        return label;
+    }
+
+    public void setGroupBy(String groupBy) {
+        this.groupBy = groupBy;
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
     }
 
     public void setOutputStream(Stream<ChunkedResult> outputStream) {
@@ -68,7 +86,7 @@ public class NewAggregator implements StreamListener<StreamResultItem> {
                 flush();
 
                 if (generateMissingChunks) {
-                    generateMissingChunks(time, source);
+                    generateMissingChunks(time, label, source, groupBy);
                 }
 
                 startOfCurrentChunk = chunk(time);
@@ -95,12 +113,12 @@ public class NewAggregator implements StreamListener<StreamResultItem> {
         outputStream.send(result);
     }
 
-    private void generateMissingChunks(long time, String source) {
+    private void generateMissingChunks(long time, String label, String source, String groupBy) {
         long startOfNextChunk = chunk(time);
         long missingPeriods = ((startOfNextChunk - startOfCurrentChunk) / chunkInterval) - 1;
         for (int i = 0; i < missingPeriods; i++) {
             long chunkStart = startOfCurrentChunk + ((i + 1) * chunkInterval);
-            ChunkedResult gapResult = new ChunkedResult(chunkStart, chunkInterval, 0, source);
+            ChunkedResult gapResult = new ChunkedResult(chunkStart, chunkInterval, 0, "gap", label, groupBy, source);
             fireResult(gapResult);
         }
     }
@@ -176,7 +194,7 @@ public class NewAggregator implements StreamListener<StreamResultItem> {
 
     public void flush() {
         for (AggregationType mode : publishingModes) {
-            ChunkedResult result = new ChunkedResult(startOfCurrentChunk, chunkInterval, getValue(mode), source /*
+            ChunkedResult result = new ChunkedResult(startOfCurrentChunk, chunkInterval, getValue(mode),mode.name(), label, groupBy, source /*
                                                                                                                  * +
                                                                                                                  * "/"
                                                                                                                  * +

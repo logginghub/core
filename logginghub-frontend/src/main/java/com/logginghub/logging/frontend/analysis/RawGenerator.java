@@ -1,17 +1,17 @@
 package com.logginghub.logging.frontend.analysis;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.utils.ValueStripper2.ValueStripper2ResultListener;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class RawGenerator implements ValueStripper2ResultListener, ResultGenerator {
     private List<ChunkedResultHandler> resultHandlers;
 
     public void onNewResult(String label, boolean isNumeric, String value, LogEvent entry) {
         if (resultHandlers != null) {            
-            ChunkedResult result = new ChunkedResult(entry.getOriginTime(), 0, Double.parseDouble(value), label);
+            ChunkedResult result = new ChunkedResult(entry.getOriginTime(), 0, Double.parseDouble(value), "raw", label, label, label);
             for (ChunkedResultHandler handler : resultHandlers) {
                 handler.onNewChunkedResult(result);
             }
