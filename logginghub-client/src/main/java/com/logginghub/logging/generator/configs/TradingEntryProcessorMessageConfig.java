@@ -1,10 +1,10 @@
 package com.logginghub.logging.generator.configs;
 
-import java.util.concurrent.atomic.AtomicLong;
-
+import com.logginghub.logging.generator.LoggingMessageGenerator.OperationState;
 import com.logginghub.logging.generator.MessageProducerConfig;
 import com.logginghub.logging.generator.StringProducer;
-import com.logginghub.logging.generator.LoggingMessageGenerator.OperationState;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 public class TradingEntryProcessorMessageConfig implements MessageProducerConfig {
 
@@ -56,6 +56,14 @@ public class TradingEntryProcessorMessageConfig implements MessageProducerConfig
 
     public double doctorTime(double original, Object[] array) {
         return original;
+    }
+
+    public String[] getMetadataLabels() {
+        return new String[] {};
+    }
+
+    public StringProducer[] getMetadataProducers() {
+        return new StringProducer[]{};
     }
 
 }

@@ -1,6 +1,8 @@
 package com.logginghub.logging.generator;
 
+import com.logginghub.logging.DefaultLogEvent;
 import com.logginghub.logging.generator.LoggingMessageGenerator.OperationState;
+import com.logginghub.utils.Is;
 import com.logginghub.utils.RandomWithMomentum;
 import com.logginghub.utils.Stopwatch;
 
@@ -15,7 +17,7 @@ public class MessageProducer {
         timeGenerator = new RandomWithMomentum(0, config.getMinimumTime(), config.getMaximumTime(), 1, 5);
     }
 
-    public String produce() {
+    public void amendEvent(DefaultLogEvent logEvent) {
 
         OperationState state = config.generateState();
 
@@ -35,7 +37,20 @@ public class MessageProducer {
         stopwatch.forceElapsedMillis(doctored);
 
         String generateMessage = generator.generateMessage(operation, state, stopwatch, array);
-        return generateMessage;
+
+        logEvent.setMessage(generateMessage);
+
+        String[] metadataLabels = config.getMetadataLabels();
+        StringProducer[] metadataProducers = config.getMetadataProducers();
+
+        Is.equals(metadataLabels.length, metadataLabels.length, "You must have the same number of metadata labels as producers");
+
+        for(int i = 0; i < metadataLabels.length; i++) {
+            String label = metadataLabels[i];
+            String value = metadataProducers[i].produce();
+
+            logEvent.getMetadata().put(label, value);
+        }
     }
 
 }

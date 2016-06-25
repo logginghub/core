@@ -2,6 +2,7 @@
 <patternModels>
 <patternmodel patternID="-1" pattern="PerformTask for \[Task={task}\] \[ServiceSessionId={session}\] \[Engine=[engine]\] completed in {nanos}ns ({time}ms)" name="task" debug="false" cleanUp="false"/>
 <patternmodel patternID="0" pattern="TradeEntryProcessor completed successfully in {time} ms :  txid was &apos;{txid}&apos;, account was &apos;[account]&apos;, instrument was &apos;[instrument]&apos;, quantity was &apos;{quantity}&apos;, status was &apos;[status]&apos;" name="process_trade" debug="false" cleanUp="false"/>
+<patternmodel patternID="1" pattern="ProcessTrade completed successfully in {time} ms :  txid was &apos;{txid}&apos;, account was &apos;[account]&apos;, instrument was &apos;[instrument]&apos;, quantity was &apos;[quantity]&apos;, status was &apos;[status]&apos;[[source]]" name="Process" debug="false" cleanUp="false"/>
 </patternModels>
 <streamModels>
 
@@ -10,11 +11,20 @@
 
 </aggregationModels>
 <pages>
-<pagemodel name="New page">
+<pagemodel name="Normal charts">
 <chartingModels>
 <linechartmodel title="Chart title" layout="" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" smoothed="false">
 <matchers>
 <chartseriesmodel patternID="0" labelIndex="0" groupBy="{instrument}" type="Mean" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+
+</filters>
+</chartseriesmodel>
+</matchers>
+</linechartmodel>
+<linechartmodel title="By source" layout="cell 0 1" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" smoothed="false">
+<matchers>
+<chartseriesmodel patternID="1" labelIndex="0" groupBy="{source}" type="Count" interval="1000" eventParts="" generateEmptyTicks="false">
 <filters>
 
 </filters>
@@ -26,7 +36,7 @@
 
 </pieChartModels>
 <tableChartModels>
-<tablechartmodel title="Example Table" layout="" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" top="2147483647" showOtherSeries="false">
+<tablechartmodel title="Example Table" layout="cell 1 0 " resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" top="2147483647" showOtherSeries="false">
 <matchers>
 <chartseriesmodel patternID="0" labelIndex="0" groupBy="{instrument} {status}" type="Mean" interval="1000" eventParts="" generateEmptyTicks="false">
 <filters>
@@ -34,6 +44,20 @@
 </filters>
 </chartseriesmodel>
 <chartseriesmodel patternID="0" labelIndex="0" groupBy="{instrument} {status}" type="Count" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+
+</filters>
+</chartseriesmodel>
+</matchers>
+</tablechartmodel>
+<tablechartmodel title="By Source" layout="cell 1 1" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="y axis label" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" top="2147483647" showOtherSeries="false">
+<matchers>
+<chartseriesmodel patternID="1" labelIndex="0" groupBy="{source}" type="Count" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+
+</filters>
+</chartseriesmodel>
+<chartseriesmodel patternID="1" labelIndex="0" groupBy="{source}" type="Mean" interval="1000" eventParts="" generateEmptyTicks="false">
 <filters>
 
 </filters>

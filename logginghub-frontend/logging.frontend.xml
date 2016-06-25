@@ -46,6 +46,7 @@
         <columnSetting name="Market" width="100" order="1"/>
         <columnSetting name="Quantity" width="100" order="2"/>
         <columnSetting name="Instrument" width="240" order="3"/>
+        <columnSetting name="Bucket" width="280" order="4" metadata="bucket"/>
         <columnSetting name="Customer" width="280" order="4" metadata="customer"/>
         <columnSetting name="Status" width="110" order="5"/>
         <columnSetting name="Product" width="110" order="6" alignment="center"/>

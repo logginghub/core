@@ -16,9 +16,37 @@
                                      asynchronousQueueWarningSize="10000"/>
 
     <generator>
-        <message limit="100000"
-                 rateMin="5000"
-                 rateMax="5000"
+        <!--<message limit="100000"-->
+                 <!--rateMin="5000"-->
+                 <!--rateMax="5000"-->
+                 <!--trendMin="1"-->
+                 <!--trendMax="1"-->
+                 <!--random="false"-->
+                 <!--level="INFO"-->
+                 <!--patternFile="message.template"-->
+                 <!--startTime="25 January 2016"-->
+                 <!--timeIncrement="5 seconds">-->
+
+            <!--<template>-->
+                <!--<metadata key="newfield" value="123"/>-->
+                <!--<metadata key="newfield2" value="abc"/>-->
+                <!--<metadata key="timefield" value="1453975220788"/>-->
+                <!--<metadata key="meta1" value="1"/>-->
+                <!--<metadata key="meta2" value="2"/>-->
+                <!--<metadata key="meta3" value="3"/>-->
+                <!--<metadata key="meta4" value="4"/>-->
+                <!--<metadata key="meta5" value="5"/>-->
+                <!--<metadata key="meta6" value="6"/>-->
+                <!--<metadata key="meta7" value="7"/>-->
+                <!--<metadata key="meta8" value="8"/>-->
+                <!--<metadata key="meta9" value="9"/>-->
+                <!--<metadata key="meta10" value="10"/>-->
+            <!--</template>-->
+
+        <!--</message>-->
+
+        <message rateMin="5"
+                 rateMax="10"
                  trendMin="1"
                  trendMax="1"
                  random="false"

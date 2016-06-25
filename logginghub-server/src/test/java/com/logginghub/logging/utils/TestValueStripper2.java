@@ -1,22 +1,19 @@
 package com.logginghub.logging.utils;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.Matchers.sameInstance;
+import com.logginghub.logging.LogEvent;
+import com.logginghub.logging.LogEventFactory;
+import com.logginghub.logging.messaging.PatternisedLogEvent;
+import com.logginghub.logging.utils.ValueStripper2.ValueStripper2ResultListener;
+import com.logginghub.logging.utils.ValueStripper2.ValueStripper2ResultListener2;
+import com.logginghub.utils.Bucket;
+import com.logginghub.utils.CollectionUtils;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Test;
-
-import com.logginghub.logging.LogEvent;
-import com.logginghub.logging.LogEventFactory;
-import com.logginghub.logging.utils.ValueStripper2;
-import com.logginghub.logging.utils.ValueStripper2.ValueStripper2ResultListener;
-import com.logginghub.utils.Bucket;
-import com.logginghub.utils.CollectionUtils;
+import static org.hamcrest.MatcherAssert.*;
+import static org.hamcrest.Matchers.*;
 
 public class TestValueStripper2 {
 
@@ -26,6 +23,175 @@ public class TestValueStripper2 {
     private LogEvent eventWithMix = LogEventFactory.createLogEvent("Value one 345 value two 'foo' and finally value three 3");
     private LogEvent eventWithNastyChars = LogEventFactory.createLogEvent("Value one [345] value two {foo} and finally value three .?3");
     private LogEvent eventWithMixAndStuffOnEnd = LogEventFactory.createLogEvent("Value one 345 value two 'foo' and finally value three 3 and some more bits at the end");
+
+    @Test public void test_with_metadata_non_numeric() {
+        LogEvent eventWithMetadata = LogEventFactory.createLogEvent("Value one 345 value two Foo and finally value three 3");
+        eventWithMetadata.getMetadata().put("a", "1");
+
+        stripper.setPattern("Value one {one} value two [two] and finally value three {three}[[a]]");
+        assertThat(stripper.getRegex(), is("Value one ([\\d-\\.,]*?) value two (.*?) and finally value three ([\\d-\\.,]*?)"));
+
+        final Bucket<PatternisedLogEvent> patterisedEvents = new Bucket<PatternisedLogEvent>();
+        stripper.addResultListener(new ValueStripper2ResultListener2() {
+            @Override
+            public void onNewPatternisedResult(PatternisedLogEvent event, boolean[] isNumeric) {
+                patterisedEvents.add(event);
+            }
+        });
+
+        stripper.onNewLogEvent(eventWithMetadata);
+
+        assertThat(patterisedEvents.size(), is(1));
+
+        PatternisedLogEvent patternisedLogEvent = patterisedEvents.get(0);
+        String[] variables = patternisedLogEvent.getVariables();
+
+        assertThat(variables.length, is(4));
+        assertThat(variables[0], is("345"));
+        assertThat(variables[1], is("Foo"));
+        assertThat(variables[2], is("3"));
+        assertThat(variables[3], is("1"));
+
+        List<String> labels = stripper.getLabels();
+        assertThat(labels.size(), is(4));
+        assertThat(labels.get(0), is("one"));
+        assertThat(labels.get(1), is("two"));
+        assertThat(labels.get(2), is("three"));
+        assertThat(labels.get(3), is("a"));
+
+        assertThat(stripper.isNumericField(0), is(true));
+        assertThat(stripper.isNumericField(1), is(false));
+        assertThat(stripper.isNumericField(2), is(true));
+        assertThat(stripper.isNumericField(3), is(false));
+
+    }
+
+    @Test public void test_with_metadata_numeric() {
+        LogEvent eventWithMetadata = LogEventFactory.createLogEvent("Value one 345 value two Foo and finally value three 3");
+        eventWithMetadata.getMetadata().put("a", "1");
+
+        stripper.setPattern("Value one {one} value two [two] and finally value three {three}{{a}}");
+        assertThat(stripper.getRegex(), is("Value one ([\\d-\\.,]*?) value two (.*?) and finally value three ([\\d-\\.,]*?)"));
+
+        final Bucket<PatternisedLogEvent> patterisedEvents = new Bucket<PatternisedLogEvent>();
+        stripper.addResultListener(new ValueStripper2ResultListener2() {
+            @Override
+            public void onNewPatternisedResult(PatternisedLogEvent event, boolean[] isNumeric) {
+                patterisedEvents.add(event);
+            }
+        });
+
+        stripper.onNewLogEvent(eventWithMetadata);
+
+        assertThat(patterisedEvents.size(), is(1));
+
+        PatternisedLogEvent patternisedLogEvent = patterisedEvents.get(0);
+        String[] variables = patternisedLogEvent.getVariables();
+
+        assertThat(variables.length, is(4));
+        assertThat(variables[0], is("345"));
+        assertThat(variables[1], is("Foo"));
+        assertThat(variables[2], is("3"));
+        assertThat(variables[3], is("1"));
+
+        List<String> labels = stripper.getLabels();
+        assertThat(labels.size(), is(4));
+        assertThat(labels.get(0), is("one"));
+        assertThat(labels.get(1), is("two"));
+        assertThat(labels.get(2), is("three"));
+        assertThat(labels.get(3), is("a"));
+
+        assertThat(stripper.isNumericField(0), is(true));
+        assertThat(stripper.isNumericField(1), is(false));
+        assertThat(stripper.isNumericField(2), is(true));
+        assertThat(stripper.isNumericField(3), is(true));
+
+    }
+
+    @Test public void test_with_metadata_in_middle() {
+        LogEvent eventWithMetadata = LogEventFactory.createLogEvent("Value one 345 value two Foo and finally value three 3");
+        eventWithMetadata.getMetadata().put("a", "1");
+
+        stripper.setPattern("Value one {one} value two [two]{{a}} and finally value three {three}");
+        assertThat(stripper.getRegex(), is("Value one ([\\d-\\.,]*?) value two (.*?) and finally value three ([\\d-\\.,]*?)"));
+
+        final Bucket<PatternisedLogEvent> patterisedEvents = new Bucket<PatternisedLogEvent>();
+        stripper.addResultListener(new ValueStripper2ResultListener2() {
+            @Override
+            public void onNewPatternisedResult(PatternisedLogEvent event, boolean[] isNumeric) {
+                patterisedEvents.add(event);
+            }
+        });
+
+        stripper.onNewLogEvent(eventWithMetadata);
+
+        assertThat(patterisedEvents.size(), is(1));
+
+        PatternisedLogEvent patternisedLogEvent = patterisedEvents.get(0);
+        String[] variables = patternisedLogEvent.getVariables();
+
+        assertThat(variables.length, is(4));
+        assertThat(variables[0], is("345"));
+        assertThat(variables[1], is("Foo"));
+        assertThat(variables[2], is("3"));
+        assertThat(variables[3], is("1"));
+
+        List<String> labels = stripper.getLabels();
+        assertThat(labels.size(), is(4));
+        assertThat(labels.get(0), is("one"));
+        assertThat(labels.get(1), is("two"));
+        assertThat(labels.get(2), is("three"));
+        assertThat(labels.get(3), is("a"));
+
+        assertThat(stripper.isNumericField(0), is(true));
+        assertThat(stripper.isNumericField(1), is(false));
+        assertThat(stripper.isNumericField(2), is(true));
+        assertThat(stripper.isNumericField(3), is(true));
+
+    }
+
+    @Test public void test_with_metadata_at_start() {
+        LogEvent eventWithMetadata = LogEventFactory.createLogEvent("Value one 345 value two Foo and finally value three 3");
+        eventWithMetadata.getMetadata().put("a", "1");
+
+        stripper.setPattern("{{a}}Value one {one} value two [two] and finally value three {three}");
+        assertThat(stripper.getRegex(), is("Value one ([\\d-\\.,]*?) value two (.*?) and finally value three ([\\d-\\.,]*?)"));
+
+        final Bucket<PatternisedLogEvent> patterisedEvents = new Bucket<PatternisedLogEvent>();
+        stripper.addResultListener(new ValueStripper2ResultListener2() {
+            @Override
+            public void onNewPatternisedResult(PatternisedLogEvent event, boolean[] isNumeric) {
+                patterisedEvents.add(event);
+            }
+        });
+
+        stripper.onNewLogEvent(eventWithMetadata);
+
+        assertThat(patterisedEvents.size(), is(1));
+
+        PatternisedLogEvent patternisedLogEvent = patterisedEvents.get(0);
+        String[] variables = patternisedLogEvent.getVariables();
+
+        assertThat(variables.length, is(4));
+        assertThat(variables[0], is("345"));
+        assertThat(variables[1], is("Foo"));
+        assertThat(variables[2], is("3"));
+        assertThat(variables[3], is("1"));
+
+        List<String> labels = stripper.getLabels();
+        assertThat(labels.size(), is(4));
+        assertThat(labels.get(0), is("one"));
+        assertThat(labels.get(1), is("two"));
+        assertThat(labels.get(2), is("three"));
+        assertThat(labels.get(3), is("a"));
+
+        assertThat(stripper.isNumericField(0), is(true));
+        assertThat(stripper.isNumericField(1), is(false));
+        assertThat(stripper.isNumericField(2), is(true));
+        assertThat(stripper.isNumericField(3), is(true));
+
+    }
+
 
     @Test public void test_escaping() {
         stripper.setPattern("[non-numeric]");

@@ -1,10 +1,11 @@
 package com.logginghub.logging.generator.configs;
 
-import java.util.Random;
-
-import com.logginghub.logging.generator.MessageProducerConfig;
-import com.logginghub.logging.generator.WeightedStringProducer;
 import com.logginghub.logging.generator.LoggingMessageGenerator.OperationState;
+import com.logginghub.logging.generator.MessageProducerConfig;
+import com.logginghub.logging.generator.StringProducer;
+import com.logginghub.logging.generator.WeightedStringProducer;
+
+import java.util.Random;
 
 public class TradeBlotterMessageConfig implements MessageProducerConfig {
 
@@ -57,6 +58,14 @@ public class TradeBlotterMessageConfig implements MessageProducerConfig {
     public String[] getLabels() {
         return labels;
 
+    }
+
+    public String[] getMetadataLabels() {
+        return new String[] {};
+    }
+
+    public StringProducer[] getMetadataProducers() {
+        return new StringProducer[]{};
     }
 
     public String getOperation() {

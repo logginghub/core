@@ -74,6 +74,8 @@ public class GeneratorModule implements Module<GeneratorConfiguration> {
     @Override
     public void start() {
 
+        final Random random = new Random();
+
         List<GeneratorMessageConfiguration> messages = configuration.getMessages();
         for (final GeneratorMessageConfiguration generator : messages) {
 
@@ -96,7 +98,9 @@ public class GeneratorModule implements Module<GeneratorConfiguration> {
                     }
 
                     // jshaw - hack
+
                     event.getMetadata().put("customer", StringUtils.randomString(5));
+                    event.getMetadata().put("bucket", ""+ random.nextInt(5));
 
                     event.setMessage(message);
                     logEventStream.onNewItem(event);

@@ -625,6 +625,28 @@ public class ChartingTreeEditorView extends JPanel {
         }
     }
 
+    protected void addTableChart() {
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
+        Object userObject = node.getUserObject();
+
+        if (userObject instanceof PageModel) {
+            PageModel pageModel = (PageModel) userObject;
+            TableChartModel chartModel = new TableChartModel();
+            pageModel.getTableChartModels().add(chartModel);
+
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    TreePath find = find(root, "Chart title");
+                    tree.setExpandsSelectedPaths(true);
+                    tree.setSelectionPath(find);
+                }
+            });
+
+        }
+    }
+
+
     private void addSeriesToLineChartModel(final LineChartModel lineChartModel) {
         final ChartSeriesModel model = new ChartSeriesModel();
 
@@ -985,6 +1007,16 @@ public class ChartingTreeEditorView extends JPanel {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         addPieChart();
+                    }
+                });
+
+                JMenuItem addTableChart = new JMenuItem("Add table");
+                addTableChart.setIcon(Icons.load("/icons/table.png"));
+                popupMenu.add(addTableChart);
+                addTableChart.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        addTableChart();
                     }
                 });
 

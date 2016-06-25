@@ -8,6 +8,8 @@ public interface MessageProducerConfig {
     public double getMinimumTime();
     public StringProducer[] getProducers();
     public String[] getLabels();
+    public String[] getMetadataLabels();
+    public StringProducer[] getMetadataProducers();
     public String getOperation();
     public double doctorTime(double original, Object[] array);
 }

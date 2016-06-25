@@ -1,12 +1,12 @@
 package com.logginghub.logging.generator;
 
+import com.logginghub.logging.DefaultLogEvent;
+import com.logginghub.logging.LogEventBuilder;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.logging.Level;
-
-import com.logginghub.logging.DefaultLogEvent;
-import com.logginghub.logging.LogEventBuilder;
 
 public class LogEventProducer {
 
@@ -87,7 +87,6 @@ public class LogEventProducer {
 
         DefaultLogEvent logEvent = LogEventBuilder.start()
                                                   .setLevel(Level.INFO.intValue())
-                                                  .setMessage(messageProducer.produce())
                                                   .setSourceApplication(instance)
                                                   .setSourceHost(host)
                                                   .setSourceAddress(addresses.get(host))
@@ -96,6 +95,8 @@ public class LogEventProducer {
                                                   .setSourceMethodName("placeTrade")
                                                   .setThreadName(threadProducer.produce())
                                                   .toLogEvent();
+
+        messageProducer.amendEvent(logEvent);
 
         if (logEvent.getSourceHost().endsWith("3")) {
             if (logEvent.getSourceApplication().endsWith("2")) {

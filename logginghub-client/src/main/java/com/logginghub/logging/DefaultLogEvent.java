@@ -409,7 +409,6 @@ public class DefaultLogEvent implements LogEvent, Serializable, SerialisableObje
         this.originTime = originTime;
     }
 
-    @Override
     public long getHubTime() {
         return hubTime;
     }
