@@ -27,6 +27,7 @@ import java.util.List;
     @XmlAttribute private boolean showChartingEditor = true;
     @XmlAttribute private boolean showHeapSlider = false;
     @XmlAttribute private boolean showHubClearEvents = false;
+    @XmlAttribute private boolean startDemoSource = false;
 
     @XmlAttribute private String backgroundColour = null;
 
@@ -36,6 +37,14 @@ import java.util.List;
 
     public LoggingFrontendConfiguration() {
 
+    }
+
+    public boolean getStartDemoSource() {
+        return startDemoSource;
+    }
+
+    public void setStartDemoSource(boolean startDemoSource) {
+        this.startDemoSource = startDemoSource;
     }
 
     public String getBackgroundColour() {

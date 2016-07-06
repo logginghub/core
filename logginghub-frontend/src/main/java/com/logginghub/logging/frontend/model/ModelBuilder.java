@@ -31,6 +31,7 @@ public class ModelBuilder {
         model.getSelectedRowFormat().set(RowFormatModel.fromConfiguration(configuration.getSelectedRowFormat()));
         model.getShowHubClearEvents().set(configuration.isShowHubClearEvents());
         model.getLocalRPCPort().set(configuration.getLocalRPCPort());
+        model.getStartDemoSource().set(configuration.getStartDemoSource());
 
         List<EnvironmentConfiguration> environments = configuration.getEnvironments();
         for (EnvironmentConfiguration environmentConfiguration : environments) {

@@ -354,6 +354,20 @@ public class LoggingMainPanel extends JPanel implements MenuService, SocketClien
             }
         });
 
+
+        model.getStartDemoSource().addListenerAndNotifyCurrent(new ObservablePropertyListener<Boolean>() {
+            @Override
+            public void onPropertyChanged(Boolean oldValue, Boolean newValue) {
+                if(newValue) {
+                    demoSourceMenuItem.setSelected(true);
+                    activateDemoSource();
+                }else{
+                    demoSourceMenuItem.setSelected(false);
+                    deactivateDemoSource();
+                }
+            }
+        });
+
         logger.info("Main panel setup complete.");
     }
 

@@ -5,7 +5,8 @@
                               showViewMenu="false"
                               showHeapSlider="false"
                               showHubClearEvents="true"
-                              localRPCPort="42042">
+                              localRPCPort="42042"
+                              startDemoSource="true">
                               <!--showChartingEditor="false"-->
                               <!--backgroundColour="lightblue"-->
 

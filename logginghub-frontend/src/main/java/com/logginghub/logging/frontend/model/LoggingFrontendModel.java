@@ -18,11 +18,16 @@ public class LoggingFrontendModel extends Observable {
     private ObservableInteger localRPCPort = createIntProperty("localRPCPort", LoggingFrontendConfiguration.DONT_USE_LOCAL_RPC);
     private ObservableProperty<Boolean> popoutCharting = createBooleanProperty("popoutCharting", false);
     private ObservableProperty<Boolean> showHubClearEvents = createBooleanProperty("showHubClearEvents", false);
+    private ObservableProperty<Boolean> startDemoSource = createBooleanProperty("startDemoSource", false);
 
     private ObservableProperty<RowFormatModel> selectedRowFormat = createProperty("selectedRowFormat", RowFormatModel.class, new RowFormatModel());
 
     public LoggingFrontendModel() {
 
+    }
+
+    public ObservableProperty<Boolean> getStartDemoSource() {
+        return startDemoSource;
     }
 
     public ObservableInteger getLocalRPCPort() {
