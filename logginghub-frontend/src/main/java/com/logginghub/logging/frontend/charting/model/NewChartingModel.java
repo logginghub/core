@@ -14,7 +14,7 @@ import com.logginghub.utils.observable.ObservableList;
 public class NewChartingModel extends Observable {
 
     private ObservableList<PatternModel> patternModels = createListProperty("patternModels", PatternModel.class);
-    // TODO : think we want to get rid of streams
+
     private ObservableList<StreamConfiguration> streamModels = createListProperty("streamModels", StreamConfiguration.class);
     private ObservableList<AggregationConfiguration> aggregationModels = createListProperty("aggregationModels", AggregationConfiguration.class);
     private ObservableList<PageModel> pages = createListProperty("pages", PageModel.class);
@@ -34,7 +34,7 @@ public class NewChartingModel extends Observable {
         return instanceNumber;
     }
 
-    public ObservableList<AggregationConfiguration> getAggregationModels() {
+    public ObservableList<AggregationConfiguration> getAggregationConfigurations() {
         return aggregationModels;
     }
 

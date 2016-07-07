@@ -184,38 +184,38 @@ public class NewChartingController {
     }
 
     private void bindAggregators(NewChartingModel model) {
-        model.getAggregationModels().addListenerAndNotifyCurrent(new ObservableListListener<AggregationConfiguration>() {
+        model.getAggregationConfigurations().addListenerAndNotifyCurrent(new ObservableListListener<AggregationConfiguration>() {
 
             @Override public void onRemoved(AggregationConfiguration t, int index) {
                 // Decouple the aggregator from the stream
-                NewAggregatorSplitter removed = aggregatorsByAggregationConfiguration.remove(t);
-                StreamBuilder streamBuilder = getStreamBuilder(t.getStreamID().get());
-                streamBuilder.getOutput().addListener(removed);
+//                NewAggregatorSplitter removed = aggregatorsByAggregationConfiguration.remove(t);
+//                StreamBuilder streamBuilder = getStreamBuilder(t.getStreamID().get());
+//                streamBuilder.getOutput().addListener(removed);
             }
 
             @Override public void onCleared() {}
 
             @Override public void onAdded(AggregationConfiguration t) {
 
-                final NewAggregatorSplitter splitter = new NewAggregatorSplitter();
-                // final NewAggregator aggregator = new NewAggregator();
-                aggregatorsByAggregationConfiguration.put(t, splitter);
-
-                t.getInterval().addListenerAndNotifyCurrent(new ObservablePropertyListener<String>() {
-                    @Override public void onPropertyChanged(String oldValue, String newValue) {
-                        splitter.setChunkInterval(TimeUtils.parseInterval(newValue));
-                    }
-                });
-
-                t.getType().addListenerAndNotifyCurrent(new ObservablePropertyListener<AggregationType>() {
-                    @Override public void onPropertyChanged(AggregationType oldValue, AggregationType newValue) {
-                        splitter.setPublishingModes(newValue);
-                    }
-                });
-
-                // Attach the aggregator to the appropriate stream
-                StreamBuilder streamBuilder = getStreamBuilder(t.getStreamID().get());
-                streamBuilder.getOutput().addListener(splitter);
+//                final NewAggregatorSplitter splitter = new NewAggregatorSplitter();
+//                // final NewAggregator aggregator = new NewAggregator();
+//                aggregatorsByAggregationConfiguration.put(t, splitter);
+//
+//                t.getInterval().addListenerAndNotifyCurrent(new ObservablePropertyListener<String>() {
+//                    @Override public void onPropertyChanged(String oldValue, String newValue) {
+//                        splitter.setChunkInterval(TimeUtils.parseInterval(newValue));
+//                    }
+//                });
+//
+//                t.getType().addListenerAndNotifyCurrent(new ObservablePropertyListener<AggregationType>() {
+//                    @Override public void onPropertyChanged(AggregationType oldValue, AggregationType newValue) {
+//                        splitter.setPublishingModes(newValue);
+//                    }
+//                });
+//
+//                // Attach the aggregator to the appropriate stream
+//                StreamBuilder streamBuilder = getStreamBuilder(t.getStreamID().get());
+//                streamBuilder.getOutput().addListener(splitter);
 
             }
         });
@@ -638,76 +638,6 @@ public class NewChartingController {
     }
 
 
-    // private void bindStreamBuilders(final NewChartingModel model) {
-    // // Wire up stream builders to the stream builder definitions
-    // model.getStreamModels().addListenerAndNotifyCurrent(new
-    // ObservableListListener<StreamConfiguration>() {
-    //
-    // @Override public void onRemoved(StreamConfiguration t) {
-    // StreamBuilder removed = streamBuildersByDefintion.remove(model);
-    //
-    // ValueStripper2 valueStripper = getValueStripper(removed.getPatternName());
-    // if (valueStripper != null) {
-    // valueStripper.removeResultListener(removed);
-    // }
-    // }
-    //
-    // @Override public void onCleared() {}
-    //
-    // @Override public void onAdded(final StreamConfiguration t) {
-    //
-    // logger.debug("Building stream builder for stream definition {}", t);
-    // Stream<StreamResultItem> output = new Stream<StreamResultItem>();
-    //
-    // final StreamBuilder streamBuilder = new StreamBuilder(output);
-    //
-    // t.getLabelName().addListenerAndNotifyCurrent(new ObservablePropertyListener<String>() {
-    // @Override public void onPropertyChanged(String oldValue, String newValue) {
-    // streamBuilder.setLabel(newValue);
-    // }
-    // });
-    //
-    // t.getPatternName().addListenerAndNotifyCurrent(new ObservablePropertyListener<String>() {
-    // @Override public void onPropertyChanged(String oldValue, String newValue) {
-    //
-    // // Decouple from the current stream
-    // ValueStripper2 valueStripper = getValueStripper(oldValue);
-    // if (valueStripper != null) {
-    // valueStripper.removeResultListener(streamBuilder);
-    // }
-    //
-    // streamBuilder.setPatternName(newValue);
-    //
-    // // Couple to the new stream
-    // valueStripper = getValueStripper(newValue);
-    // if (valueStripper != null) {
-    // valueStripper.addResultListener(streamBuilder);
-    // }
-    // else {
-    // logger.warn("No value stripper found for pattern {}", newValue);
-    // }
-    // }
-    // });
-    //
-    // t.getEventElements().addListener(new ObservableListListener<String>() {
-    // @Override public void onRemoved(String element) {
-    // streamBuilder.setEventElements(t.getEventElements());
-    // }
-    //
-    // @Override public void onCleared() {}
-    //
-    // @Override public void onAdded(String element) {
-    // streamBuilder.setEventElements(t.getEventElements());
-    // }
-    // });
-    // streamBuilder.setEventElements(t.getEventElements());
-    //
-    // streamBuildersByDefintion.put(t, streamBuilder);
-    //
-    // }
-    // });
-    // }
-
     public ValueStripper2 getValueStripper(int searchPatternID) {
         ValueStripper2 result = null;
         Set<Entry<PatternModel, ValueStripper2>> entrySet = valueStrippersByPattern.entrySet();
@@ -754,7 +684,7 @@ public class NewChartingController {
     }
 
     public NewAggregatorSplitter addAggregation(AggregationConfiguration aggregationConfiguration) {
-        model.getAggregationModels().add(aggregationConfiguration);
+        model.getAggregationConfigurations().add(aggregationConfiguration);
 
         // This will have gone and down lots of things via listeners
         NewAggregatorSplitter splitter = aggregatorsByAggregationConfiguration.get(aggregationConfiguration);

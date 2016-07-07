@@ -11,6 +11,15 @@ public class AggregationModel {
     private String type;
     private int labelIndex;
     private String eventParts;
+    private String name;
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
 
     public int getAggregationID() {
         return aggregationID;

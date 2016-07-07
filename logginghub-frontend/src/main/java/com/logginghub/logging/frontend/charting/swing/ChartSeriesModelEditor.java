@@ -1,6 +1,7 @@
 package com.logginghub.logging.frontend.charting.swing;
 
 import com.logginghub.logging.frontend.charting.NewChartingController;
+import com.logginghub.logging.frontend.charting.model.AggregationConfiguration;
 import com.logginghub.logging.frontend.charting.model.BatchedArraryListTableModel;
 import com.logginghub.logging.frontend.charting.model.ChartSeriesFilterModel;
 import com.logginghub.logging.frontend.charting.model.ChartSeriesModel;
@@ -8,6 +9,8 @@ import com.logginghub.logging.frontend.charting.model.NewChartingModel;
 import com.logginghub.logging.messages.AggregationType;
 import com.logginghub.logging.messaging.PatternModel;
 import com.logginghub.logging.utils.ValueStripper2;
+import com.logginghub.utils.MutableInt;
+import com.logginghub.utils.StringUtils;
 import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.observable.Binder2;
 import com.logginghub.utils.observable.ObservableList;
@@ -18,6 +21,7 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -39,8 +43,10 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
+@SuppressWarnings("Since15")
 public class ChartSeriesModelEditor extends JPanel {
 
+    private final static LabelIndexWrapper blankWrapper = new LabelIndexWrapper(-1, "");
     private static Logger logger = Logger.getLoggerFor(ChartSeriesModelEditor.class);
     // private JTextField patternTextField;
     // private JTextField legendTextField;
@@ -49,21 +55,18 @@ public class ChartSeriesModelEditor extends JPanel {
     // private JTextField typeTextField;
     private JTextField intervalTextField;
     private JComboBox typeCombo;
-
     private JTextField eventPartsTextField;
-
     private JComboBox patternCombo;
-
+    private DefaultComboBoxModel<AggregationConfigurationWrapper> aggregationsComboModel;
     private DefaultComboBoxModel<PatternModelWrapper> patternComboModel;
     private DefaultComboBoxModel<String> groupByComboModel;
     private DefaultComboBoxModel<LabelIndexWrapper> tableEditorLabelComboModel;
-
+    private JComboBox aggregationCombo;
     private JComboBox labelCombo;
     private DefaultComboBoxModel<LabelIndexWrapper> labelComboModel;
     private NewChartingController controller;
     private JLabel lblNewLabel_6;
     private JComboBox groupByCombo;
-
     private JCheckBox generateEmptyTicks;
     private JTable table;
     private JScrollPane scrollPane;
@@ -74,8 +77,6 @@ public class ChartSeriesModelEditor extends JPanel {
     private JButton removeFilterButton;
     private JLabel lblNewLabel_7;
     private JComboBox tableEditorLabelComboBox;
-
-    private final static LabelIndexWrapper blankWrapper = new LabelIndexWrapper(-1, "");
     private NewChartingModel chartingModel;
 
     public ChartSeriesModelEditor() {
@@ -86,27 +87,26 @@ public class ChartSeriesModelEditor extends JPanel {
         setBackground(Color.white);
         setOpaque(true);
 
-        JLabel lblNewLabel = new JLabel("Pattern");
-        add(lblNewLabel, "cell 0 0,alignx trailing");
+        aggregationsComboModel = new DefaultComboBoxModel<AggregationConfigurationWrapper>();
+        aggregationCombo = new JComboBox(aggregationsComboModel);
+        aggregationCombo.setName("Aggregations Combo");
+
+        MutableInt row = new MutableInt(0);
+
+        addRow(row, "Existing aggregation", aggregationCombo);
 
         patternComboModel = new DefaultComboBoxModel();
         patternCombo = new JComboBox(patternComboModel);
         patternCombo.setName("Pattern Combo");
 
-        add(patternCombo, "cell 1 0,growx");
-
-        JLabel lblNewLabel_2 = new JLabel("Label");
-        add(lblNewLabel_2, "cell 0 1,alignx trailing");
+        addRow(row, "Pattern", patternCombo);
 
         labelComboModel = new DefaultComboBoxModel();
         labelCombo = new JComboBox(labelComboModel);
         labelCombo.setName("Label Combo");
         labelCombo.setEditable(false);
 
-        add(labelCombo, "cell 1 1,growx");
-
-        JLabel lblNewLabel_3 = new JLabel("Type");
-        add(lblNewLabel_3, "cell 0 2,alignx trailing");
+        addRow(row, "Label", labelCombo);
 
         DefaultComboBoxModel dcm = new DefaultComboBoxModel();
         AggregationType[] values = AggregationType.values();
@@ -116,41 +116,40 @@ public class ChartSeriesModelEditor extends JPanel {
 
         typeCombo = new JComboBox(dcm);
         typeCombo.setName("Type Combo");
-        add(typeCombo, "cell 1 2,growx");
 
-        JLabel lblNewLabel_4 = new JLabel("Interval");
-        add(lblNewLabel_4, "cell 0 3,alignx trailing");
+        addRow(row, "Type", typeCombo);
 
         intervalTextField = new JTextField();
-        add(intervalTextField, "cell 1 3,growx");
         intervalTextField.setColumns(10);
+
+        addRow(row, "Interval", intervalTextField);
 
         JLabel eventPartsExamples = new JLabel("For examples 'Source Host/Source IP/Source Application'");
         eventPartsExamples.setForeground(Color.GRAY);
         eventPartsExamples.setFont(new Font("Tahoma", Font.ITALIC, 11));
-        add(eventPartsExamples, "cell 1 4,alignx trailing");
+        add(eventPartsExamples, "cell 1 5,alignx trailing");
 
         JLabel lblNewLabel_5 = new JLabel("Event parts");
-        add(lblNewLabel_5, "cell 0 5,alignx trailing");
+        add(lblNewLabel_5, "cell 0 6,alignx trailing");
 
         eventPartsTextField = new JTextField();
-        add(eventPartsTextField, "cell 1 5,growx");
+        add(eventPartsTextField, "cell 1 6,growx");
         eventPartsTextField.setColumns(10);
 
         lblNewLabel_6 = new JLabel("Group by");
-        add(lblNewLabel_6, "cell 0 6,alignx trailing");
+        add(lblNewLabel_6, "cell 0 7,alignx trailing");
 
         groupByComboModel = new DefaultComboBoxModel();
         groupByCombo = new JComboBox(groupByComboModel);
         groupByCombo.setEditable(true);
         groupByCombo.setName("Group by");
 
-        add(groupByCombo, "cell 1 6,growx");
+        add(groupByCombo, "cell 1 7,growx");
 
-        add(new JLabel("Generate empty ticks"), "cell 1 7,alignx trailing");
+        add(new JLabel("Generate empty ticks"), "cell 1 8,alignx trailing");
         generateEmptyTicks = new JCheckBox();
         generateEmptyTicks.setOpaque(false);
-        add(generateEmptyTicks, "cell 1 7");
+        add(generateEmptyTicks, "cell 1 8");
 
         btnNewButton = new JButton("Add filter");
         btnNewButton.addActionListener(new ActionListener() {
@@ -159,38 +158,19 @@ public class ChartSeriesModelEditor extends JPanel {
             }
         });
         btnNewButton.setName("Add filter");
-        add(btnNewButton, "flowx,cell 1 8");
+        add(btnNewButton, "flowx,cell 1 9");
 
         lblFilters = new JLabel("Filters");
         lblFilters.setHorizontalAlignment(SwingConstants.RIGHT);
         lblFilters.setVerticalAlignment(SwingConstants.TOP);
-        add(lblFilters, "cell 0 9");
+        add(lblFilters, "cell 0 10");
 
         scrollPane = new JScrollPane();
 
         tableModel = new BatchedArraryListTableModel<ChartSeriesFilterModel>() {
 
-            @Override public String[] getColumnNames() {
-                return new String[] { "Enabled", "Variable", "Whitelist", "Blacklist" };
-
-            }
-
-            @Override public Object extractValue(ChartSeriesFilterModel item, int columnIndex) {
-                switch (columnIndex) {
-                    case 0:
-                        return item.getEnabled().get();
-                    case 1:
-                        return getVariableLabel(item.getVariableIndex().get());
-                    case 2:
-                        return item.getWhitelist().get();
-                    case 3:
-                        return item.getBlacklist().get();
-
-                }
-                return "??";
-            }
-
-            @Override public Class<?> getColumnClass(int columnIndex) {
+            @Override
+            public Class<?> getColumnClass(int columnIndex) {
                 switch (columnIndex) {
                     case 0:
                         return Boolean.class;
@@ -206,11 +186,13 @@ public class ChartSeriesModelEditor extends JPanel {
 
             }
 
-            @Override public boolean isCellEditable(int rowIndex, int columnIndex) {
+            @Override
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
                 return true;
             }
 
-            @Override public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+            @Override
+            public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
                 ChartSeriesFilterModel item = getItemAtRow(rowIndex);
                 switch (columnIndex) {
                     case 0:
@@ -230,9 +212,31 @@ public class ChartSeriesModelEditor extends JPanel {
                 }
             }
 
+            @Override
+            public String[] getColumnNames() {
+                return new String[]{"Enabled", "Variable", "Whitelist", "Blacklist"};
+
+            }
+
+            @Override
+            public Object extractValue(ChartSeriesFilterModel item, int columnIndex) {
+                switch (columnIndex) {
+                    case 0:
+                        return item.getEnabled().get();
+                    case 1:
+                        return getVariableLabel(item.getVariableIndex().get());
+                    case 2:
+                        return item.getWhitelist().get();
+                    case 3:
+                        return item.getBlacklist().get();
+
+                }
+                return "??";
+            }
+
         };
 
-        add(scrollPane, "cell 1 9,grow");
+        add(scrollPane, "cell 1 10,grow");
 
         table = new JTable(tableModel);
         table.setName("Filter table");
@@ -244,21 +248,21 @@ public class ChartSeriesModelEditor extends JPanel {
                 removeSelectedFilter();
             }
         });
-        add(removeFilterButton, "cell 1 8");
+        add(removeFilterButton, "cell 1 9");
 
         lblNewLabel_7 = new JLabel("Hold the alt key whilst clicking cells to open in a larger editor window");
         lblNewLabel_7.setForeground(Color.GRAY);
         lblNewLabel_7.setFont(new Font("Tahoma", Font.ITALIC, 11));
-        add(lblNewLabel_7, "cell 1 8");
+        add(lblNewLabel_7, "cell 1 9");
 
         table.setRowHeight(24);
 
         table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            @Override public void valueChanged(ListSelectionEvent e) {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
                 if (table.getSelectedRow() == -1) {
                     removeFilterButton.setEnabled(false);
-                }
-                else {
+                } else {
                     removeFilterButton.setEnabled(true);
                 }
 
@@ -283,9 +287,11 @@ public class ChartSeriesModelEditor extends JPanel {
                     JPanel panel = new JPanel();
                     panel.add(sp);
 
-                    EditorDialog dialog = new EditorDialog() {};
+                    EditorDialog dialog = new EditorDialog() {
+                    };
                     dialog.getEventSource().addHandler(new EventHandler() {
-                        @Override public void onEvent(Event event) {
+                        @Override
+                        public void onEvent(Event event) {
                             boolean ok = (Boolean) event.getPayload();
                             if (ok) {
                                 table.getModel().setValueAt(ta.getText(), row, column);
@@ -308,6 +314,22 @@ public class ChartSeriesModelEditor extends JPanel {
         variableColumn.setCellEditor(new DefaultCellEditor(tableEditorLabelComboBox));
     }
 
+    private void addRow(MutableInt row, String label, JComponent component) {
+        JLabel lblNewLabel = new JLabel(label);
+        add(lblNewLabel, StringUtils.format("cell 0 {},alignx trailing", row.getValue()));
+        add(component, StringUtils.format("cell 1 {},growx", row.getValue()));
+        row.increment();
+    }
+
+    protected void addFilter() {
+        if (model != null) {
+            ChartSeriesFilterModel chartSeriesFilterModel = new ChartSeriesFilterModel();
+            // Default to the first label
+            chartSeriesFilterModel.getVariableIndex().set(0);
+            model.getFilters().add(chartSeriesFilterModel);
+        }
+    }
+
     protected String getVariableLabel(int index) {
 
         String label = "";
@@ -326,8 +348,7 @@ public class ChartSeriesModelEditor extends JPanel {
                         break;
                     }
                 }
-            }
-            else {
+            } else {
                 label = "<no pattern selected>";
             }
         }
@@ -344,58 +365,13 @@ public class ChartSeriesModelEditor extends JPanel {
         }
     }
 
-    protected void addFilter() {
-        if (model != null) {
-            ChartSeriesFilterModel chartSeriesFilterModel = new ChartSeriesFilterModel();
-            // Default to the first label
-            chartSeriesFilterModel.getVariableIndex().set(0);
-            model.getFilters().add(chartSeriesFilterModel);
-        }
-    }
-
-    class PatternModelWrapper {
-        private PatternModel patternModel;
-
-        public PatternModelWrapper(PatternModel model) {
-            patternModel = model;
-        }
-
-        @Override public String toString() {
-            return patternModel.getName().get();
-        }
-
-        public PatternModel getPatternModel() {
-            return patternModel;
-        }
-    }
-
-    private final static class LabelIndexWrapper {
-        private int index;
-        private String label;
-
-        public LabelIndexWrapper(int index, String label) {
-            this.index = index;
-            this.label = label;
-        }
-
-        public int getIndex() {
-            return index;
-        }
-
-        public String getLabel() {
-            return label;
-        }
-
-        @Override public String toString() {
-            return label;
-        }
-    }
-
     public void bind(final NewChartingController controller, final ChartSeriesModel model, final NewChartingModel chartingModel) {
         this.controller = controller;
         this.model = model;
         this.chartingModel = chartingModel;
         binder = new Binder2();
+
+        bindAggregationsCombo(binder, model, chartingModel);
 
         int selectedPatternID = model.getPatternID().get();
         if (selectedPatternID == -1) {
@@ -416,7 +392,8 @@ public class ChartSeriesModelEditor extends JPanel {
         }
 
         patternCombo.addActionListener(new ActionListener() {
-            @Override public void actionPerformed(ActionEvent e) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
                 PatternModelWrapper wrapper = (PatternModelWrapper) patternComboModel.getSelectedItem();
                 logger.info("Selected pattern '{}'", wrapper.getPatternModel().getName().get());
                 model.getPatternID().set(wrapper.getPatternModel().getPatternID().get());
@@ -428,7 +405,8 @@ public class ChartSeriesModelEditor extends JPanel {
 
         // Custom binder for the label combo box
         final ItemListener labelComboListener = new ItemListener() {
-            @SuppressWarnings("unchecked") public void itemStateChanged(ItemEvent e) {
+            @SuppressWarnings("unchecked")
+            public void itemStateChanged(ItemEvent e) {
                 if (e.getStateChange() == ItemEvent.SELECTED) {
                     LabelIndexWrapper selectedItem = (LabelIndexWrapper) labelCombo.getSelectedItem();
                     model.getLabelIndex().set(selectedItem.getIndex());
@@ -439,14 +417,16 @@ public class ChartSeriesModelEditor extends JPanel {
         labelCombo.addItemListener(labelComboListener);
 
         binder.addUnbinder(new Runnable() {
-            @Override public void run() {
+            @Override
+            public void run() {
                 labelCombo.removeItemListener(labelComboListener);
             }
         });
 
         // Custom binder for the group combo box
         final ItemListener groupByComboListener = new ItemListener() {
-            @SuppressWarnings("unchecked") public void itemStateChanged(ItemEvent e) {
+            @SuppressWarnings("unchecked")
+            public void itemStateChanged(ItemEvent e) {
                 if (e.getStateChange() == ItemEvent.SELECTED) {
                     String groupBy = (String) groupByCombo.getSelectedItem();
                     model.getGroupBy().set(groupBy);
@@ -457,7 +437,8 @@ public class ChartSeriesModelEditor extends JPanel {
         groupByCombo.addItemListener(groupByComboListener);
 
         binder.addUnbinder(new Runnable() {
-            @Override public void run() {
+            @Override
+            public void run() {
                 groupByCombo.removeItemListener(groupByComboListener);
             }
         });
@@ -479,6 +460,43 @@ public class ChartSeriesModelEditor extends JPanel {
         tableModel.clear();
         tableModel.bindTo(model.getFilters());
         tableModel.setAsync(false);
+
+    }
+
+    private void bindAggregationsCombo(Binder2 binder, final ChartSeriesModel model, NewChartingModel chartingModel) {
+
+        aggregationsComboModel.removeAllElements();
+        this.aggregationsComboModel.addElement(AggregationConfigurationWrapper.empty);
+
+        ObservableList<AggregationConfiguration> aggregationModels = chartingModel.getAggregationConfigurations();
+        for (AggregationConfiguration aggregationModel : aggregationModels) {
+            this.aggregationsComboModel.addElement(new AggregationConfigurationWrapper(aggregationModel));
+        }
+
+        final ItemListener listener = new ItemListener() {
+            @SuppressWarnings("unchecked")
+            public void itemStateChanged(ItemEvent e) {
+                if (e.getStateChange() == ItemEvent.SELECTED) {
+                    AggregationConfigurationWrapper wrapper = (AggregationConfigurationWrapper) aggregationCombo.getSelectedItem();
+
+                    if(wrapper == AggregationConfigurationWrapper.empty) {
+                        model.getExistingAggregation().set(null);
+                    }else{
+                        model.getExistingAggregation().set(wrapper.getAggregationConfiguration());
+                    }
+
+                }
+            }
+        };
+
+        aggregationCombo.addItemListener(listener);
+
+        binder.addUnbinder(new Runnable() {
+            @Override
+            public void run() {
+                aggregationCombo.removeItemListener(listener);
+            }
+        });
 
     }
 
@@ -532,8 +550,7 @@ public class ChartSeriesModelEditor extends JPanel {
 
                     if (selectedWrapper != null) {
                         labelComboModel.setSelectedItem(selectedWrapper);
-                    }
-                    else {
+                    } else {
                         if (labels.size() > 0) {
                             labelComboModel.setSelectedItem(labelComboModel.getElementAt(0));
                         }
@@ -548,12 +565,76 @@ public class ChartSeriesModelEditor extends JPanel {
         }
     }
 
+    public void commitEditingChanges() {
+        table.editCellAt(-1, -1);
+    }
+
     public void unbind() {
         binder.unbind();
     }
 
-    public void commitEditingChanges() {
-        table.editCellAt(-1, -1);
+
+    public static class AggregationConfigurationWrapper {
+        public static AggregationConfigurationWrapper empty = new AggregationConfigurationWrapper(null);
+        private AggregationConfiguration aggregationConfiguration;
+
+        public AggregationConfigurationWrapper(AggregationConfiguration aggregationConfiguration) {
+            this.aggregationConfiguration = aggregationConfiguration;
+        }
+
+        public AggregationConfiguration getAggregationConfiguration() {
+            return aggregationConfiguration;
+        }
+
+        @Override
+        public String toString() {
+            if(this == AggregationConfigurationWrapper.empty) {
+                return "Create new aggregation...";
+            }else {
+                return aggregationConfiguration.getName().get();
+            }
+        }
+    }
+
+
+    public static class PatternModelWrapper {
+        private PatternModel patternModel;
+
+        public PatternModelWrapper(PatternModel model) {
+            patternModel = model;
+        }
+
+        public PatternModel getPatternModel() {
+            return patternModel;
+        }
+
+        @Override
+        public String toString() {
+            return patternModel.getName().get();
+        }
+    }
+
+    public final static class LabelIndexWrapper {
+        private int index;
+        private String label;
+
+        public LabelIndexWrapper(int index, String label) {
+            this.index = index;
+            this.label = label;
+        }
+
+        public int getIndex() {
+            return index;
+        }
+
+        public String getLabel() {
+            return label;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
     }
 
 }

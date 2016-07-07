@@ -14,6 +14,7 @@ import com.logginghub.utils.observable.ObservableProperty;
  */
 public class ChartSeriesModel extends Observable {
 
+    private ObservableProperty<AggregationConfiguration> existingAggregation = createProperty("existingAggregation", AggregationConfiguration.class, null);
     private ObservableInteger patternID = createIntProperty("patternID", -1);
     private ObservableInteger labelIndex = createIntProperty("labelIndex", -1);
     private ObservableProperty<String> groupBy = createStringProperty("groupBy", null);
@@ -31,6 +32,10 @@ public class ChartSeriesModel extends Observable {
     }
 
     public ChartSeriesModel() {}
+
+    public ObservableProperty<AggregationConfiguration> getExistingAggregation() {
+        return existingAggregation;
+    }
 
     public ObservableProperty<Boolean> getGenerateEmptyTicks() {
         return generateEmptyTicks;
