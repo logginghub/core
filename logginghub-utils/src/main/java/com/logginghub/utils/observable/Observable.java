@@ -1,12 +1,5 @@
 package com.logginghub.utils.observable;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-
 import com.logginghub.utils.FileUtils;
 import com.logginghub.utils.Metadata;
 import com.logginghub.utils.NotImplementedException;
@@ -15,6 +8,13 @@ import com.logginghub.utils.StringUtils;
 import com.logginghub.utils.Xml;
 import com.logginghub.utils.Xml.XmlEntry;
 import com.logginghub.utils.logging.Logger;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Observable implements ObservableItemContainer, ObservableItem {
 
@@ -305,8 +305,12 @@ public class Observable implements ObservableItemContainer, ObservableItem {
                                 logger.trace("Processing as sub-object...");
                                 // This looks like an element, encode it
                                 Observable observable = (Observable) observableProperty.get();;
-                                String xml = observable.toXml(((AbstractObservableProperty) observableItem).getName());
-                                builder.append(xml).append(newline);
+                                if(observable == null) {
+                                    // Not set, ignore from the xml
+                                }else {
+                                    String xml = observable.toXml(((AbstractObservableProperty) observableItem).getName());
+                                    builder.append(xml).append(newline);
+                                }
 
                             }
                             else {
@@ -580,8 +584,13 @@ public class Observable implements ObservableItemContainer, ObservableItem {
                             Observable element = (Observable) type.newInstance();
 
                             XmlEntry nodePath = xml.nodePath(property.getName());
-                            element.fromXml(nodePath);
-                            property.set(element);
+                            if(nodePath == null) {
+                             // Missing element in the xml, set the property to null
+                                property.set(null);
+                            }else {
+                                element.fromXml(nodePath);
+                                property.set(element);
+                            }
                         }
                         catch (Exception e) {
                             throw new RuntimeException(e);

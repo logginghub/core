@@ -12,10 +12,13 @@ import com.logginghub.utils.observable.ObservableList;
 import com.logginghub.utils.observable.ObservableListListener;
 import com.logginghub.utils.observable.ObservablePropertyListener;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.AbstractTableModel;
-import java.awt.*;
+import java.awt.Color;
 import java.io.File;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -160,16 +163,27 @@ public class TableChartView extends MigPanel {
 
         private Map<String, Integer> rowLookup = new HashMap<String, Integer>();
 
+        private Object lock = new Object();
+
         public TableChartViewTableModel() {
-//            rows.add(new HashMap<String, String>());
+            //            rows.add(new HashMap<String, String>());
         }
 
         public void clear() {
-            rows.clear();
-            columns.clear();
-            columnSet.clear();
-//            rows.add(new HashMap<String, String>());
-            fireTableStructureChanged();
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+
+                    rows.clear();
+                    columns.clear();
+                    columnSet.clear();
+                    rowLookup.clear();
+
+                    //            rows.add(new HashMap<String, String>());
+                    fireTableStructureChanged();
+
+                }
+            });
         }
 
         @Override
@@ -199,45 +213,51 @@ public class TableChartView extends MigPanel {
             return value;
         }
 
-        public void onNewChunkedResult(ChunkedResult t) {
-//            logger.info("Chunked result : {}", t);
+        public void onNewChunkedResult(final ChunkedResult t) {
 
-            String source = t.getSource();
-            String label = t.getLabel() + " (" + t.getMode() + ")";
-            String groupBy = t.getGroupBy();
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
 
-            Map<String, String> row;
-            Integer rowIndex = rowLookup.get(source);
-            if (rowIndex == null) {
-                rowIndex = rows.size();
-                rowLookup.put(source, rowIndex);
-                row = new HashMap<String, String>();
-                rows.add(row);
-                fireTableStructureChanged();
-            } else {
-                row = rows.get(rowIndex);
-            }
+                    String source = t.getSource();
+                    String label = t.getLabel() + " (" + t.getMode() + ")";
+                    String groupBy = t.getGroupBy();
 
-            if(!columnSet.contains(groupBy)) {
-                columns.add(groupBy);
-                columnSet.add(groupBy);
-                fireTableStructureChanged();
-            }
+                    Map<String, String> row;
+                    Integer rowIndex = rowLookup.get(source);
+                    if (rowIndex == null) {
+                        rowIndex = rows.size();
+                        rowLookup.put(source, rowIndex);
+                        row = new HashMap<String, String>();
+                        rows.add(row);
+                        fireTableStructureChanged();
+                    } else {
+                        row = rows.get(rowIndex);
+                    }
 
-            if (!columnSet.contains(label)) {
-                columns.add(label);
-                columnSet.add(label);
-                fireTableStructureChanged();
-            }
+                    if (!columnSet.contains(groupBy)) {
+                        columns.add(groupBy);
+                        columnSet.add(groupBy);
+                        fireTableStructureChanged();
+                    }
 
-            // TODO : work out the row index based on some field?
+                    if (!columnSet.contains(label)) {
+                        columns.add(label);
+                        columnSet.add(label);
+                        fireTableStructureChanged();
+                    }
 
-            NumberFormat instance = NumberFormat.getInstance();
+                    // TODO : work out the row index based on some field?
 
-            row.put(label, instance.format(t.getValue()));
-            row.put(groupBy, source);
+                    NumberFormat instance = NumberFormat.getInstance();
 
-            fireTableRowsUpdated(rowIndex, rowIndex);
+                    row.put(label, instance.format(t.getValue()));
+                    row.put(groupBy, source);
+
+                    fireTableRowsUpdated(rowIndex, rowIndex);
+
+                }
+            });
 
         }
     }

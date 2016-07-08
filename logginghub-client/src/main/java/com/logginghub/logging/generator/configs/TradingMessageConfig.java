@@ -12,7 +12,7 @@ public class TradingMessageConfig implements MessageProducerConfig {
 
     private WeightedStringProducer instrumentProducer = new WeightedStringProducer(new String[] { "GBPUSD Spot", "EURUSD Spot", "EURGBP Spot" }, new double[] { 10, 2, 1 });
     private WeightedStringProducer quantityProducer = new WeightedStringProducer(new String[] { "1000", "10,000", "50,000", "100,000", "500,000", "1,000,000" }, new double[] { 10, 8, 6, 2, 1, 0.1 });
-    private WeightedStringProducer statusProducer = new WeightedStringProducer(new String[] { "Accepted", "Rejected-NoEnoughEquity", "Rejected-BadPrice", "Exception" }, new double[] { 10, 0.01 });
+    private WeightedStringProducer statusProducer = new WeightedStringProducer(new String[] { "Accepted", "Rejected-NoEnoughEquity", "Rejected-BadPrice", "Exception" }, new double[] { 10, 5, 1, 0.01 });
     private WeightedStringProducer sourceProducer = new WeightedStringProducer(new String[] { "ECN", "SDP", "Phone", "Direct" }, new double[] { 10, 5, 1, 3 });
     private WeightedStringProducer accountProducer;
 

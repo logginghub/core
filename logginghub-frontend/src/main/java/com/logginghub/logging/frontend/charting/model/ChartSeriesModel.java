@@ -12,9 +12,11 @@ import com.logginghub.utils.observable.ObservableProperty;
  * @author James
  * 
  */
-public class ChartSeriesModel extends Observable {
+public class ChartSeriesModel extends Observable implements DataSourceInterface {
 
     private ObservableProperty<AggregationConfiguration> existingAggregation = createProperty("existingAggregation", AggregationConfiguration.class, null);
+    private ObservableProperty<ExpressionConfiguration> existingExpression = createProperty("existingExpression", ExpressionConfiguration.class, null);
+
     private ObservableInteger patternID = createIntProperty("patternID", -1);
     private ObservableInteger labelIndex = createIntProperty("labelIndex", -1);
     private ObservableProperty<String> groupBy = createStringProperty("groupBy", null);
@@ -32,6 +34,10 @@ public class ChartSeriesModel extends Observable {
     }
 
     public ChartSeriesModel() {}
+
+    public ObservableProperty<ExpressionConfiguration> getExistingExpression() {
+        return existingExpression;
+    }
 
     public ObservableProperty<AggregationConfiguration> getExistingAggregation() {
         return existingAggregation;

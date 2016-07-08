@@ -38,9 +38,14 @@ public class NewAggregator implements StreamListener<StreamResultItem> {
     private double lastValue = Double.NaN;
     private String label;
     private String groupBy;
+    private String aggregationName;
 
     public NewAggregator() {
         
+    }
+
+    public String getAggregationName() {
+        return aggregationName;
     }
 
     public String getGroupBy() {
@@ -49,6 +54,10 @@ public class NewAggregator implements StreamListener<StreamResultItem> {
 
     public String getLabel() {
         return label;
+    }
+
+    public void setAggregationName(String aggregationName) {
+        this.aggregationName = aggregationName;
     }
 
     public void setGroupBy(String groupBy) {
@@ -200,6 +209,8 @@ public class NewAggregator implements StreamListener<StreamResultItem> {
                                                                                                                  * +
                                                                                                                  * mode
                                                                                                                  */);
+
+            result.setAggregationName(aggregationName);
             logger.fine("Flushing time chunk result {}", result);
             fireResult(result);
         }

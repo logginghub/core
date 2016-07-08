@@ -31,8 +31,13 @@ import com.logginghub.utils.observable.ObservableItemContainer;
 import com.logginghub.utils.observable.ObservableList;
 import com.logginghub.utils.observable.ObservableListener;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JFrame;
+import javax.swing.JTabbedPane;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.EventQueue;
+import java.awt.Toolkit;
 import java.io.Closeable;
 import java.io.File;
 import java.util.Timer;
@@ -160,6 +165,8 @@ public class SwingFrontEnd extends SmartJFrame implements Closeable {
     }
 
     public static void main(String[] args) {
+
+//        Logger.setLevel(Logger.finest, Observable.class);
 
         // JFreeChartStackAnalysisViewer.showAnalyser();
 

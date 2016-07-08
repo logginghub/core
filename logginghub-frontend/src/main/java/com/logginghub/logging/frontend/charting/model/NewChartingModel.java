@@ -1,8 +1,5 @@
 package com.logginghub.logging.frontend.charting.model;
 
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.logginghub.logging.api.patterns.Pattern;
 import com.logginghub.logging.frontend.services.PatternManagementService;
 import com.logginghub.logging.messaging.PatternModel;
@@ -11,12 +8,16 @@ import com.logginghub.utils.Visitor;
 import com.logginghub.utils.observable.Observable;
 import com.logginghub.utils.observable.ObservableList;
 
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class NewChartingModel extends Observable {
 
     private ObservableList<PatternModel> patternModels = createListProperty("patternModels", PatternModel.class);
 
     private ObservableList<StreamConfiguration> streamModels = createListProperty("streamModels", StreamConfiguration.class);
     private ObservableList<AggregationConfiguration> aggregationModels = createListProperty("aggregationModels", AggregationConfiguration.class);
+    private ObservableList<ExpressionConfiguration> expressionConfigurations = createListProperty("expressionConfigurations", ExpressionConfiguration.class);
     private ObservableList<PageModel> pages = createListProperty("pages", PageModel.class);
 
     private static AtomicInteger nextInstance = new AtomicInteger(0);
@@ -28,6 +29,10 @@ public class NewChartingModel extends Observable {
 
     public ObservableList<PageModel> getPages() {
         return pages;
+    }
+
+    public ObservableList<ExpressionConfiguration> getExpressionConfigurations() {
+        return expressionConfigurations;
     }
 
     public int getInstanceNumber() {

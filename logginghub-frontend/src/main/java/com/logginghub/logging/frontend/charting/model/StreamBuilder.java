@@ -15,6 +15,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+/**
+ * Take Patternised events and turn them into individual data streams based on a particular group by expression.
+ */
 public class StreamBuilder implements ValueStripper2ResultListener2 {
 
     private static Logger logger = Logger.getLoggerFor(StreamBuilder.class);

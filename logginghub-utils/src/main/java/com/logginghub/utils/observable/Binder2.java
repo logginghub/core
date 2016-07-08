@@ -2,6 +2,7 @@ package com.logginghub.utils.observable;
 
 import com.logginghub.utils.Convertor;
 import com.logginghub.utils.MutableBoolean;
+import com.logginghub.utils.TimeUtils;
 import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.swing.DoubleSpinner;
 
@@ -80,6 +81,70 @@ public class Binder2 {
                 if (e.getStateChange() == ItemEvent.SELECTED) {
                     Object selectedItem = comboBox.getSelectedItem();
                     observable.set((T) selectedItem);
+                }
+            }
+        };
+        comboBox.addItemListener(aListener);
+
+        Runnable unbinder = new Runnable() {
+            public void run() {
+                observable.removeListener(listener);
+                comboBox.removeItemListener(aListener);
+            }
+        };
+
+        unbinders.add(unbinder);
+    }
+
+    public void bindInterval(final ObservableLong observable, final JTextField textField) {
+
+        final ObservableProperty<String> intermediate = new ObservableProperty<String>("");
+
+        bind(intermediate, textField);
+
+        final ObservablePropertyListener<String> stringToLong = new ObservablePropertyListener<String>() {
+            public void onPropertyChanged(String oldValue, String newValue) {
+                long interval = TimeUtils.parseInterval(newValue);
+                observable.set(interval);
+            }
+        };
+
+        final ObservablePropertyListener<Long> longToString = new ObservablePropertyListener<Long>() {
+            public void onPropertyChanged(Long oldValue, Long newValue) {
+                String interval = TimeUtils.formatIntervalMilliseconds(newValue);
+                intermediate.set(interval);
+            }
+        };
+
+        observable.addListenerAndNotifyCurrent(longToString);
+        intermediate.addListenerAndNotifyCurrent(stringToLong);
+
+        unbinders.add(new Runnable() {
+            public void run() {
+                observable.removeListener(longToString);
+                intermediate.removeListener(stringToLong);
+            }
+        });
+    }
+
+    public <T> void bindInterval(final ObservableLong observable, final JComboBox comboBox) {
+
+        comboBox.setSelectedItem(observable.get());
+
+        final ObservablePropertyListener<Long> listener = new ObservablePropertyListener<Long>() {
+            public void onPropertyChanged(Long oldValue, Long newValue) {
+                String selected = TimeUtils.formatIntervalMilliseconds(newValue);
+                comboBox.setSelectedItem(selected);
+            }
+        };
+        observable.addListener(listener);
+
+        final ItemListener aListener = new ItemListener() {
+            @SuppressWarnings("unchecked") public void itemStateChanged(ItemEvent e) {
+                if (e.getStateChange() == ItemEvent.SELECTED) {
+                    Object selectedItem = comboBox.getSelectedItem();
+                    long time = TimeUtils.parseInterval(selectedItem.toString());
+                    observable.set(time);
                 }
             }
         };

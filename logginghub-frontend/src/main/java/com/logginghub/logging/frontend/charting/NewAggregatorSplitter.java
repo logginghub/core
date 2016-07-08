@@ -27,13 +27,28 @@ public class NewAggregatorSplitter implements StreamListener<StreamResultItem> {
     private boolean generateEmptyTicks = false;
     
     private AggregationType publishingMode = AggregationType.Mean;
+    private String aggregationName;
 
     public NewAggregatorSplitter() {
 
     }
 
+    public String getAggregationName() {
+        return aggregationName;
+    }
+
     public Stream<ChunkedResult> getOutputStream() {
         return outputStream;
+    }
+
+    public void setAggregationName(String aggregationName) {
+        this.aggregationName = aggregationName;
+        synchronized (chunkersPerSource) {
+            Collection<NewAggregator> values = chunkersPerSource.values();
+            for (NewAggregator timeChunker : values) {
+                timeChunker.setAggregationName(aggregationName);
+            }
+        }
     }
 
     public void setChunkInterval(long chunkInterval) {
@@ -125,6 +140,7 @@ public class NewAggregatorSplitter implements StreamListener<StreamResultItem> {
                 timeChunker.setSource(t.getPath());
                 timeChunker.setLabel(t.getLabel());
                 timeChunker.setGroupBy(t.getGroupBy());
+                timeChunker.setAggregationName(aggregationName);
                 chunkersPerSource.put(t.getPath(), timeChunker);
             }
         }

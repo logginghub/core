@@ -11,6 +11,7 @@ public class ChunkedResult {
     private final String label;
     private final String groupBy;
     private String source;
+    private String aggregationName;
 
     public ChunkedResult(long startOfCurrentChunk, long chunkDuration, double value, String mode, String label, String groupBy, String source) {
         this.startOfCurrentChunk = startOfCurrentChunk;
@@ -20,6 +21,14 @@ public class ChunkedResult {
         this.label = label;
         this.groupBy = groupBy;
         this.source = source;
+    }
+
+    public void setAggregationName(String aggregationName) {
+        this.aggregationName = aggregationName;
+    }
+
+    public String getAggregationName() {
+        return aggregationName;
     }
 
     public String getMode() {
@@ -64,6 +73,8 @@ public class ChunkedResult {
                value +
                ", source=" +
                source +
+               ", aggregationName=" +
+               aggregationName +
                ", label=" +
                label +
                ", groupBy=" +

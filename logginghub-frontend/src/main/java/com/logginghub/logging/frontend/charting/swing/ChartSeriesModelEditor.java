@@ -5,10 +5,12 @@ import com.logginghub.logging.frontend.charting.model.AggregationConfiguration;
 import com.logginghub.logging.frontend.charting.model.BatchedArraryListTableModel;
 import com.logginghub.logging.frontend.charting.model.ChartSeriesFilterModel;
 import com.logginghub.logging.frontend.charting.model.ChartSeriesModel;
+import com.logginghub.logging.frontend.charting.model.ExpressionConfiguration;
 import com.logginghub.logging.frontend.charting.model.NewChartingModel;
 import com.logginghub.logging.messages.AggregationType;
 import com.logginghub.logging.messaging.PatternModel;
 import com.logginghub.logging.utils.ValueStripper2;
+import com.logginghub.utils.FormattedRuntimeException;
 import com.logginghub.utils.MutableInt;
 import com.logginghub.utils.StringUtils;
 import com.logginghub.utils.logging.Logger;
@@ -57,11 +59,11 @@ public class ChartSeriesModelEditor extends JPanel {
     private JComboBox typeCombo;
     private JTextField eventPartsTextField;
     private JComboBox patternCombo;
-    private DefaultComboBoxModel<AggregationConfigurationWrapper> aggregationsComboModel;
+    private DefaultComboBoxModel<NamedModelWrapper> existingDataSourcesComboModel;
     private DefaultComboBoxModel<PatternModelWrapper> patternComboModel;
     private DefaultComboBoxModel<String> groupByComboModel;
     private DefaultComboBoxModel<LabelIndexWrapper> tableEditorLabelComboModel;
-    private JComboBox aggregationCombo;
+    private JComboBox existingDataSources;
     private JComboBox labelCombo;
     private DefaultComboBoxModel<LabelIndexWrapper> labelComboModel;
     private NewChartingController controller;
@@ -87,13 +89,13 @@ public class ChartSeriesModelEditor extends JPanel {
         setBackground(Color.white);
         setOpaque(true);
 
-        aggregationsComboModel = new DefaultComboBoxModel<AggregationConfigurationWrapper>();
-        aggregationCombo = new JComboBox(aggregationsComboModel);
-        aggregationCombo.setName("Aggregations Combo");
+        existingDataSourcesComboModel = new DefaultComboBoxModel<NamedModelWrapper>();
+        existingDataSources = new JComboBox(existingDataSourcesComboModel);
+        existingDataSources.setName("Aggregations Combo");
 
         MutableInt row = new MutableInt(0);
 
-        addRow(row, "Existing aggregation", aggregationCombo);
+        addRow(row, "Existing data sources", existingDataSources);
 
         patternComboModel = new DefaultComboBoxModel();
         patternCombo = new JComboBox(patternComboModel);
@@ -339,7 +341,7 @@ public class ChartSeriesModelEditor extends JPanel {
             if (patternWrapper != null) {
                 ObservableList<PatternModel> patternModels = chartingModel.getPatternModels();
                 for (PatternModel patternModel : patternModels) {
-                    if (patternModel.getPatternID().get() == patternWrapper.patternModel.getPatternID().get()) {
+                    if (patternModel.getPatternID().get().equals(patternWrapper.patternModel.getPatternID().get())) {
 
                         ValueStripper2 stripper = new ValueStripper2();
                         stripper.setPattern(patternModel.getPattern().get());
@@ -371,7 +373,7 @@ public class ChartSeriesModelEditor extends JPanel {
         this.chartingModel = chartingModel;
         binder = new Binder2();
 
-        bindAggregationsCombo(binder, model, chartingModel);
+        bindDataSourcesCombo(binder, model, chartingModel);
 
         int selectedPatternID = model.getPatternID().get();
         if (selectedPatternID == -1) {
@@ -463,38 +465,53 @@ public class ChartSeriesModelEditor extends JPanel {
 
     }
 
-    private void bindAggregationsCombo(Binder2 binder, final ChartSeriesModel model, NewChartingModel chartingModel) {
+    private void bindDataSourcesCombo(Binder2 binder, final ChartSeriesModel model, NewChartingModel chartingModel) {
 
-        aggregationsComboModel.removeAllElements();
-        this.aggregationsComboModel.addElement(AggregationConfigurationWrapper.empty);
+        existingDataSourcesComboModel.removeAllElements();
+        this.existingDataSourcesComboModel.addElement(AggregationConfigurationWrapper.empty);
 
         ObservableList<AggregationConfiguration> aggregationModels = chartingModel.getAggregationConfigurations();
         for (AggregationConfiguration aggregationModel : aggregationModels) {
-            this.aggregationsComboModel.addElement(new AggregationConfigurationWrapper(aggregationModel));
+            this.existingDataSourcesComboModel.addElement(new AggregationConfigurationWrapper(aggregationModel));
+        }
+
+        ObservableList<ExpressionConfiguration> expressionConfigurations = chartingModel.getExpressionConfigurations();
+        for (ExpressionConfiguration expressionConfiguration : expressionConfigurations) {
+            this.existingDataSourcesComboModel.addElement(new ExpressionConfigurationWrapper(expressionConfiguration));
         }
 
         final ItemListener listener = new ItemListener() {
             @SuppressWarnings("unchecked")
             public void itemStateChanged(ItemEvent e) {
                 if (e.getStateChange() == ItemEvent.SELECTED) {
-                    AggregationConfigurationWrapper wrapper = (AggregationConfigurationWrapper) aggregationCombo.getSelectedItem();
+                    NamedModelWrapper wrapper = (NamedModelWrapper) existingDataSources.getSelectedItem();
 
                     if(wrapper == AggregationConfigurationWrapper.empty) {
                         model.getExistingAggregation().set(null);
+                        model.getExistingExpression().set(null);
                     }else{
-                        model.getExistingAggregation().set(wrapper.getAggregationConfiguration());
+                        if(wrapper instanceof AggregationConfigurationWrapper) {
+                            AggregationConfigurationWrapper aggregationConfigurationWrapper = (AggregationConfigurationWrapper) wrapper;
+                            model.getExistingAggregation().set(aggregationConfigurationWrapper.getAggregationConfiguration());
+                            model.getExistingExpression().set(null);
+                        }else if(wrapper instanceof ExpressionConfigurationWrapper) {
+                            ExpressionConfigurationWrapper expressionConfigurationWrapper = (ExpressionConfigurationWrapper) wrapper;
+                            model.getExistingAggregation().set(null);
+                            model.getExistingExpression().set(expressionConfigurationWrapper.getExpressionConfiguration());
+                        }else {
+                            throw new FormattedRuntimeException("Unsupported wrapper type '{}'", wrapper.getClass().getName());
+                        }
                     }
-
                 }
             }
         };
 
-        aggregationCombo.addItemListener(listener);
+        existingDataSources.addItemListener(listener);
 
         binder.addUnbinder(new Runnable() {
             @Override
             public void run() {
-                aggregationCombo.removeItemListener(listener);
+                existingDataSources.removeItemListener(listener);
             }
         });
 
@@ -574,7 +591,11 @@ public class ChartSeriesModelEditor extends JPanel {
     }
 
 
-    public static class AggregationConfigurationWrapper {
+    public interface NamedModelWrapper {
+        String toString();
+    }
+
+    public static class AggregationConfigurationWrapper implements NamedModelWrapper {
         public static AggregationConfigurationWrapper empty = new AggregationConfigurationWrapper(null);
         private AggregationConfiguration aggregationConfiguration;
 
@@ -593,6 +614,23 @@ public class ChartSeriesModelEditor extends JPanel {
             }else {
                 return aggregationConfiguration.getName().get();
             }
+        }
+    }
+
+    public static class ExpressionConfigurationWrapper implements NamedModelWrapper {
+        private ExpressionConfiguration expressionConfiguration;
+
+        public ExpressionConfigurationWrapper(ExpressionConfiguration expressionConfiguration) {
+            this.expressionConfiguration = expressionConfiguration;
+        }
+
+        public ExpressionConfiguration getExpressionConfiguration() {
+            return expressionConfiguration;
+        }
+
+        @Override
+        public String toString() {
+            return expressionConfiguration.getName().get();
         }
     }
 

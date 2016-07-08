@@ -177,4 +177,8 @@ public class PageView extends JPanel {
         return pieChartCounterparts.values();
     }
 
+    public Collection<TableChartView> getTableChartViews() {
+        return tableChartCounterparts.values();
+    }
+
 }

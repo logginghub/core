@@ -1,17 +1,16 @@
 package com.logginghub.logging.frontend.charting.swing;
 
+import com.logginghub.logging.frontend.charting.model.AggregationConfiguration;
+import com.logginghub.logging.messages.AggregationType;
+import com.logginghub.utils.observable.Binder2;
+import net.miginfocom.swing.MigLayout;
+
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
-
-import net.miginfocom.swing.MigLayout;
-
-import com.logginghub.logging.frontend.charting.model.AggregationConfiguration;
-import com.logginghub.logging.messages.AggregationType;
-import com.logginghub.utils.observable.Binder2;
 
 public class AggregationPanel extends JPanel {
     private static final long serialVersionUID = 1L;
@@ -54,7 +53,7 @@ public class AggregationPanel extends JPanel {
     public void bind(AggregationConfiguration aggregationConfiguration) {
         binder = new Binder2();
         binder.bind(aggregationConfiguration.getType(), aggregationTypeCombo);
-        binder.bind(aggregationConfiguration.getInterval(), intervalComboBox);
+        binder.bindInterval(aggregationConfiguration.getInterval(), intervalComboBox);
         
     }
 

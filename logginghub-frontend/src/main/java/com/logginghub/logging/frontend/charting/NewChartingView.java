@@ -1,23 +1,21 @@
 package com.logginghub.logging.frontend.charting;
 
-import java.io.File;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.swing.JPanel;
-import javax.swing.JTabbedPane;
-import javax.swing.SwingUtilities;
-
-import net.miginfocom.swing.MigLayout;
-
 import com.logginghub.logging.frontend.charting.model.NewChartingModel;
 import com.logginghub.logging.frontend.charting.model.PageModel;
 import com.logginghub.utils.DateFormatFactory;
 import com.logginghub.utils.WorkerThread;
 import com.logginghub.utils.observable.ObservableListListener;
 import com.logginghub.utils.observable.ObservablePropertyListener;
+import net.miginfocom.swing.MigLayout;
+
+import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
+import javax.swing.SwingUtilities;
+import java.io.File;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 public class NewChartingView extends JPanel {
     private static final long serialVersionUID = 1L;
@@ -116,6 +114,11 @@ public class NewChartingView extends JPanel {
                     for (PieChartView pieChartModelView : pieChartViews) {
                         pieChartModelView.saveChartData(folder);
                     }
+
+                    Collection<TableChartView> tableChartViews = pageModelView.getTableChartViews();
+                    for (TableChartView tableChartView : tableChartViews) {
+                        tableChartView.saveChartData(folder);
+                    }
                 }
             }
         });
@@ -137,6 +140,11 @@ public class NewChartingView extends JPanel {
                     for (PieChartView pieChartModelView : pieChartViews) {
                         pieChartModelView.saveChartImages(folder);
                     }
+
+                    Collection<TableChartView> tableChartViews = pageModelView.getTableChartViews();
+                    for (TableChartView tableChartView : tableChartViews) {
+                        tableChartView.saveChartImages(folder);
+                    }
                 }
             }
         });
@@ -157,6 +165,11 @@ public class NewChartingView extends JPanel {
                     Collection<PieChartView> pieChartViews = pageModelView.getPieChartViews();
                     for (PieChartView pieChartModelView : pieChartViews) {
                         pieChartModelView.clearChartData();
+                    }
+
+                    Collection<TableChartView> tableChartViews = pageModelView.getTableChartViews();
+                    for (TableChartView tableChartView : tableChartViews) {
+                        tableChartView.clearChartData();
                     }
                 }
             }

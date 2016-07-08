@@ -532,16 +532,18 @@ public class Logger {
     }
 
     public void debug(Throwable t, String format, Object... objects) {
-        LogEvent event = new LogEvent();
-        event.setMessage(StringUtils.format(format, objects));
-        event.setSourceClassName(StacktraceUtils.getCallingClassName(3));
-        event.setSourceMethodName(StacktraceUtils.getCallingMethodName(3));
-        event.setLocalCreationTimeMillis(timeProvider.getTime());
-        event.setLevel(debug);
-        event.setThreadName(Thread.currentThread().getName());
-        event.setThrowable(t);
-        event.setThreadContext(threadContexts.get());
-        logEvent(event);
+        if ((level < 0 && root.level <= debug) || (level >= 0 && level <= debug)) {
+            LogEvent event = new LogEvent();
+            event.setMessage(StringUtils.format(format, objects));
+            event.setSourceClassName(StacktraceUtils.getCallingClassName(3));
+            event.setSourceMethodName(StacktraceUtils.getCallingMethodName(3));
+            event.setLocalCreationTimeMillis(timeProvider.getTime());
+            event.setLevel(debug);
+            event.setThreadName(Thread.currentThread().getName());
+            event.setThrowable(t);
+            event.setThreadContext(threadContexts.get());
+            logEvent(event);
+        }
     }
 
     public void divider(int level) {

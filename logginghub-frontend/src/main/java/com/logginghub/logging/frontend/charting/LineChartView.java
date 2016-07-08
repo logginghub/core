@@ -1,17 +1,5 @@
 package com.logginghub.logging.frontend.charting;
 
-import java.awt.Color;
-import java.io.File;
-
-import javax.swing.BorderFactory;
-import javax.swing.SwingUtilities;
-
-import org.jfree.chart.JFreeChart;
-import org.jfree.chart.axis.NumberAxis;
-import org.jfree.chart.axis.ValueAxis;
-import org.jfree.chart.plot.XYPlot;
-import org.jfree.ui.RectangleEdge;
-
 import com.logginghub.logging.frontend.analysis.ChartInterface;
 import com.logginghub.logging.frontend.analysis.ChunkedResult;
 import com.logginghub.logging.frontend.analysis.XYHistogramChart;
@@ -25,6 +13,16 @@ import com.logginghub.utils.logging.Logger;
 import com.logginghub.utils.observable.ObservableList;
 import com.logginghub.utils.observable.ObservableListListener;
 import com.logginghub.utils.observable.ObservablePropertyListener;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.ui.RectangleEdge;
+
+import javax.swing.BorderFactory;
+import javax.swing.SwingUtilities;
+import java.awt.Color;
+import java.io.File;
 
 public class LineChartView extends MigPanel {
 
@@ -192,20 +190,20 @@ public class LineChartView extends MigPanel {
                 }
             };
 
-            @Override public void onAdded(ChartSeriesModel matcherModel) {
+            @Override public void onAdded(ChartSeriesModel chartSeriesModel) {
 
-                // String matcherValue = matcherModel.getPattern().get();
+                // String matcherValue = chartSeriesModel.getPattern().get();
                 // SourceWildcardChunkedResultFilter filter = new
                 // SourceWildcardChunkedResultFilter();
                 // filter.setPattern(matcherValue);
                 // chart.addFilter(filter);
 
-                // String legend = matcherModel.getLegend().get();
+                // String legend = chartSeriesModel.getLegend().get();
                 // if (legend != null) {
                 // filter.setLegend(legend);
                 // }
 
-                Stream<ChunkedResult> stream = controller.getResultStreamFor(matcherModel);
+                Stream<ChunkedResult> stream = controller.getResultStreamFor(chartSeriesModel);
                 stream.addListener(listener);
             }
 
@@ -213,6 +211,7 @@ public class LineChartView extends MigPanel {
                 logger.info("Unbinding chart series model '{}' from chart");
                 Stream<ChunkedResult> stream = controller.getResultStreamFor(t);
                 stream.removeListener(listener);
+                clearChartData();
             }
 
             @Override public void onCleared() {}

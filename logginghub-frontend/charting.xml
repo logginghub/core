@@ -7,18 +7,27 @@
 
 </streamModels>
 <aggregationModels>
-<aggregationconfiguration aggregationID="-1" streamID="null" name="count_by_status" rawData="false" interval="1 second" type="Mean" patternID="0" labelIndex="0" groupBy="{status}">
+<aggregationconfiguration aggregationID="0" streamID="null" name="trade_count_by_status" rawData="false" interval="1000" type="Count" patternID="0" generateEmptyTicks="false" labelIndex="0" groupBy="{instrument}" eventParts="null">
 <filters>
 
 </filters>
 </aggregationconfiguration>
+<aggregationconfiguration aggregationID="1" streamID="null" name="trade_count_by_status_accepted" rawData="false" interval="1000" type="Count" patternID="0" generateEmptyTicks="false" labelIndex="0" groupBy="{instrument}" eventParts="null">
+<filters>
+<chartseriesfiltermodel variableIndex="5" enabled="true" blacklist="" whitelist="Accepted"/>
+</filters>
+</aggregationconfiguration>
 </aggregationModels>
+<expressionConfigurations>
+<expressionconfiguration id="0" name="hitrate" expression="100 * (trade_count_by_status_accepted / trade_count_by_status)" groupBy="{instrument}"/>
+</expressionConfigurations>
 <pages>
 <pagemodel name="Normal charts">
 <chartingModels>
-<linechartmodel title="Chart title" layout="" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" smoothed="false">
+<linechartmodel title="Foo" layout="" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" smoothed="false">
 <matchers>
-<chartseriesmodel patternID="0" labelIndex="0" groupBy="{instrument}" type="Mean" interval="1000" eventParts="" generateEmptyTicks="false">
+<chartseriesmodel patternID="0" labelIndex="0" groupBy="null" type="Mean" interval="1000" eventParts="" generateEmptyTicks="false">
+<existingExpression id="0" name="hitrate" expression="trade_count_by_status_accepted / trade_count_by_status" groupBy="{instrument}"/>
 <filters>
 
 </filters>
@@ -70,6 +79,16 @@
 </filters>
 </chartseriesmodel>
 <chartseriesmodel patternID="1" labelIndex="0" groupBy="{source}" type="Mean" interval="1000" eventParts="" generateEmptyTicks="false">
+<filters>
+
+</filters>
+</chartseriesmodel>
+</matchers>
+</tablechartmodel>
+<tablechartmodel title="Hit rates" layout="cell 1 0" resetAt="" resets="0" type="" xAxisLabel="Time" yAxisLabel="y axis label" onlyShowValuesAbove="NaN" warningThreshold="NaN" severeThreshold="NaN" yAxisLock="NaN" dataPoints="300" forceYZero="true" showLegend="true" sideLegend="false" top="2147483647" showOtherSeries="false">
+<matchers>
+<chartseriesmodel patternID="0" labelIndex="0" groupBy="null" type="Mean" interval="1000" eventParts="" generateEmptyTicks="false">
+<existingExpression id="0" name="hitrate" expression="100 * (trade_count_by_status_accepted / trade_count_by_status)" groupBy="{instrument}"/>
 <filters>
 
 </filters>

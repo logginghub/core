@@ -434,7 +434,7 @@ public class AggregationConfigurationEditor extends JPanel {
         });
 
         binder.bind(model.getType(), typeCombo);
-        binder.bind(model.getInterval(), intervalTextField);
+        binder.bindInterval(model.getInterval(), intervalTextField);
 //        binder.bind(model.getEventParts(), eventPartsTextField);
 //        binder.bind(model.getGenerateEmptyTicks(), generateEmptyTicks);
 

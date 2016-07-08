@@ -6,6 +6,7 @@ import com.logginghub.logging.frontend.charting.NewChartingView;
 import com.logginghub.logging.frontend.charting.model.AggregationConfiguration;
 import com.logginghub.logging.frontend.charting.model.ChartSeriesFilterModel;
 import com.logginghub.logging.frontend.charting.model.ChartSeriesModel;
+import com.logginghub.logging.frontend.charting.model.ExpressionConfiguration;
 import com.logginghub.logging.frontend.charting.model.LineChartModel;
 import com.logginghub.logging.frontend.charting.model.NewChartingModel;
 import com.logginghub.logging.frontend.charting.model.PageModel;
@@ -35,12 +36,25 @@ import com.logginghub.utils.observable.ObservablePropertyListener;
 import com.logginghub.utils.swing.VLFrame;
 import net.miginfocom.swing.MigLayout;
 
-import javax.swing.*;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTree;
+import javax.swing.SwingUtilities;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
@@ -52,12 +66,14 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.Enumeration;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ChartingTreeEditorView extends JPanel {
 
     private static final Logger logger = Logger.getLoggerFor(ChartingTreeEditorView.class);
     private static final long serialVersionUID = 1L;
     private final DefaultMutableTreeNode aggregationsNode;
+    private final DefaultMutableTreeNode expressionsNode;
 
     private DefaultMutableTreeNode patternsNode;
     // private DefaultMutableTreeNode streamsNode;
@@ -66,6 +82,9 @@ public class ChartingTreeEditorView extends JPanel {
 
     private ObservableList<ChartSeriesFilterModel> copyFilters;
 
+    private AtomicInteger nextAggregationId = new AtomicInteger(0);
+    private AtomicInteger nextExpressionId = new AtomicInteger(0);
+
     private NewChartingModel model;
     private JTree tree;
     private DefaultTreeModel treeModel;
@@ -73,6 +92,7 @@ public class ChartingTreeEditorView extends JPanel {
     private Counterparts<PageModel, DefaultMutableTreeNode> pageCounterparts;
     private Counterparts<PatternModel, DefaultMutableTreeNode> patternCounterparts;
     private Counterparts<AggregationConfiguration, DefaultMutableTreeNode> aggregationsCounterparts;
+    private Counterparts<ExpressionConfiguration, DefaultMutableTreeNode> expressionCounterparts;
     private Counterparts<StreamConfiguration, DefaultMutableTreeNode> streamCounterparts;
     private Counterparts<LineChartModel, DefaultMutableTreeNode> lineChartCounterparts;
     private Counterparts<PieChartModel, DefaultMutableTreeNode> pieChartCounterparts;
@@ -91,6 +111,7 @@ public class ChartingTreeEditorView extends JPanel {
         patternCounterparts = new Counterparts<PatternModel, DefaultMutableTreeNode>();
         streamCounterparts = new Counterparts<StreamConfiguration, DefaultMutableTreeNode>();
         aggregationsCounterparts = new Counterparts<AggregationConfiguration, DefaultMutableTreeNode>();
+        expressionCounterparts = new Counterparts<ExpressionConfiguration, DefaultMutableTreeNode>();
 
         setLayout(new BorderLayout());
 
@@ -98,10 +119,12 @@ public class ChartingTreeEditorView extends JPanel {
 
         patternsNode = new DefaultMutableTreeNode("Patterns");
         aggregationsNode = new DefaultMutableTreeNode("Aggregations");
+        expressionsNode = new DefaultMutableTreeNode("Expressions");
         chartingNode = new DefaultMutableTreeNode("Charting");
 
         root.add(patternsNode);
         root.add(aggregationsNode);
+        root.add(expressionsNode);
         root.add(chartingNode);
 
         treeModel = new DefaultTreeModel(root);
@@ -113,7 +136,8 @@ public class ChartingTreeEditorView extends JPanel {
 
         expandAll();
 
-        Dimension treeSize = new Dimension(250, -1);
+        int treeWidth = 400;
+        Dimension treeSize = new Dimension(treeWidth, -1);
         tree.setMinimumSize(treeSize);
         tree.setPreferredSize(treeSize);
 
@@ -154,11 +178,14 @@ public class ChartingTreeEditorView extends JPanel {
                             } else if (userObject instanceof AggregationConfiguration) {
                                 AggregationConfiguration model = (AggregationConfiguration) userObject;
                                 editAggregationConfiguration(model);
+                            } else if (userObject instanceof ExpressionConfiguration) {
+                                ExpressionConfiguration model = (ExpressionConfiguration) userObject;
+                                editExpressionConfiguration(model);
                             } else if (userObject instanceof LineChartModel) {
                                 showLineChartEditorDialog(userObject);
                             } else if (userObject instanceof PieChartModel) {
                                 showPieChartEditorDialog(userObject);
-                            }else if (userObject instanceof TableChartModel) {
+                            } else if (userObject instanceof TableChartModel) {
                                 showTableChartEditorDialog(userObject);
                             }
                         }
@@ -172,10 +199,12 @@ public class ChartingTreeEditorView extends JPanel {
 
         // Build the split pane
         JSplitPane pane = new JSplitPane();
-        pane.setLeftComponent(new JScrollPane(tree));
+        JScrollPane scrollPane = new JScrollPane(tree);
+        scrollPane.setPreferredSize(treeSize);
+        pane.setLeftComponent(scrollPane);
         pane.setRightComponent(chartingPanel);
-        pane.setDividerLocation(250);
-        pane.setDividerSize(2);
+        pane.setDividerLocation(treeWidth);
+        pane.setDividerSize(3);
 
         add(pane, BorderLayout.CENTER);
     }
@@ -239,6 +268,8 @@ public class ChartingTreeEditorView extends JPanel {
         this.model = controller.getModel();
 
         chartingPanel.bind(controller);
+
+        setupNextIds(model);
 
         model.getPages().addListenerAndNotifyCurrent(new ObservableListListener<PageModel>() {
             @Override
@@ -347,7 +378,7 @@ public class ChartingTreeEditorView extends JPanel {
                 SwingHelper.invoke(new Runnable() {
                     @Override
                     public void run() {
-                        DefaultMutableTreeNode remove = patternCounterparts.remove(t);
+                        DefaultMutableTreeNode remove = aggregationsCounterparts.remove(t);
                         treeModel.removeNodeFromParent(remove);
                     }
                 });
@@ -358,6 +389,41 @@ public class ChartingTreeEditorView extends JPanel {
             }
         });
 
+        model.getExpressionConfigurations().addListenerAndNotifyCurrent(new ObservableListListener<ExpressionConfiguration>() {
+            @Override
+            public void onAdded(final ExpressionConfiguration t) {
+                SwingHelper.invoke(new Runnable() {
+                    @Override
+                    public void run() {
+                        DefaultMutableTreeNode node = new DefaultMutableTreeNode(t) {
+                            private static final long serialVersionUID = 1L;
+
+                            @Override
+                            public String toString() {
+                                return "[" + t.getId().get() + "] " + t.getName().get();
+                            }
+                        };
+                        treeModel.insertNodeInto(node, expressionsNode, expressionsNode.getChildCount());
+                        expressionCounterparts.put(t, node);
+                    }
+                });
+            }
+
+            @Override
+            public void onRemoved(final ExpressionConfiguration t, int index) {
+                SwingHelper.invoke(new Runnable() {
+                    @Override
+                    public void run() {
+                        DefaultMutableTreeNode remove = expressionCounterparts.remove(t);
+                        treeModel.removeNodeFromParent(remove);
+                    }
+                });
+            }
+
+            @Override
+            public void onCleared() {
+            }
+        });
 
         // Auto expand some nodes
         SwingUtilities.invokeLater(new Runnable() {
@@ -370,13 +436,29 @@ public class ChartingTreeEditorView extends JPanel {
                     DefaultMutableTreeNode node = (DefaultMutableTreeNode) breadthFirstEnumeration.nextElement();
 
                     Object userObject = node.getUserObject();
-                    if (userObject instanceof PageModel || node == patternsNode || node == aggregationsNode) {
+                    if (userObject instanceof PageModel || node == patternsNode || node == aggregationsNode || node == expressionsNode) {
                         tree.expandPath(new TreePath(node.getPath()));
                     }
                 }
 
             }
         });
+    }
+
+    private void setupNextIds(NewChartingModel model) {
+        int max = -1;
+        for (AggregationConfiguration aggregationConfiguration : model.getAggregationConfigurations()) {
+            max = Math.max(max, aggregationConfiguration.getAggregationId().get());
+        }
+
+        nextAggregationId.set(max + 1);
+
+        max = -1;
+        for (ExpressionConfiguration expressionConfiguration : model.getExpressionConfigurations()) {
+            max = Math.max(max, expressionConfiguration.getId().get());
+        }
+
+        nextExpressionId.set(max + 1);
     }
 
     private void bindPage(final DefaultMutableTreeNode node, final PageModel t) {
@@ -453,24 +535,20 @@ public class ChartingTreeEditorView extends JPanel {
         ObservableList<ChartSeriesModel> matcherModels = lineChartModel.getMatcherModels();
         matcherModels.addListenerAndNotifyCurrent(new ObservableListListener<ChartSeriesModel>() {
             @Override
-            public void onAdded(final ChartSeriesModel t) {
-                logger.debug("Chart series model '{}' has been added to chart '{}'", t, lineChartModel);
-                t.setParentChart(lineChartModel);
-                DefaultMutableTreeNode seriesNode = new DefaultMutableTreeNode(t) {
+            public void onAdded(final ChartSeriesModel chartSeriesModel) {
+                logger.debug("Chart series model '{}' has been added to chart '{}'", chartSeriesModel, lineChartModel);
+                chartSeriesModel.setParentChart(lineChartModel);
+                DefaultMutableTreeNode seriesNode = new DefaultMutableTreeNode(chartSeriesModel) {
                     private static final long serialVersionUID = 1L;
 
                     @Override
                     public String toString() {
-                        String name = model.getPatternNameForID(t.getPatternID().get()) +
-                                      "/" +
-                                      model.getPatternLabelForID(t.getPatternID().get(), t.getLabelIndex().get()) +
-                                      "/" +
-                                      t.getType().get();
-                        return name;
+                        String formatted = formatChartSeriesModelTitle(chartSeriesModel);
+                        return formatted;
                     }
                 };
                 treeModel.insertNodeInto(seriesNode, chartNode, chartNode.getChildCount());
-                seriesCounterparts.put(t, seriesNode);
+                seriesCounterparts.put(chartSeriesModel, seriesNode);
             }
 
             @Override
@@ -484,6 +562,32 @@ public class ChartingTreeEditorView extends JPanel {
             public void onCleared() {
             }
         });
+    }
+
+    private String formatChartSeriesModelTitle(ChartSeriesModel chartSeriesModel) {
+
+
+        ExpressionConfiguration expressionConfiguration = chartSeriesModel.getExistingExpression().get();
+        AggregationConfiguration aggregationConfiguration = chartSeriesModel.getExistingAggregation().get();
+
+        String formatted;
+
+        if(expressionConfiguration != null) {
+            formatted = "Expr : [" + expressionConfiguration.getId().get() + "] " + expressionConfiguration.getName().get();
+        }else if(aggregationConfiguration != null) {
+            formatted = "Aggr : [" + aggregationConfiguration.getAggregationId().get() + "] " + aggregationConfiguration.getName().get();
+        }else {
+
+
+            formatted = model.getPatternNameForID(chartSeriesModel.getPatternID().get()) +
+                          "/" +
+                          model.getPatternLabelForID(chartSeriesModel.getPatternID().get(), chartSeriesModel.getLabelIndex().get()) +
+                          "/" +
+                          chartSeriesModel.getType().get();
+        }
+
+        return formatted;
+
     }
 
     private void bindPieChart(final DefaultMutableTreeNode node, final PageModel t, final PieChartModel pieChartModel) {
@@ -603,6 +707,68 @@ public class ChartingTreeEditorView extends JPanel {
     // }
     // }
 
+    private void addAggregation() {
+
+        EditorDialog editorDialog = new EditorDialog() {
+        };
+
+        final AggregationConfiguration editable = new AggregationConfiguration();
+
+        final AggregationConfigurationEditor editor = new AggregationConfigurationEditor();
+        editor.bind(controller, editable, ChartingTreeEditorView.this.model);
+
+        editorDialog.getEventSource().addHandler(new EventHandler() {
+            @Override
+            public void onEvent(Event event) {
+                Boolean option = event.getPayload();
+                if (option) {
+                    editor.commitEditingChanges();
+                    editable.getAggregationId().set(nextAggregationId.getAndIncrement());
+                    model.getAggregationConfigurations().add(editable);
+                } else {
+                    // Dont do anything
+                }
+            }
+        });
+
+        editorDialog.setSize(500, 500);
+        editorDialog.setName("Data aggregation editor");
+        editorDialog.setModal(true);
+        editorDialog.show("Create data aggregation", editor, getParentRecursive());
+
+    }
+
+    private void addExpression() {
+
+        EditorDialog editorDialog = new EditorDialog() {
+        };
+
+        final ExpressionConfiguration editable = new ExpressionConfiguration();
+
+        final ExpressionConfigurationEditor editor = new ExpressionConfigurationEditor();
+        editor.bind(controller, editable, ChartingTreeEditorView.this.model);
+
+        editorDialog.getEventSource().addHandler(new EventHandler() {
+            @Override
+            public void onEvent(Event event) {
+                Boolean option = event.getPayload();
+                if (option) {
+                    editor.commitEditingChanges();
+                    editable.getId().set(nextExpressionId.getAndIncrement());
+                    model.getExpressionConfigurations().add(editable);
+                } else {
+                    // Dont do anything
+                }
+            }
+        });
+
+        editorDialog.setSize(500, 500);
+        editorDialog.setName("Expression editor");
+        editorDialog.setModal(true);
+        editorDialog.show("Create expression", editor, getParentRecursive());
+
+    }
+
     protected void addLineChart() {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
         Object userObject = node.getUserObject();
@@ -622,57 +788,6 @@ public class ChartingTreeEditorView extends JPanel {
             });
 
         }
-    }
-
-    private void addAggregation() {
-
-        EditorDialog editorDialog = new EditorDialog() {};
-
-        final AggregationConfiguration editable = new AggregationConfiguration();
-
-//        editable.getLabelIndex().set(chartSeriesModel.getLabelIndex().get());
-//        editable.getPatternID().set(chartSeriesModel.getPatternID().get());
-//        editable.getType().set(chartSeriesModel.getType().get());
-//        editable.getInterval().set(chartSeriesModel.getInterval().get());
-//        editable.getGroupBy().set(chartSeriesModel.getGroupBy().get());
-//        editable.getGenerateEmptyTicks().set(chartSeriesModel.getGenerateEmptyTicks().get());
-
-        final AggregationConfigurationEditor editor = new AggregationConfigurationEditor();
-        editor.bind(controller, editable, ChartingTreeEditorView.this.model);
-
-        editorDialog.getEventSource().addHandler(new EventHandler() {
-            @Override
-            public void onEvent(Event event) {
-                Boolean option = event.getPayload();
-                if (option) {
-                    editor.commitEditingChanges();
-
-                    model.getAggregationConfigurations().add(editable);
-
-
-                    // Update the actual model from the values in the editable copy
-//                    chartSeriesModel.getLabelIndex().set(editable.getLabelIndex().get());
-                    // chartSeriesModel.getLegend().set(editable.getLegend().get());
-//                    chartSeriesModel.getPatternID().set(editable.getPatternID().get());
-//                    chartSeriesModel.getType().set(editable.getType().get());
-//                    chartSeriesModel.getInterval().set(editable.getInterval().get());
-//                    chartSeriesModel.getEventParts().set(editable.getEventParts().get());
-//                    chartSeriesModel.getGroupBy().set(editable.getGroupBy().get());
-//                    chartSeriesModel.getGenerateEmptyTicks().set(editable.getGenerateEmptyTicks().get());
-
-                    // jshaw - see comment about copying filters a few lines up
-//                    chartSeriesModel.getFilters().set(editable.getFilters());
-                } else {
-                    // Dont do anything
-                }
-            }
-        });
-
-        editorDialog.setSize(500, 500);
-        editorDialog.setName("Data aggregation editor");
-        editorDialog.setModal(true);
-        editorDialog.show("Create data aggregation", editor, getParentRecursive());
-
     }
 
     private void addPage() {
@@ -721,28 +836,6 @@ public class ChartingTreeEditorView extends JPanel {
 
         }
     }
-
-    protected void addTableChart() {
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
-        Object userObject = node.getUserObject();
-
-        if (userObject instanceof PageModel) {
-            PageModel pageModel = (PageModel) userObject;
-            TableChartModel chartModel = new TableChartModel();
-            pageModel.getTableChartModels().add(chartModel);
-
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    TreePath find = find(root, "Chart title");
-                    tree.setExpandsSelectedPaths(true);
-                    tree.setSelectionPath(find);
-                }
-            });
-
-        }
-    }
-
 
     private void addSeriesToLineChartModel(final LineChartModel lineChartModel) {
         final ChartSeriesModel model = new ChartSeriesModel();
@@ -819,6 +912,27 @@ public class ChartingTreeEditorView extends JPanel {
         editorDialog.show("Edit chart series", editor, getParentRecursive());
     }
 
+    protected void addTableChart() {
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
+        Object userObject = node.getUserObject();
+
+        if (userObject instanceof PageModel) {
+            PageModel pageModel = (PageModel) userObject;
+            TableChartModel chartModel = new TableChartModel();
+            pageModel.getTableChartModels().add(chartModel);
+
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    TreePath find = find(root, "Chart title");
+                    tree.setExpandsSelectedPaths(true);
+                    tree.setSelectionPath(find);
+                }
+            });
+
+        }
+    }
+
     protected void deleteNode(DefaultMutableTreeNode node) {
         Object userObject = node.getUserObject();
 
@@ -836,6 +950,152 @@ public class ChartingTreeEditorView extends JPanel {
             PageModel parentPage = lineChartModel.getParentPage();
             parentPage.getChartingModels().remove(lineChartModel);
         }
+    }
+
+    protected void editAggregationConfiguration(final AggregationConfiguration model) {
+
+        EditorDialog editorDialog = new EditorDialog() {
+        };
+        final AggregationConfiguration editable = new AggregationConfiguration();
+
+        editable.getName().set(model.getName().get());
+        editable.getLabelIndex().set(model.getLabelIndex().get());
+        editable.getPatternID().set(model.getPatternID().get());
+        editable.getType().set(model.getType().get());
+        editable.getInterval().set(model.getInterval().get());
+        editable.getGroupBy().set(model.getGroupBy().get());
+
+        // jshaw - this is potentially messy, as we are passing references to the original filters
+        // into the editor - ideally we should be passing in copies
+        // TODO : pass in copies
+        editable.getFilters().set(model.getFilters());
+
+        final AggregationConfigurationEditor editor = new AggregationConfigurationEditor();
+        editor.bind(controller, editable, ChartingTreeEditorView.this.model);
+
+        editorDialog.getEventSource().addHandler(new EventHandler() {
+            @Override
+            public void onEvent(Event event) {
+                Boolean option = event.getPayload();
+                if (option) {
+                    editor.commitEditingChanges();
+
+                    // Update the actual model from the values in the editable copy
+                    model.getName().set(editable.getName().get());
+                    model.getLabelIndex().set(editable.getLabelIndex().get());
+                    model.getPatternID().set(editable.getPatternID().get());
+                    model.getType().set(editable.getType().get());
+                    model.getInterval().set(editable.getInterval().get());
+                    model.getGroupBy().set(editable.getGroupBy().get());
+
+                    // jshaw - see comment about copying filters a few lines up
+                    model.getFilters().set(editable.getFilters());
+                } else {
+                    // Dont do anything
+                }
+            }
+        });
+
+        editorDialog.setSize(500, 500);
+        editorDialog.setName("Aggregation editor");
+        editorDialog.setModal(true);
+        editorDialog.show("Edit aggregation", editor, getParentRecursive());
+
+    }
+
+    protected void editChartSeriesModel(final ChartSeriesModel chartSeriesModel) {
+
+        EditorDialog editorDialog = new EditorDialog() {
+        };
+        final ChartSeriesModel editable = new ChartSeriesModel();
+
+        editable.getLabelIndex().set(chartSeriesModel.getLabelIndex().get());
+        editable.getExistingAggregation().set(chartSeriesModel.getExistingAggregation().get());
+        // editable.getLegend().set(chartSeriesModel.getLegend().get());
+        editable.getPatternID().set(chartSeriesModel.getPatternID().get());
+        editable.getType().set(chartSeriesModel.getType().get());
+        editable.getInterval().set(chartSeriesModel.getInterval().get());
+        editable.getGroupBy().set(chartSeriesModel.getGroupBy().get());
+        editable.getGenerateEmptyTicks().set(chartSeriesModel.getGenerateEmptyTicks().get());
+
+        // jshaw - this is potentially messy, as we are passing references to the original filters
+        // into the editor - ideally we should be passing in copies
+        // TODO : pass in copies
+        editable.getFilters().set(chartSeriesModel.getFilters());
+
+        final ChartSeriesModelEditor editor = new ChartSeriesModelEditor();
+        editor.bind(controller, editable, ChartingTreeEditorView.this.model);
+
+        editorDialog.getEventSource().addHandler(new EventHandler() {
+            @Override
+            public void onEvent(Event event) {
+                Boolean option = event.getPayload();
+                if (option) {
+                    editor.commitEditingChanges();
+
+                    // Update the actual model from the values in the editable copy
+                    chartSeriesModel.getLabelIndex().set(editable.getLabelIndex().get());
+                    // chartSeriesModel.getLegend().set(editable.getLegend().get());
+                    chartSeriesModel.getExistingAggregation().set(editable.getExistingAggregation().get());
+                    chartSeriesModel.getPatternID().set(editable.getPatternID().get());
+                    chartSeriesModel.getType().set(editable.getType().get());
+                    chartSeriesModel.getInterval().set(editable.getInterval().get());
+                    chartSeriesModel.getEventParts().set(editable.getEventParts().get());
+                    chartSeriesModel.getGroupBy().set(editable.getGroupBy().get());
+                    chartSeriesModel.getGenerateEmptyTicks().set(editable.getGenerateEmptyTicks().get());
+
+                    // jshaw - see comment about copying filters a few lines up
+                    chartSeriesModel.getFilters().set(editable.getFilters());
+                } else {
+                    // Dont do anything
+                }
+            }
+        });
+
+        editorDialog.setSize(500, 500);
+        editorDialog.setName("Chart series editor");
+        editorDialog.setModal(true);
+        editorDialog.show("Edit chart series", editor, getParentRecursive());
+
+    }
+
+    protected void editExpressionConfiguration(final ExpressionConfiguration model) {
+
+        EditorDialog editorDialog = new EditorDialog() {
+        };
+        final ExpressionConfiguration editable = new ExpressionConfiguration();
+
+        editable.getName().set(model.getName().get());
+        editable.getId().set(model.getId().get());
+        editable.getExpression().set(model.getExpression().get());
+        editable.getGroupBy().set(model.getGroupBy().get());
+
+        final ExpressionConfigurationEditor editor = new ExpressionConfigurationEditor();
+        editor.bind(controller, editable, ChartingTreeEditorView.this.model);
+
+        editorDialog.getEventSource().addHandler(new EventHandler() {
+            @Override
+            public void onEvent(Event event) {
+                Boolean option = event.getPayload();
+                if (option) {
+                    editor.commitEditingChanges();
+
+                    model.getName().set(editable.getName().get());
+                    model.getId().set(editable.getId().get());
+                    model.getExpression().set(editable.getExpression().get());
+                    model.getGroupBy().set(editable.getGroupBy().get());
+
+                } else {
+                    // Dont do anything
+                }
+            }
+        });
+
+        editorDialog.setSize(500, 500);
+        editorDialog.setName("Expression editor");
+        editorDialog.setModal(true);
+        editorDialog.show("Edit expression", editor, getParentRecursive());
+
     }
 
     private void expandAll() {
@@ -921,113 +1181,6 @@ public class ChartingTreeEditorView extends JPanel {
         }
     }
 
-    protected void editChartSeriesModel(final ChartSeriesModel chartSeriesModel) {
-
-        EditorDialog editorDialog = new EditorDialog() {
-        };
-        final ChartSeriesModel editable = new ChartSeriesModel();
-
-        editable.getLabelIndex().set(chartSeriesModel.getLabelIndex().get());
-        editable.getExistingAggregation().set(chartSeriesModel.getExistingAggregation().get());
-        // editable.getLegend().set(chartSeriesModel.getLegend().get());
-        editable.getPatternID().set(chartSeriesModel.getPatternID().get());
-        editable.getType().set(chartSeriesModel.getType().get());
-        editable.getInterval().set(chartSeriesModel.getInterval().get());
-        editable.getGroupBy().set(chartSeriesModel.getGroupBy().get());
-        editable.getGenerateEmptyTicks().set(chartSeriesModel.getGenerateEmptyTicks().get());
-
-        // jshaw - this is potentially messy, as we are passing references to the original filters
-        // into the editor - ideally we should be passing in copies
-        // TODO : pass in copies
-        editable.getFilters().set(chartSeriesModel.getFilters());
-
-        final ChartSeriesModelEditor editor = new ChartSeriesModelEditor();
-        editor.bind(controller, editable, ChartingTreeEditorView.this.model);
-
-        editorDialog.getEventSource().addHandler(new EventHandler() {
-            @Override
-            public void onEvent(Event event) {
-                Boolean option = event.getPayload();
-                if (option) {
-                    editor.commitEditingChanges();
-
-                    // Update the actual model from the values in the editable copy
-                    chartSeriesModel.getLabelIndex().set(editable.getLabelIndex().get());
-                    // chartSeriesModel.getLegend().set(editable.getLegend().get());
-                    chartSeriesModel.getExistingAggregation().set(editable.getExistingAggregation().get());
-                    chartSeriesModel.getPatternID().set(editable.getPatternID().get());
-                    chartSeriesModel.getType().set(editable.getType().get());
-                    chartSeriesModel.getInterval().set(editable.getInterval().get());
-                    chartSeriesModel.getEventParts().set(editable.getEventParts().get());
-                    chartSeriesModel.getGroupBy().set(editable.getGroupBy().get());
-                    chartSeriesModel.getGenerateEmptyTicks().set(editable.getGenerateEmptyTicks().get());
-
-                    // jshaw - see comment about copying filters a few lines up
-                    chartSeriesModel.getFilters().set(editable.getFilters());
-                } else {
-                    // Dont do anything
-                }
-            }
-        });
-
-        editorDialog.setSize(500, 500);
-        editorDialog.setName("Chart series editor");
-        editorDialog.setModal(true);
-        editorDialog.show("Edit chart series", editor, getParentRecursive());
-
-    }
-
-    protected void editAggregationConfiguration(final AggregationConfiguration model) {
-
-        EditorDialog editorDialog = new EditorDialog() {
-        };
-        final AggregationConfiguration editable = new AggregationConfiguration();
-
-        editable.getName().set(model.getName().get());
-        editable.getLabelIndex().set(model.getLabelIndex().get());
-        editable.getPatternID().set(model.getPatternID().get());
-        editable.getType().set(model.getType().get());
-        editable.getInterval().set(model.getInterval().get());
-        editable.getGroupBy().set(model.getGroupBy().get());
-
-        // jshaw - this is potentially messy, as we are passing references to the original filters
-        // into the editor - ideally we should be passing in copies
-        // TODO : pass in copies
-        editable.getFilters().set(model.getFilters());
-
-        final AggregationConfigurationEditor editor = new AggregationConfigurationEditor();
-        editor.bind(controller, editable, ChartingTreeEditorView.this.model);
-
-        editorDialog.getEventSource().addHandler(new EventHandler() {
-            @Override
-            public void onEvent(Event event) {
-                Boolean option = event.getPayload();
-                if (option) {
-                    editor.commitEditingChanges();
-
-                    // Update the actual model from the values in the editable copy
-                    model.getName().set(editable.getName().get());
-                    model.getLabelIndex().set(editable.getLabelIndex().get());
-                    model.getPatternID().set(editable.getPatternID().get());
-                    model.getType().set(editable.getType().get());
-                    model.getInterval().set(editable.getInterval().get());
-                    model.getGroupBy().set(editable.getGroupBy().get());
-
-                    // jshaw - see comment about copying filters a few lines up
-                    model.getFilters().set(editable.getFilters());
-                } else {
-                    // Dont do anything
-                }
-            }
-        });
-
-        editorDialog.setSize(500, 500);
-        editorDialog.setName("Aggregation editor");
-        editorDialog.setModal(true);
-        editorDialog.show("Edit aggregation", editor, getParentRecursive());
-
-    }
-
     protected void showContextMenu(DefaultMutableTreeNode node, Component component, int x, int y) {
 
         final JPopupMenu popupMenu = new JPopupMenu();
@@ -1061,6 +1214,16 @@ public class ChartingTreeEditorView extends JPanel {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     addAggregation();
+                }
+            });
+
+        } else if (node == expressionsNode) {
+            JMenuItem menuItem = new JMenuItem("Add expression");
+            popupMenu.add(menuItem);
+            menuItem.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    addExpression();
                 }
             });
 
@@ -1121,7 +1284,7 @@ public class ChartingTreeEditorView extends JPanel {
                     }
                 });
 
-            }else if (userObject instanceof TableChartModel) {
+            } else if (userObject instanceof TableChartModel) {
                 final TableChartModel tableChartModel = (TableChartModel) userObject;
 
                 JMenuItem addSeries = new JMenuItem("Add series");
@@ -1463,7 +1626,9 @@ public class ChartingTreeEditorView extends JPanel {
                 setIcon(Icons.load("/icons/patterns.png"));
             } else if (node == chartingNode) {
                 setIcon(Icons.load("/icons/charting.png"));
-            }else if (node == aggregationsNode) {
+            } else if (node == aggregationsNode) {
+                setIcon(Icons.load("/icons/MenuItem.png"));
+            } else if (node == expressionsNode) {
                 setIcon(Icons.load("/icons/MenuItem.png"));
             } else {
                 Object userObject = node.getUserObject();
