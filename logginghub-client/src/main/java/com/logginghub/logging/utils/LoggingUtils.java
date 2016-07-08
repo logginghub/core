@@ -257,7 +257,6 @@ public class LoggingUtils {
                     catch (LoggingMessageSenderException e) {}
                 }
 
-                @Override
                 public void onNewLogEvent(EventContext eventContext) {
 
                 }
@@ -323,7 +322,6 @@ public class LoggingUtils {
                 catch (LoggingMessageSenderException e) {}
             }
 
-            @Override
             public void onNewLogEvent(EventContext eventContext) {
 
             }

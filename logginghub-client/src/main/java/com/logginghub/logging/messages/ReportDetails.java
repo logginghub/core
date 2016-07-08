@@ -29,12 +29,12 @@ public class ReportDetails implements SerialisableObject {
         this.command = command;
     }
 
-    @Override public void read(SofReader reader) throws SofException {
+    public void read(SofReader reader) throws SofException {
         name = reader.readString(0);
         command = reader.readString(1);
     }
 
-    @Override public void write(SofWriter writer) throws SofException {
+    public void write(SofWriter writer) throws SofException {
         writer.write(0, name);
         writer.write(1, command);
     }

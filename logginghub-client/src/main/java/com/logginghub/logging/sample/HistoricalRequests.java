@@ -1,8 +1,5 @@
 package com.logginghub.logging.sample;
 
-import java.net.InetSocketAddress;
-import java.util.concurrent.CountDownLatch;
-
 import com.logginghub.logging.DefaultLogEvent;
 import com.logginghub.logging.exceptions.LoggingMessageSenderException;
 import com.logginghub.logging.listeners.LoggingMessageListener;
@@ -15,6 +12,9 @@ import com.logginghub.utils.MutableInt;
 import com.logginghub.utils.Out;
 import com.logginghub.utils.TimeUtils;
 import com.logginghub.utils.VLPorts;
+
+import java.net.InetSocketAddress;
+import java.util.concurrent.CountDownLatch;
 
 public class HistoricalRequests {
 
@@ -51,7 +51,7 @@ public class HistoricalRequests {
         // We need to bind to the message receiver to pick out the HistoricalDataResponse messages
         client.addLoggingMessageListener(new LoggingMessageListener() {
 
-            @Override public void onNewLoggingMessage(LoggingMessage message) {
+            public void onNewLoggingMessage(LoggingMessage message) {
 
                 if (message instanceof HistoricalDataResponse) {
                     HistoricalDataResponse response = (HistoricalDataResponse) message;

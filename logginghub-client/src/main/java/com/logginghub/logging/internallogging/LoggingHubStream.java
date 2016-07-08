@@ -75,7 +75,7 @@ public class LoggingHubStream implements LoggerStream, StandardAppenderFeatures 
         });
 
         appenderHelper.setLevelSettingImplementation(new LevelSettingImplementation() {
-            @Override public boolean process(LevelSettingsRequest request) {
+            public boolean process(LevelSettingsRequest request) {
                 return setLogLevels(request);
             }
         });
@@ -107,15 +107,15 @@ public class LoggingHubStream implements LoggerStream, StandardAppenderFeatures 
         appenderHelper.setSourceApplication(sourceApplication);
     }
 
-    @Override public void setEnvironment(String environment) {
+    public void setEnvironment(String environment) {
         appenderHelper.setEnvironment(environment);
     }
 
-    @Override public void setInstanceIdentifier(String instanceIdentifier) {
+    public void setInstanceIdentifier(String instanceIdentifier) {
         appenderHelper.setInstanceIdentifier(instanceIdentifier);
     }
 
-    @Override public void setInstanceType(String instanceType) {
+    public void setInstanceType(String instanceType) {
         appenderHelper.setInstanceType(instanceType);
     }
 
@@ -407,7 +407,7 @@ public class LoggingHubStream implements LoggerStream, StandardAppenderFeatures 
     }
 
 
-    @Override public void onNewLogEvent(final com.logginghub.utils.logging.LogEvent vlevent) {
+    public void onNewLogEvent(final com.logginghub.utils.logging.LogEvent vlevent) {
         if(vlevent.getLevel() >= levelFilter) {
             if (appenderHelper.isGatheringCallerDetails()) {
                 // Forces lazy gathering of caller details
@@ -435,7 +435,6 @@ public class LoggingHubStream implements LoggerStream, StandardAppenderFeatures 
         }
     }
 
-    @Override
     public void onNewLogEvent(EventContext eventContext) {
 
     }

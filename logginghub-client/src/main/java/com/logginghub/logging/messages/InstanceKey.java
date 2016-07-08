@@ -133,7 +133,7 @@ public class InstanceKey implements SerialisableObject {
         return sb.toString();
     }
 
-    @Override public void read(SofReader reader) throws SofException {
+    public void read(SofReader reader) throws SofException {
         environment = reader.readString(0);
         host = reader.readString(1);
         address = reader.readString(2);
@@ -142,7 +142,7 @@ public class InstanceKey implements SerialisableObject {
         instanceIdentifier = reader.readString(5);
     }
 
-    @Override public void write(SofWriter writer) throws SofException {
+    public void write(SofWriter writer) throws SofException {
         writer.write(0, environment);
         writer.write(1, host);
         writer.write(2, address);

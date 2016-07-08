@@ -12,11 +12,11 @@ public class ClearEventsMessage implements SerialisableObject, LoggingMessage {
 
     }
 
-    @Override public void read(SofReader reader) throws SofException {
+    public void read(SofReader reader) throws SofException {
 
     }
 
-    @Override public void write(SofWriter writer) throws SofException {
+    public void write(SofWriter writer) throws SofException {
 
     }
 

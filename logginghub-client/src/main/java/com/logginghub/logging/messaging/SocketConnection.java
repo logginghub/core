@@ -64,8 +64,8 @@ public class SocketConnection implements LoggingMessageSource,
     private ExceptionPolicy exceptionPolicy = new ExceptionPolicy(Policy.SystemErr);
     private Throttler throttler = new Throttler(10, TimeUnit.SECONDS);
     /**
-     * Each sweep we use this list to store the messages to be sent - I'm not sure if its going to be quicker to create
-     * a new empty list than it is to clear it down
+     * Each sweep we use this list to store the messages to be sent - I'm not sure if its going to be quicker to create a new empty list than it is to
+     * clear it down
      */
     private List<LoggingMessage> temporaryMessagesToSendBuffer = new ArrayList<LoggingMessage>();
     private List<LoggingMessageListener> messageListeners = new CopyOnWriteArrayList<LoggingMessageListener>();
@@ -116,8 +116,7 @@ public class SocketConnection implements LoggingMessageSource,
     }
 
     /**
-     * @param socket In order to ensure you dont miss any messages, it is important to add a listener at construction
-     *               time.
+     * @param socket In order to ensure you dont miss any messages, it is important to add a listener at construction time.
      * @throws IOException if something goes wrong getting the socket io input and output streams
      */
     public SocketConnection(Socket socket, String name) throws IOException {
@@ -248,15 +247,13 @@ public class SocketConnection implements LoggingMessageSource,
                         throw iae;
                     } catch (RuntimeException t) {
                         if (!closing) {
-                            close("An exception was caught sending data to the stream : " + StacktraceUtils.combineMessages(
-                                    t));
+                            close("An exception was caught sending data to the stream : " + StacktraceUtils.combineMessages(t));
                             exceptionPolicy.handle(t, "An exception was caught sending data to the stream");
                         }
                         break;
                     } catch (IOException t) {
                         if (!closing) {
-                            close("An exception was caught sending data to the stream : " + StacktraceUtils.combineMessages(
-                                    t));
+                            close("An exception was caught sending data to the stream : " + StacktraceUtils.combineMessages(t));
                             exceptionPolicy.handle(t, "An exception was caught sending data to the stream");
                         }
                         break;
@@ -296,9 +293,7 @@ public class SocketConnection implements LoggingMessageSource,
                     Out.out("{} | Read {} bytes", name, read);
                 }
                 receiveBuffer.put(fixedReceiverBuffer, 0, read);
-                logger.finest("Read '{}' bytes from the input stream, and appended to buffer '{}'",
-                              read,
-                              receiveBuffer);
+                logger.finest("Read '{}' bytes from the input stream, and appended to buffer '{}'", read, receiveBuffer);
                 processReceiveBuffer();
             } else {
                 close("The incomming stream closed gracefully");
@@ -357,9 +352,7 @@ public class SocketConnection implements LoggingMessageSource,
         try {
             fireNewMessage(message);
         } catch (RuntimeException t) {
-            logger.warn(t,
-                        "Exception caught processing message '{}' - we should be able to continue after this however",
-                        message);
+            logger.warn(t, "Exception caught processing message '{}' - we should be able to continue after this however", message);
         }
     }
 
@@ -417,10 +410,9 @@ public class SocketConnection implements LoggingMessageSource,
                             writeQueue.poll();
                             messagesDiscarded++;
                             if (throttler.isOkToFire()) {
-                                System.err.println(
-                                        "The LoggingHub socket connection write queue is full, and we've discarded '" +
-                                                messagesDiscarded +
-                                                "' event(s) (total since the process started). This message will only be repeat once every 10 seconds if the send rate continues to overwhelm the write queue.");
+                                System.err.println("The LoggingHub socket connection write queue is full, and we've discarded '" +
+                                                   messagesDiscarded +
+                                                   "' event(s) (total since the process started). This message will only be repeat once every 10 seconds if the send rate continues to overwhelm the write queue.");
                             }
                         }
                     }
@@ -647,22 +639,19 @@ public class SocketConnection implements LoggingMessageSource,
         this.levelFilter = levelFilter;
     }
 
-    @Override
+
     public int getConnectionType() {
         return connectionType;
     }
 
-    @Override
     public void setConnectionType(int i) {
         this.connectionType = i;
     }
 
-    @Override
     public String getConnectionDescription() {
         return connectionDescription;
     }
 
-    @Override
     public void setConnectionDescription(String description) {
         this.connectionDescription = description;
     }

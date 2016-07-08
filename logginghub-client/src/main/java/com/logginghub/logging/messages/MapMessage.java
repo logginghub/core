@@ -1,15 +1,15 @@
 package com.logginghub.logging.messages;
 
+import com.logginghub.utils.sof.SerialisableObject;
+import com.logginghub.utils.sof.SofException;
+import com.logginghub.utils.sof.SofReader;
+import com.logginghub.utils.sof.SofWriter;
+
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
-import com.logginghub.utils.sof.SerialisableObject;
-import com.logginghub.utils.sof.SofException;
-import com.logginghub.utils.sof.SofReader;
-import com.logginghub.utils.sof.SofWriter;
 
 public class MapMessage implements SerialisableObject {
 
@@ -41,7 +41,7 @@ public class MapMessage implements SerialisableObject {
         return content.get(key);
     }
 
-    @Override public void read(SofReader reader) throws SofException {
+    public void read(SofReader reader) throws SofException {
         int index = 0;
         int count = reader.readInt(index++);
         for(int i = 0; i < count; i++) {
@@ -51,7 +51,7 @@ public class MapMessage implements SerialisableObject {
         }
     }
 
-    @Override public void write(SofWriter writer) throws SofException {
+    public void write(SofWriter writer) throws SofException {
         int index = 0;
         writer.write(index++, content.size());
         Set<Entry<String, String>> entrySet = content.entrySet();

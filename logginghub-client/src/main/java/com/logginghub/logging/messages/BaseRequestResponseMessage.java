@@ -19,11 +19,11 @@ public class BaseRequestResponseMessage implements RequestResponseMessage, Seria
         this.correlationID = correlationID;
     }
 
-    @Override public void read(SofReader reader) throws SofException {
+    public void read(SofReader reader) throws SofException {
         this.setCorrelationID(reader.readInt(0));
     }
 
-    @Override public void write(SofWriter writer) throws SofException {
+    public void write(SofWriter writer) throws SofException {
         writer.write(0, getCorrelationID());
     }
 }

@@ -4,7 +4,7 @@ plugins {
 
 subprojects {
 
-    version = '1.5.14'
+    version = '1.5.15'
     group = 'com.logginghub'
 
     apply plugin: 'java'
@@ -77,6 +77,14 @@ subprojects {
     configurations {
         deployerJars
     }
+
+
+    test {
+        testLogging {
+            exceptionFormat = 'full'
+        }
+    }
+
 
     dependencies {
         deployerJars "org.apache.maven.wagon:wagon-ssh:2.2"
