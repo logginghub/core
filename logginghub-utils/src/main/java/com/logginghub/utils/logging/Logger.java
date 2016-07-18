@@ -816,7 +816,7 @@ public class Logger {
         indent++;
     }
 
-    public void setThreadContext(String name) {
+    public static void setThreadContext(String name) {
         threadContexts.set(name);
     }
 
