@@ -647,16 +647,8 @@ public class DetailedLogEventTablePanel extends JPanel implements LogEventListen
     }
 
     private void scrollToBottom() {
-
-        // Out.out("Model row count at scroll time is {}", table.getRowCount());
-
-        int row = table.getRowCount() - 2;
-
-        // Out.out("Row count -1 is {}", row);
-
+        int row = table.getRowCount() - 1;
         Rectangle cellRect = table.getCellRect(row, 0, true);
-
-        // Out.out("Cell rect is {}", cellRect);
         table.scrollRectToVisible(cellRect);
     }
 
