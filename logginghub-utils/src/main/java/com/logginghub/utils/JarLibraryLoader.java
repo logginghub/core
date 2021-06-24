@@ -50,7 +50,15 @@ public class JarLibraryLoader {
     }
 
     private static File getOutputFile(String name) {
-        String folderName = System.getProperty("java.io.tmpdir") + "/vllibtemp/";
+
+        String folderName = System.getProperty("com.logginghub.utils.JarLibraryLoader.libraryTemp");
+
+        if(StringUtils.isNotNullOrEmpty(folderName)) {
+            folderName = FileUtils.checkForHome(folderName);
+        }else {
+            folderName = System.getProperty("java.io.tmpdir") + "/vllibtemp/";
+        }
+
         File folder = new File(folderName);
         folder.mkdirs();
 

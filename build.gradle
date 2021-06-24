@@ -4,22 +4,55 @@ plugins {
 
 subprojects {
 
-    version = '1.5.16'
+    version = '1.5.17'
     group = 'com.logginghub'
 
     apply plugin: 'java'
     apply plugin: 'idea'
     apply plugin: 'maven'
+    apply plugin: 'maven-publish'
 
     sourceCompatibility = 1.6
     targetCompatibility = 1.6
 
     repositories {
         mavenCentral()
+
         maven {
-            url "http://www.vertexlabs.co.uk/repository"
+            url "${meornMavenRepoUrl}"
+            credentials(HttpHeaderCredentials) {
+                name = "Authorization"
+                value = "${meornMavenRepoAccessKey}"
+            }
+            authentication {
+                header(HttpHeaderAuthentication)
+            }
         }
     }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+            }
+        }
+
+       repositories {
+            maven {
+                url "${meornMavenRepoUrl}"
+                credentials(HttpHeaderCredentials) {
+                    name = "Authorization"
+                    value = "${meornMavenRepoAccessKey}"
+                }
+                authentication {
+                    header(HttpHeaderAuthentication)
+                }
+            }
+        }
+    }
+
+
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //

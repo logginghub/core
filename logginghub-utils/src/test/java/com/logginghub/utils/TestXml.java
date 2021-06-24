@@ -14,8 +14,6 @@ public class TestXml {
         assertThat(xml.getRoot().getChildren().get(0).getAttribute("value"), is("foo"));
     }
 
-
-
     @Test public void test_quoted_slash_in_attributes() {
         Xml xml = new Xml("<outer><inner value=\"/path/path/path/\"/></outer>");
         assertThat(xml.getRoot().getTagName(), is("outer"));

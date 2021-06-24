@@ -39,39 +39,42 @@ distributions {
     }
 }
 
-task buildDistribution << {
+task buildDistribution {
+    doLast {
 
-    delete 'build/dist_temp/hub'
-    copy {
-        from 'dist/common'
-        into file('build/dist_temp/hub')
+        delete 'build/dist_temp/hub'
+        copy {
+            from 'dist/common'
+            into file('build/dist_temp/hub')
+        }
+        copy {
+            from 'dist/hub'
+            into file('build/dist_temp/hub')
+        }
+
+        StringBuilder classpath = new StringBuilder();
+        int counter = 1;
+        classpath.append("wrapper.java.classpath.${counter++}=../lib/${jar.archivePath.name}\n")
+        sourceSets.main.runtimeClasspath.collect {
+            classpath.append("wrapper.java.classpath.${counter++}=../lib/" + it.name + "\n")
+        }
+        classpath.append("wrapper.java.classpath.${counter++}=../lib/wrapper.jar\n")
+
+        ant.replace(file: "build/dist_temp/hub/conf/wrapper.conf", token: 'wrapper.java.classpath.1=../lib/*', value: classpath)
+        ant.replace(file: "build/dist_temp/hub/conf/wrapper.conf", token: 'wrapper.logfile=', value: 'wrapper.logfile=../logs/hub.wrapper.log')
     }
-    copy {
-        from 'dist/hub'
-        into file('build/dist_temp/hub')
-    }
-
-    StringBuilder classpath = new StringBuilder();
-    int counter = 1;
-    classpath.append("wrapper.java.classpath.${counter++}=../lib/${jar.archivePath.name}\n")
-    sourceSets.main.runtimeClasspath.collect {
-        classpath.append("wrapper.java.classpath.${counter++}=../lib/" + it.name + "\n")
-    }
-    classpath.append("wrapper.java.classpath.${counter++}=../lib/wrapper.jar\n")
-
-    ant.replace(file: "build/dist_temp/hub/conf/wrapper.conf", token: 'wrapper.java.classpath.1=../lib/*', value: classpath)
-    ant.replace(file: "build/dist_temp/hub/conf/wrapper.conf", token: 'wrapper.logfile=', value: 'wrapper.logfile=../logs/hub.wrapper.log')
-
 }
 
 distZip.dependsOn("buildDistribution")
 
-task deployDistribution << {
-    def targetDir = '/var/www/repository/com/logginghub/archives/' + version;
-    ssh.run {
-        session(remotes.hosting) {
-            execute 'mkdir -p ' + targetDir
-            put buildDir.getAbsolutePath() + '/distributions/logginghub-' + version + '.zip', targetDir
+task deployDistribution {
+    doLast {
+        def targetDir = '/var/www/repository/com/logginghub/archives/' + version;
+        ssh.run {
+            session(remotes.hosting) {
+                execute 'mkdir -p ' + targetDir
+                put buildDir.getAbsolutePath() + '/distributions/logginghub-' + version + '.zip', targetDir
+            }
         }
     }
 }

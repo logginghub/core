@@ -1892,4 +1892,7 @@ public class FileUtils {
 
     }
 
+    public static String checkForHome(String path) {
+        return path.replaceFirst("^~", System.getProperty("user.home"));
+    }
 }

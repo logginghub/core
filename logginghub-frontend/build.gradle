@@ -31,25 +31,26 @@ test {
     exclude 'com/logginghub/**'
 }
 
-task buildLaunchScripts << {
+task buildLaunchScripts  {
+    doLast {
 
-    delete 'build/tmp/dist_temp/'
+        delete 'build/tmp/dist_temp/'
 
-    copy {
-        from 'dist'
-        into 'build/tmp/dist_temp/'
+        copy {
+            from 'dist'
+            into 'build/tmp/dist_temp/'
+        }
+
+        def artifact = "logginghub-frontend-${version}.jar"
+
+        ant.replace(file: "build/tmp/dist_temp/frontend.sh", token: 'CLASSPATH', value: artifact)
+        ant.replace(file: "build/tmp/dist_temp/frontend.command", token: 'CLASSPATH', value: artifact)
+        ant.replace(file: "build/tmp/dist_temp/frontend.bat", token: 'CLASSPATH', value: artifact)
+        ant.replace(file: "build/tmp/dist_temp/frontend-console.bat", token: 'CLASSPATH', value: artifact)
+
+        ant.chmod(file: "build/tmp/dist_temp/frontend.sh", perm: "755");
+        ant.chmod(file: "build/tmp/dist_temp/frontend.command", perm: "755");
     }
-
-    def artifact = "logginghub-frontend-${version}.jar"
-
-    ant.replace(file: "build/tmp/dist_temp/frontend.sh", token: 'CLASSPATH', value: artifact)
-    ant.replace(file: "build/tmp/dist_temp/frontend.command", token: 'CLASSPATH', value: artifact)
-    ant.replace(file: "build/tmp/dist_temp/frontend.bat", token: 'CLASSPATH', value: artifact)
-    ant.replace(file: "build/tmp/dist_temp/frontend-console.bat", token: 'CLASSPATH', value: artifact)
-
-    ant.chmod(file: "build/tmp/dist_temp/frontend.sh", perm: "755");
-    ant.chmod(file: "build/tmp/dist_temp/frontend.command", perm: "755");
-
 }
 
 distZip.dependsOn("buildLaunchScripts")
@@ -80,12 +81,14 @@ jar {
 //    }
 }
 
-task deployDistribution << {
-    def targetDir = '/var/www/repository/com/logginghub/archives/' + version;
-    ssh.run {
-        session(remotes.hosting) {
-            execute 'mkdir -p ' + targetDir
-            put buildDir.getAbsolutePath() + '/distributions/logginghub-frontend-' + version + '.zip', targetDir
+task deployDistribution {
+    doLast {
+        def targetDir = '/var/www/repository/com/logginghub/archives/' + version;
+        ssh.run {
+            session(remotes.hosting) {
+                execute 'mkdir -p ' + targetDir
+                put buildDir.getAbsolutePath() + '/distributions/logginghub-frontend-' + version + '.zip', targetDir
+            }
         }
     }
 }

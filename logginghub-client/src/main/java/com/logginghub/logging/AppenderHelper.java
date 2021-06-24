@@ -344,7 +344,8 @@ public class AppenderHelper {
 
     public void setSourceApplication(String sourceApplication) {
 
-        Out.err("[logginghub] setSourceApplication has been deprecated - you should use setInstanceType and setInstanceIdentifier instead to provide richer metadata. We'll try and parse it as " + "best we can.");
+        // jshaw - we never followed through with this change, and its annoying logging you can't get rid off!
+        //Out.err("[logginghub] setSourceApplication has been deprecated - you should use setInstanceType and setInstanceIdentifier instead to provide richer metadata. We'll try and parse it as " + "best we can.");
 
         String actualValue = StringUtils.environmentReplacement(sourceApplication);
 
