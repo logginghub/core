@@ -19,7 +19,7 @@ import java.util.List;
 // TODO : make this a proper test!
 public class LoggingHubStreamTest {
 
-//    @Ignore
+    @Ignore
     @Test public void test_properties_from_file() {
 
         File file = FileUtils.createRandomTestFileForClass(LoggingHubStreamTest.class);
