@@ -1,25 +1,23 @@
 package com.logginghub.logging.telemetry;
 
+import com.logginghub.utils.JarLibraryLoader;
 import org.hyperic.sigar.CpuPerc;
 import org.hyperic.sigar.Sigar;
-import org.hyperic.sigar.SigarException;
-
-import com.logginghub.utils.JarLibraryLoader;
 
 public class SigarHelper {
 
-    public static double getCPU() {
-        try {
-            loadLibrary();
-            Sigar sigar = new Sigar();
-            CpuPerc cpu = sigar.getCpuPerc();
-
-            return cpu.getCombined();
-        }
-        catch (SigarException e) {
-            throw new RuntimeException(e);
-        }
-    }
+//    public static double getCPU() {
+//        try {
+//            loadLibrary();
+//            Sigar sigar = new Sigar();
+//            CpuPerc cpu = sigar.getCpuPerc();
+//
+//            return cpu.getCombined();
+//        }
+//        catch (SigarException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
 
     public static void loadLibrary() {
         System.setProperty("org.hyperic.sigar.path", "-");
@@ -63,5 +61,21 @@ public class SigarHelper {
 
         String path = start + "-" + arch + "-" + osName + ext;
         return path;
+    }
+
+    public static boolean hasSigarSupport() {
+        boolean hasSigarSupport;
+        try {
+            loadLibrary();
+            Sigar sigar = new Sigar();
+            CpuPerc cpu = sigar.getCpuPerc();
+            cpu.getCombined();
+            hasSigarSupport = true;
+        }
+        catch (Throwable e) {
+            hasSigarSupport = false;
+        }
+
+        return hasSigarSupport;
     }
 }

@@ -1,9 +1,9 @@
 package com.logginghub.logging.utils;
 
+import com.logginghub.logging.PidHelper;
 import com.logginghub.logging.VLLogEvent;
 import com.logginghub.logging.messages.PartialMessageException;
 import com.logginghub.logging.messaging.LogEventCodex;
-import com.logginghub.logging.telemetry.SigarHelper;
 import com.logginghub.utils.Destination;
 import com.logginghub.utils.ExpandingByteBuffer;
 import com.logginghub.utils.FileUtils;
@@ -58,7 +58,7 @@ public class BinaryFileStream implements LoggerStream, Destination<LogEvent> {
         // Make a cautious attempt at getting the pid - we dont want things to
         // blow up if this doesn't work though
         try {
-            pid = SigarHelper.getPid();
+            pid = PidHelper.getPid();
         } catch (Throwable t) {
             t.printStackTrace();
         }

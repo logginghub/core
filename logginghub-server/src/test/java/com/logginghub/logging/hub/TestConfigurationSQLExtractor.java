@@ -4,6 +4,7 @@ import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.hub.configuration.FilterConfiguration;
 import com.logginghub.logging.launchers.RunHub;
 import com.logginghub.logging.servers.SocketHub;
+import com.logginghub.logging.telemetry.SigarHelper;
 import com.logginghub.utils.Bucket;
 import com.logginghub.utils.Destination;
 import org.junit.Test;
@@ -168,12 +169,14 @@ public class TestConfigurationSQLExtractor {
 
     @Test
     public void test_j() throws Exception {
-        validate("hub.with.telemetry.xml", new Validator() {
-            @Override
-            public void validate(RunHub hub) {
+        if(SigarHelper.hasSigarSupport()) {
+            validate("hub.with.telemetry.xml", new Validator() {
+                @Override
+                public void validate(RunHub hub) {
 
-            }
-        });
+                }
+            });
+        }
     }
 
     @Test
@@ -198,12 +201,14 @@ public class TestConfigurationSQLExtractor {
 
     @Test
     public void test_hub_with_telemetry() throws Exception {
-        validate("hub.with.telemetry.xml", new Validator() {
-            @Override
-            public void validate(RunHub hub) {
+        if(SigarHelper.hasSigarSupport()) {
+            validate("hub.with.telemetry.xml", new Validator() {
+                @Override
+                public void validate(RunHub hub) {
 
-            }
-        });
+                }
+            });
+        }
     }
 
     private void validate(String string, Validator validator) throws Exception {

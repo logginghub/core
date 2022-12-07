@@ -2,6 +2,7 @@ package com.logginghub.logging.utils;
 
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.LoggingPorts;
+import com.logginghub.logging.PidHelper;
 import com.logginghub.logging.VLLogEvent;
 import com.logginghub.logging.exceptions.LoggingMessageSenderException;
 import com.logginghub.logging.handlers.SocketHandler;
@@ -9,7 +10,6 @@ import com.logginghub.logging.internallogging.LoggingHubStream;
 import com.logginghub.logging.messages.LogEventMessage;
 import com.logginghub.logging.messaging.SocketClient;
 import com.logginghub.logging.messaging.SocketClientManager;
-import com.logginghub.logging.telemetry.SigarHelper;
 import com.logginghub.utils.NetUtils;
 import com.logginghub.utils.SizeOf;
 import com.logginghub.utils.VLPorts;
@@ -239,7 +239,7 @@ public class LoggingUtils {
             // Make a cautious attempt at getting the pid - we dont want things to
             // blow up if this doesn't work though
             try {
-                pid = SigarHelper.getPid();
+                pid = PidHelper.getPid();
             }
             catch (Throwable t) {
                 t.printStackTrace();
@@ -304,7 +304,7 @@ public class LoggingUtils {
         // Make a cautious attempt at getting the pid - we dont want things to
         // blow up if this doesn't work though
         try {
-            pid = SigarHelper.getPid();
+            pid = PidHelper.getPid();
         }
         catch (Throwable t) {
             t.printStackTrace();

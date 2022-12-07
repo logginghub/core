@@ -37,3 +37,8 @@ logginghub-visualiser/
 logginghub-server/src/main/resources/logginghubweb/angular/app/visualiser/
 logginghub-server/src/main/resources/logginghubweb/angular/app/
 classes/
+logginghub-client/out/
+logginghub-frontend/out/
+logginghub-server/out/
+logginghub-utils/out/
+logginghub-web/out/

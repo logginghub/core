@@ -1,8 +1,8 @@
 package com.logginghub.logging.transaction.configuration;
 
+import com.logginghub.logging.PidHelper;
 import com.logginghub.logging.messages.InstanceKey;
 import com.logginghub.logging.modules.HubStackCaptureModule;
-import com.logginghub.logging.telemetry.SigarHelper;
 import com.logginghub.utils.NetUtils;
 import com.logginghub.utils.module.Configures;
 
@@ -114,7 +114,7 @@ import javax.xml.bind.annotation.XmlAttribute;
         InstanceKey instanceKey = new InstanceKey();
 
         try {
-            instanceKey.setPid(SigarHelper.getPid());
+            instanceKey.setPid(PidHelper.getPid());
         } catch (Throwable t) {
             t.printStackTrace();
         }

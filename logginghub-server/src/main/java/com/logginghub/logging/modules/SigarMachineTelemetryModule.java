@@ -5,7 +5,7 @@ import java.text.NumberFormat;
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.LogEventBuilder;
 import com.logginghub.logging.modules.configuration.SigarMachineTelemetryConfiguration;
-import com.logginghub.logging.telemetry.MachineTelemetryGenerator;
+import com.logginghub.logging.telemetry.SigarMachineTelemetryGenerator;
 import com.logginghub.logging.telemetry.SigarHelper;
 import com.logginghub.utils.Asynchronous;
 import com.logginghub.utils.Destination;
@@ -21,7 +21,7 @@ public class SigarMachineTelemetryModule implements Module<SigarMachineTelemetry
     private boolean sigar;
     private static final Logger logger = Logger.getLoggerFor(SigarProcessTelemetryModule.class);
     private Destination<LogEvent> eventDestination;
-    private MachineTelemetryGenerator generator;
+    private SigarMachineTelemetryGenerator generator;
 
     @Override public void configure(SigarMachineTelemetryConfiguration configuration, ServiceDiscovery discovery) {
         this.configuration = configuration;
@@ -40,7 +40,7 @@ public class SigarMachineTelemetryModule implements Module<SigarMachineTelemetry
         final NumberFormat nf1pd = NumberFormat.getInstance();
         nf1pd.setMaximumFractionDigits(1);
 
-        generator = new MachineTelemetryGenerator();
+        generator = new SigarMachineTelemetryGenerator();
         generator.getDataStructureMultiplexer().addDestination(new Destination<DataStructure>() {
             @Override public void send(DataStructure t) {
 

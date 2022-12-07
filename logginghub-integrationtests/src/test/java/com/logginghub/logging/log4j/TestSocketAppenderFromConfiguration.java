@@ -1,33 +1,13 @@
 package com.logginghub.logging.log4j;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.is;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.concurrent.Callable;
-
-import org.apache.log4j.Appender;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
 import com.logginghub.integrationtests.logging.HubTestFixture;
 import com.logginghub.logging.exceptions.ConnectorException;
-import com.logginghub.logging.log4j.SocketAppender;
 import com.logginghub.logging.messages.ChannelMessage;
 import com.logginghub.logging.messages.Channels;
 import com.logginghub.logging.messages.StackSnapshot;
 import com.logginghub.logging.messaging.SocketClient;
 import com.logginghub.logging.servers.SocketHub;
+import com.logginghub.logging.telemetry.SigarHelper;
 import com.logginghub.testutils.CustomRunner;
 import com.logginghub.utils.Bucket;
 import com.logginghub.utils.Destination;
@@ -37,6 +17,25 @@ import com.logginghub.utils.ThreadUtils;
 import com.logginghub.utils.data.DataStructure;
 import com.logginghub.utils.data.DataStructure.Values;
 import com.logginghub.utils.sof.SerialisableObject;
+import org.apache.log4j.Appender;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.concurrent.Callable;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
 
 @RunWith(CustomRunner.class) public class TestSocketAppenderFromConfiguration {
 
@@ -255,8 +254,11 @@ import com.logginghub.utils.sof.SerialisableObject;
         SerialisableObject payload = message.getPayload();
         assertThat(payload, is(instanceOf(DataStructure.class)));
         DataStructure dataStructure = (DataStructure) payload;
-        assertThat(dataStructure.containsValue(Values.SIGAR_OS_Cpu_User_Time), is(false));
-        assertThat(dataStructure.containsValue(Values.JVM_Process_Memory_Maximum), is(true));
+
+        if(SigarHelper.hasSigarSupport()) {
+            assertThat(dataStructure.containsValue(Values.SIGAR_OS_Cpu_User_Time), is(false));
+            assertThat(dataStructure.containsValue(Values.JVM_Process_Memory_Maximum), is(true));
+        }
 
         hub.stop();
 
@@ -292,29 +294,31 @@ import com.logginghub.utils.sof.SerialisableObject;
 
         Logger.getLogger("test").info("informational message");
 
-        ThreadUtils.repeatUntilTrue(new Callable<Boolean>() {
-            @Override public Boolean call() throws Exception {
+        if(SigarHelper.hasSigarSupport()) {
+            ThreadUtils.repeatUntilTrue(new Callable<Boolean>() {
+                @Override
+                public Boolean call() throws Exception {
 
-                boolean ok;
+                    boolean ok;
 
-                if (messageBucket.size() > 0) {
-                    ChannelMessage message = messageBucket.popFirst();
-                    SerialisableObject payload = message.getPayload();
+                    if (messageBucket.size() > 0) {
+                        ChannelMessage message = messageBucket.popFirst();
+                        SerialisableObject payload = message.getPayload();
 
-                    assertThat(payload, is(instanceOf(DataStructure.class)));
-                    DataStructure data = (DataStructure) payload;
+                        assertThat(payload, is(instanceOf(DataStructure.class)));
+                        DataStructure data = (DataStructure) payload;
 
-                    ok = true;
-                    ok &= data.containsValue(Values.SIGAR_OS_Cpu_User_Time);
-                    ok &= !data.containsValue(Values.JVM_Process_Memory_Maximum);
+                        ok = true;
+                        ok &= data.containsValue(Values.SIGAR_OS_Cpu_User_Time);
+                        ok &= !data.containsValue(Values.JVM_Process_Memory_Maximum);
+                    } else {
+                        ok = false;
+                    }
+
+                    return ok;
                 }
-                else {
-                    ok = false;
-                }
-
-                return ok;
-            }
-        });
+            });
+        }
 
         hub.stop();
 

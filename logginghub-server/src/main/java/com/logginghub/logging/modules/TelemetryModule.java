@@ -12,8 +12,8 @@ import com.logginghub.logging.messages.LogEventMessage;
 import com.logginghub.logging.modules.configuration.SigarMachineTelemetryConfiguration;
 import com.logginghub.logging.modules.configuration.SigarProcessTelemetryConfiguration;
 import com.logginghub.logging.modules.configuration.TelemetryConfiguration;
-import com.logginghub.logging.telemetry.MachineTelemetryGenerator;
-import com.logginghub.logging.telemetry.ProcessTelemetryGenerator;
+import com.logginghub.logging.telemetry.SigarMachineTelemetryGenerator;
+import com.logginghub.logging.telemetry.SigarProcessTelemetryGenerator;
 import com.logginghub.logging.telemetry.SigarHelper;
 import com.logginghub.utils.Asynchronous;
 import com.logginghub.utils.Destination;
@@ -97,7 +97,7 @@ public class TelemetryModule implements Module<TelemetryConfiguration> {
                 SigarHelper.loadLibrary();
                 sigar = true;
             }
-            ProcessTelemetryGenerator generator = new ProcessTelemetryGenerator(processName);
+            SigarProcessTelemetryGenerator generator = new SigarProcessTelemetryGenerator(processName);
             generator.getDataStructureMultiplexer().addDestination(dataStructureDestination);
             generator.setInterval(processTelemetryConfiguration.getInterval());
             generators.add(generator);
@@ -110,7 +110,7 @@ public class TelemetryModule implements Module<TelemetryConfiguration> {
                 SigarHelper.loadLibrary();
                 sigar = true;
             }
-            MachineTelemetryGenerator generator = new MachineTelemetryGenerator();
+            SigarMachineTelemetryGenerator generator = new SigarMachineTelemetryGenerator();
             generator.setInterval(machineTelemetryConfiguration.getInterval());
             generator.getDataStructureMultiplexer().addDestination(dataStructureDestination);
             generators.add(generator);

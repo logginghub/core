@@ -25,7 +25,7 @@ import com.logginghub.logging.modules.StackCaptureConfiguration;
 import com.logginghub.logging.modules.StackCaptureModule;
 import com.logginghub.logging.telemetry.MachineTelemetryGenerator;
 import com.logginghub.logging.telemetry.ProcessTelemetryGenerator;
-import com.logginghub.logging.telemetry.SigarHelper;
+import com.logginghub.logging.telemetry.SigarTelemetryHelper;
 import com.logginghub.logging.telemetry.TelemetryHelper;
 import com.logginghub.logging.utils.InstanceDetailsContainsFilter;
 import com.logginghub.logging.utils.Java7GCMonitor;
@@ -116,7 +116,7 @@ public class AppenderHelper {
      */
     private PublishingListener publishingListener = null;
     private RunnableWorkerThread dispatcherThread;
-    private TelemetryHelper telemetryClient = new TelemetryHelper();
+    private TelemetryHelper telemetryClient;
     private String telemetry;
     private TimeProvider timeProvider = null;
 
@@ -141,6 +141,12 @@ public class AppenderHelper {
     public AppenderHelper(String name, AppenderHelperCustomisationInterface ahci) {
         customisationInterface = ahci;
         socketClient = new SocketClient(name);
+
+        if(SigarSetting.noSigar()) {
+            telemetryClient = new NoopTelemetryHelper();
+        }else {
+            telemetryClient = new SigarTelemetryHelper();
+        }
 
         // LogManager manager = LogManager.getLogManager();
         // manager.addPropertyChangeListener(this);
@@ -182,12 +188,10 @@ public class AppenderHelper {
 
         // Make a cautious attempt at getting the pid - we dont want things to
         // blow up if this doesn't work though
-        try {
-            instanceKey.setPid(SigarHelper.getPid());
-            GlobalLoggingParameters.pid = instanceKey.getPid();
-        } catch (Throwable t) {
-            t.printStackTrace();
-        }
+        int pid = PidHelper.getPid();
+
+        instanceKey.setPid(pid);
+        GlobalLoggingParameters.pid = pid;
 
         stackTraceModule = new StackCaptureModule(null, null);
 

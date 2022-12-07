@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 
+import com.logginghub.logging.telemetry.SigarHelper;
 import org.apache.log4j.Appender;
 import org.apache.log4j.Category;
 import org.apache.log4j.LogManager;

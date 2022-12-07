@@ -1,5 +1,16 @@
 package com.logginghub.logging.modules;
 
+import com.logginghub.logging.DefaultLogEvent;
+import com.logginghub.logging.LogEvent;
+import com.logginghub.logging.PidHelper;
+import com.logginghub.logging.modules.configuration.SocketTextReaderConfiguration;
+import com.logginghub.utils.Destination;
+import com.logginghub.utils.Stream;
+import com.logginghub.utils.WorkerThread;
+import com.logginghub.utils.logging.Logger;
+import com.logginghub.utils.module.Module;
+import com.logginghub.utils.module.ServiceDiscovery;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,17 +19,6 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.CountDownLatch;
-
-import com.logginghub.logging.DefaultLogEvent;
-import com.logginghub.logging.LogEvent;
-import com.logginghub.logging.modules.configuration.SocketTextReaderConfiguration;
-import com.logginghub.logging.telemetry.SigarHelper;
-import com.logginghub.utils.Destination;
-import com.logginghub.utils.Stream;
-import com.logginghub.utils.WorkerThread;
-import com.logginghub.utils.logging.Logger;
-import com.logginghub.utils.module.Module;
-import com.logginghub.utils.module.ServiceDiscovery;
 
 public class SocketTextReaderModule implements Module<SocketTextReaderConfiguration> {
     // private final int port;
@@ -29,7 +29,7 @@ public class SocketTextReaderModule implements Module<SocketTextReaderConfigurat
     public static int defaultPort = 58780;
     // private final SocketHub hub;
     private CountDownLatch boundLatch = new CountDownLatch(1);
-    private int pid = SigarHelper.getPid();
+    private int pid = PidHelper.getPid();
 
 //    private int level = Integer.getInteger("socketTextReader.level", Level.FINE.intValue());
 

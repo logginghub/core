@@ -1,25 +1,26 @@
 package com.logginghub.logging.hub;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.nullValue;
-
-import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.junit.Test;
-
 import com.logginghub.logging.LogEvent;
 import com.logginghub.logging.hub.configuration.FilterConfiguration;
 import com.logginghub.logging.launchers.RunHub;
 import com.logginghub.logging.servers.SocketHub;
+import com.logginghub.logging.telemetry.SigarHelper;
 import com.logginghub.utils.Bucket;
 import com.logginghub.utils.Destination;
 import com.logginghub.utils.FileUtils;
 import com.logginghub.utils.StringUtils;
+import org.junit.Test;
+
+import java.io.File;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 
 public class TestConfigurations {
 
@@ -142,6 +143,16 @@ public class TestConfigurations {
         List<File> listFiles = FileUtils.listFiles(baseFolder);
 
         assertThat(listFiles.size(), is(not(0)));
+
+        if(!SigarHelper.hasSigarSupport()) {
+            Iterator<File> iterator = listFiles.iterator();
+            while(iterator.hasNext()) {
+                File file = iterator.next();
+                if(file.getName().equals("hub.with.telemetry.xml")) {
+                    iterator.remove();
+                }
+            }
+        }
 
         for (File file : listFiles) {
             try {
