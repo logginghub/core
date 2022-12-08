@@ -4,10 +4,10 @@ Now everything has been migrated over to gradle, building is less Heath-Robinson
 2. git status            : to make sure you've got everything squared away
 3. gradle install        : to deploy artifacts in the local maven repo, if you are building or compiling anything locally that needs the update
 4. gradle distZip        : to build the deployable zip files
-5. gradle uploadArchives : to deploy the artifacts and zip files to the remote repo at central.meorn.com
+5. gradle uploadDistribution : to deploy the artifacts and zip files to the remote repo at central.meorn.com
 6. gradle publish        : to publish the jars to the maven repo at central.meorn.com
 
-gradle install distZip uploadArchives
+gradle install distZip uploadDistribution publish
 
 6. git tag [version number] : tag the release in git
 7. Edit build.gradle and increase the version number

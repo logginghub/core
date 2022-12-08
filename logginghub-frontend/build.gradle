@@ -16,7 +16,7 @@ dependencies {
     compile("com.badlogic:gdx-backend-lwjgl-natives:0.9.9")
 
     // Expression processor
-    compile("com.udojava:EvalEx:1.0"){
+    compile("com.udojava:EvalEx:1.0") {
         transitive = false
     }
 
@@ -31,7 +31,7 @@ test {
     exclude 'com/logginghub/**'
 }
 
-task buildLaunchScripts  {
+task buildLaunchScripts {
     doLast {
 
         delete 'build/tmp/dist_temp/'
@@ -95,3 +95,18 @@ task deployDistribution {
 
 deployDistribution.dependsOn("distZip");
 uploadArchives.dependsOn("deployDistribution")
+
+task uploadDistribution {
+    doLast {
+        exec {
+            commandLine 'curl',
+                    '-F',
+                    "upload=@build/distributions/logginghub-frontend-${version}.zip",
+                    '--header',
+                    "Authorization: ${meornArtifactRepoAccessKey}",
+                    '--header',
+                    "Transfer-Encoding: chunked",
+                    "${meornArtifactRepoUrl}?group=logginghub&artifact=frontend&version=${version}"
+        }
+    }
+}

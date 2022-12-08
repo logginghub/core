@@ -79,6 +79,21 @@ task deployDistribution {
     }
 }
 
+task uploadDistribution {
+    doLast {
+        exec {
+            commandLine 'curl',
+                    '-F',
+                    "upload=@build/distributions/logginghub-${version}.zip",
+                    '--header',
+                    "Authorization: ${meornArtifactRepoAccessKey}",
+                    '--header',
+                    "Transfer-Encoding: chunked",
+                    "${meornArtifactRepoUrl}?group=logginghub&artifact=hub&version=${version}"
+        }
+    }
+}
+
 deployDistribution.dependsOn("distZip")
 uploadArchives.dependsOn("deployDistribution")
 

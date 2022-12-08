@@ -4,7 +4,7 @@ plugins {
 
 subprojects {
 
-    version = '1.5.18'
+    version = '1.5.19'
     group = 'com.logginghub'
 
     apply plugin: 'java'
@@ -99,13 +99,13 @@ subprojects {
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    remotes {
-        hosting {
-            host = 'www.vertexlabs.co.uk'
-            user = 'mavenrepo'
-            identity = file(System.properties['user.home'] + "/.ssh/id_rsa")
-        }
-    }
+//    remotes {
+//        hosting {
+//            host = 'www.vertexlabs.co.uk'
+//            user = 'mavenrepo'
+//            identity = file(System.properties['user.home'] + "/.ssh/id_rsa")
+//        }
+//    }
 
     configurations {
         deployerJars
@@ -123,14 +123,14 @@ subprojects {
         deployerJars "org.apache.maven.wagon:wagon-ssh:2.2"
     }
 
-    uploadArchives {
-        repositories.mavenDeployer {
-            configuration = configurations.deployerJars
-            repository(url: "scp://mavenrepo@www.vertexlabs.co.uk:/var/www/repository")  {
-                authentication(userName: "mavenrepo", privateKey: System.properties['user.home'] + "/.ssh/id_rsa")
-            }
-        }
-    }
+//    uploadArchives {
+//        repositories.mavenDeployer {
+//            configuration = configurations.deployerJars
+//            repository(url: "scp://mavenrepo@www.vertexlabs.co.uk:/var/www/repository")  {
+//                authentication(userName: "mavenrepo", privateKey: System.properties['user.home'] + "/.ssh/id_rsa")
+//            }
+//        }
+//    }
 
     dependencies {
         testCompile 'junit:junit:4.11'
